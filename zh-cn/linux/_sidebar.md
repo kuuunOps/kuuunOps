@@ -1,5 +1,6 @@
 - [首页](/zh-cn/)
   - [Linux](/zh-cn/linux/)
+    - [Gitlab](/zh-cn/linux/gitlab/gitlab.md)
   - [MySQL](/zh-cn/mysql/)
   - [Mariadb](/zh-cn/mariadb/)
   - [Openresty](/zh-cn/openresty/)

@@ -1,6 +1,36 @@
 # Linux
 
 
+### SVN的http方式访问
+
+1. 安装软件包
+```bash
+yum install -y httpd subversion mod_dav_svn
+```
+
+2. 创建svn库
+   
+3. 生成密码文件
+```bash
+htpasswd -cb /data/project/svn/conf/httpd.passwd test test
+htpasswd -b /data/project/svn/conf/httpd.passwd test test
+```
+
+4. 虚拟主机参考配置
+```bash
+<Location /system>
+    DAV svn
+        SVNPath /data/project/svn/system
+            AuthType Basic
+                AuthName "Authorization Realm"
+                AuthUserFile /data/project/svn/conf/httpd.passwd
+                AuthzSVNAccessFile /data/project/svn/conf/authz
+                Satisfy all
+                Require valid-user
+</Location>
+```
+
+
 ### iptables快速使用
 
 1. 开放一个端口
