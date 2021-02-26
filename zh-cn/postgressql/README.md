@@ -42,7 +42,7 @@ $ psql -U postgres -f /tmp/postgres.sql bk01 (恢复postgres.sql数据到bk01数
 $ pg_restore -U postgres -d bk01 /tmp/postgres.tar  (恢复postgres.tar数据到bk01数据库)
 ```
 
-#### 三、用户操作
+### 三、用户操作
 ```sql
 -- 切换用户
 $ \c - <username>
