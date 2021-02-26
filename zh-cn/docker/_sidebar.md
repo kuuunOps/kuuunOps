@@ -1,7 +1,10 @@
 - [首页](/zh-cn/)
   - [Linux](/zh-cn/linux/)
+  - [Nginx](/zh-cn/Nginx/)
+  - [PHP](/zh-cn/php/)
   - [MySQL](/zh-cn/mysql/)
   - [Mariadb](/zh-cn/mariadb/)
+  - [PostgresSQL](/zh-cn/postgressql/)
   - [Openresty](/zh-cn/openresty/)
   - [Docker](/zh-cn/docker/)
     - Docker基础

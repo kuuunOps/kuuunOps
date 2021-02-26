@@ -165,7 +165,7 @@ urlpatterns = [
 ]
 ```
 
-将`serializers.Serializer` 更换为 `serializers.ModelSerializer`
+将`serializers.Serializer` 更换为 `serializers.ModelSerializer`，通过数据库模型进行序列化。
 
 ```python
 from rest_framework import serializers
@@ -175,11 +175,19 @@ from .models import User
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
+        # 指定字段
         fields = ['id', 'username', 'email', 'phone']
+        # 所有字段
         # fields = '__all___'
+        # 排除某些字段
+        # exclude = ['id']
+        # 额外参数
+        # extra_kwargs = {
+        #   'username': { 'required': True, 'max_length': 128}    
+        #}
 ```
 
 #### 反序列化
 
-反序列化就是将用户的请求(`post`,`put`)，进行数据校验，通过序列化器，反向写入到数据库中创建，或更新数据。
+反序列化就是将用户的请求(`post`,`put`)，进行数据校验，通过序列化器，反向到数据库中创建，或更新数据。
 
