@@ -1,6 +1,6 @@
 - [首页](/)
   - [Linux](/zh-cn/linux/)
-  - [Nginx](/zh-cn/Nginx/)
+  - [Nginx](/zh-cn/nginx/)
   - [PHP](/zh-cn/php/)
   - [MySQL](/zh-cn/mysql/)
   - [Mariadb](/zh-cn/mariadb/)
