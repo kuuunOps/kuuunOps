@@ -50,7 +50,7 @@ systemctl enable horizon.service
 
 ---
 
-## PHP编译参考
+## PHP7编译参考
 
 1. 安装软件包
 ```bash
@@ -64,3 +64,21 @@ yum install -y gcc  autoconf libxml2-devel libcurl-devel libjpeg-turbo-devel lib
 
 ---
 
+## 安装第三方插件
+
+### redis
+```bash
+# 下载并解压
+wget https://github.com/phpredis/phpredis/archive/3.1.4.tar.gz
+cd phpredis-3.1.4
+
+# 执行编译
+/usr/local/php/bin/phpize
+./configure --enable-redis --with-php-config=/usr/local/php/bin/php-config
+make && make install
+
+# 配置php
+extension_dir = "/usr/local/php/lib/php/extensions/no-debug-zts-20090626"
+extension_dir = /usr/local/php/lib/php/extensions/no-debug-non-zts-20170718/
+extension=redis.so
+```

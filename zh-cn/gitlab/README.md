@@ -41,3 +41,20 @@ sudo gitlab-rake gitlab:backup:create STRATEGY=copy
 ```bash
 rpm -Uvh xxx.rpm
 ```
+
+## 故障
+
+### 500
+```bash
+# 查看日志
+/var/log/gitlab/gitlab-rails/production.log
+
+# 查看token信息
+/etc/gitlab/gitlab-secrets.json
+
+# 连接控制台
+gitlab-rails console
+
+# 执行重置token命令
+ApplicationSetting.current.reset_runners_registration_token!
+```
