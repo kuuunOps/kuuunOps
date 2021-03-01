@@ -15,10 +15,12 @@
     - [MySQL](/zh-cn/mysql/)
     - [Mariadb](/zh-cn/mariadb/)
     - [PostgresSQL](/zh-cn/postgressql/)
+  - 版本控制
+    - [Gitlab](/zh-cn/gitlab/)
+    - [Subversion](/zh-cn/subversion/)
   - 部署
     - [Linux](/zh-cn/linux/)
-      - [Gitlab](/zh-cn/linux/gitlab/)
-      - [Subversion](/zh-cn/linux/subversion/)
+      - [Shell](/zh-cn/linux/shell/)
       - [Ubuntu](/zh-cn/linux/ubuntu/)
     - [Nginx](/zh-cn/nginx/)
     - [Openresty](/zh-cn/openresty/)

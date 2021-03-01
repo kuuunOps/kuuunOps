@@ -16,9 +16,15 @@
     - [MongoDB](/zh-cn/mongodb/)
     - [MariaDB](/zh-cn/mariadb/)
     - [PostgresSQL](/zh-cn/postgressql/)
+  - 版本控制
+    - [Gitlab](/zh-cn/gitlab/)
+    - [Subversion](/zh-cn/subversion/)
   - 部署
     - [Linux](/zh-cn/linux/)
+    - [Rsync](/zh-cn/rsync/)
+    - [Apache](/zh-cn/apache/)
     - [Nginx](/zh-cn/nginx/)
     - [Openresty](/zh-cn/openresty/)
+  - 容器
     - [Docker](/zh-cn/docker/)
   - [其他](/zh-cn/other/)
