@@ -27,10 +27,8 @@
     - [Openresty](/zh-cn/openresty/)
   - 容器
     - [Docker](/zh-cn/docker/)
-      - Docker基础
         - [Docker概述](/zh-cn/docker/base/)
         - [Docker安装](/zh-cn/docker/install/)
-        - [Docker快速入门](/zh-cn/docker/quickstart/)
-      - Docker高级
+        - [Docker入门](/zh-cn/docker/quickstart/)
         - [Docker实战](/zh-cn/docker/advance/)
   - [其他](/zh-cn/other/)
