@@ -17,8 +17,9 @@
     - [PostgresSQL](/zh-cn/postgressql/)
   - 部署
     - [Linux](/zh-cn/linux/)
-      - [Gitlab](/zh-cn/linux/gitlab/gitlab.md)
-      - [Ubuntu](/zh-cn/linux/ubuntu/ubuntu.md)
+      - [Gitlab](/zh-cn/linux/gitlab/)
+      - [Subversion](/zh-cn/linux/subversion/)
+      - [Ubuntu](/zh-cn/linux/ubuntu/)
     - [Nginx](/zh-cn/nginx/)
     - [Openresty](/zh-cn/openresty/)
     - [Docker](/zh-cn/docker/)

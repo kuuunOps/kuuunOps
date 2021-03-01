@@ -9,15 +9,16 @@
     - [RabbitMQ](/zh-cn/rabbitmq/)
   - 后端
     - [Python](/zh-cn/python/)
-      - [基础知识(更新中)](/zh-cn/python/base/base.md)
-      - [爬虫(更新中)](/zh-cn/python/reptile/reptile.md)
-      - [Django(更新中)](/zh-cn/python/django/django.md)
-      - [django-rest-framework(更新中)](/zh-cn/python/django/django-rest-framework.md)
+      - [基础知识(更新中)](/zh-cn/python/base/)
+      - [爬虫(更新中)](/zh-cn/python/reptile/)
+      - [Django(更新中)](/zh-cn/python/django/)
+      - [django-rest-framework(更新中)](/zh-cn/python/drf/)
     - [PHP](/zh-cn/php/)
     - [Go](/zh-cn/go/)
   - 数据库
     - [MySQL](/zh-cn/mysql/)
-    - [Mariadb](/zh-cn/mariadb/)
+    - [MongoDB](/zh-cn/mongodb/)
+    - [MariaDB](/zh-cn/mariadb/)
     - [PostgresSQL](/zh-cn/postgressql/)
   - 部署
     - [Linux](/zh-cn/linux/)

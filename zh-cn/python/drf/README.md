@@ -2,7 +2,7 @@
 
 ## 一、安装及配置
 
-#### 安装软件包
+### 1. 安装软件包
 
 ```bash
 pip install django==2.2
@@ -11,7 +11,7 @@ pip install mysqlclient
 ```
 
 
-#### 创建project和app
+### 2. 创建project和app
 
 ```bash
 djang-admin startproject tutorial
@@ -19,7 +19,7 @@ cd tutorial
 python manage.py startapp user
 ```
 
-#### 注册应用
+### 3. 注册应用
 
 
 ```bash
@@ -32,7 +32,7 @@ INSTALLED_APPS = [
 
 ## 二、序列化与反序列化
 
-#### 序列化
+### 1. 序列化
 
 创建`user/models.py`
 
@@ -187,7 +187,7 @@ class UserSerializer(serializers.ModelSerializer):
         #}
 ```
 
-#### 反序列化
+### 2. 反序列化
 
 反序列化就是将用户的请求(`post`,`put`)，进行数据校验，通过序列化器，反向到数据库中创建，或更新数据。
 

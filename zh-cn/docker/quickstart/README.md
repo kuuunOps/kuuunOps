@@ -20,7 +20,7 @@
 
 ## 二、Docker环境设置
 
-#### 1、Docker版本检测
+### 1、Docker版本检测
 
 成功安装Docker Desktop后，打开终端并运行 `docker --version` 来检查计算机上安装的Docker的版本
 
@@ -29,7 +29,7 @@ $ docker --version
 Docker version 19.03.12, build 48a66213fe
 ```
 
-#### 2、Docker安装测试
+### 2、Docker安装测试
 
 1. 通过运行hello-world Docker镜像来测试安装是否正常
 
@@ -58,7 +58,7 @@ CONTAINER ID     IMAGE           COMMAND      CREATED            STATUS
 54f4984ed6a8     hello-world     "/hello"     20 seconds ago     Exited (0) 19 seconds ago
 ```
 
-#### 3、总结
+### 3、总结
 
 ​至此，您已经在开发机器上安装了Docker，并进行了快速测试，以确保您已设置为构建和运行第一个容器化应用程序。
 
@@ -70,7 +70,7 @@ CONTAINER ID     IMAGE           COMMAND      CREATED            STATUS
 2. 将您的容器和支持基础结构组装成一个完整的应用程序。
 3. 测试，共享和部署完整的容器化应用程序。
 
-#### 1、安装
+### 1、安装
 
 让我们下载node-bulletin-board示例项目。这是一个用Node.js编写的简单公告板应用程序。
 
@@ -79,11 +79,11 @@ git clone https://gitee.com/kuuun/node-bulletin-board.git
 cd node-bulletin-board/bulletin-board-app
 ```
 
-#### 2、用Dockerfile定义一个容器
+### 2、用Dockerfile定义一个容器
 
 下载项目后，在应用程序中查看名为Dockerfile的文件。 Dockerfile描述了如何为容器组装专用文件系统，并且还可以包含一些元数据，这些元数据描述了如何基于该镜像运行容器。
 
-#### 3、构建和测试镜像
+### 3、构建和测试镜像
 
 现在您已经有了一些源代码和一个Dockerfile，现在该构建您的第一个镜像，并确保从其启动的容器能够按预期工作。
 确保使用cd命令在终端或PowerShell中的目录`node-bulletin-board/bulletin-board-app中`。运行以下命令来构建公告板镜像：
@@ -93,7 +93,7 @@ docker build --tag bulletinboard:1.0 .
 ```
 您会看到Docker逐步完成Dockerfile中的每条指令，并逐步构建镜像。如果成功，则构建过程应以一条消息结束：`Successfully tagged bulletinboard:1.0` 。
 
-#### 4、使用这个镜像运行一个容器
+### 4、使用这个镜像运行一个容器
 
 1. 运行以下命令以基于新镜像启动容器：
 
@@ -124,7 +124,7 @@ docker rm --force bb
 
 至此，您已经成功构建了镜像，对应用程序进行了简单的容器化，并确认您的应用程序已在其容器中成功运行。下一步将是在Docker Hub或私有仓库上共享您的镜像，以便可以轻松下载它们并在任何目标计算机上运行它们。
 
-#### Dockerfile示例
+### Dockerfile示例
 
 编写Dockerfile是将应用程序容器化的第一步。您可以将这些Dockerfile命令视为有关如何构建镜像的逐步指南。应用程序中的Dockerfile如下所示：
 
@@ -163,11 +163,11 @@ COPY . .
 
 ## 四、分享镜像文件到Docker Hub
 
-#### 1、设置Docker Hub账户
+### 1、设置Docker Hub账户
 
 创建并注册Docker ID，通过认证，并登陆。也可以通过输入 `docker login` 从命令行登录Docker Hub。
 
-#### 2、创建Docker Hub仓库并推送镜像文件
+### 2、创建Docker Hub仓库并推送镜像文件
 
 1. 创建仓库。
 
@@ -182,7 +182,7 @@ docker tag bulletinboard:1.0 <Your Docker ID>/bulletinboard:1.0
 ```bash
 docker push <Your Docker ID>/bulletinboard:1.0
 ```
-#### 3、总结
+### 3、总结
 
 现在，镜像已在Docker Hub上可用，您将可以在任何地方运行它。如果您尝试在尚未安装的新机器上使用它，则Docker将自动尝试从Docker Hub下载它。通过以这种方式移动镜像，您不再需要在要运行软件的机器上安装除Docker以外的任何依赖项。容器化应用程序的依赖项已完全封装并隔离在镜像中，您可以如上所述使用Docker Hub进行分享。
 

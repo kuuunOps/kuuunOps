@@ -1,6 +1,6 @@
 # PHP
 
-### 使用 systemd 运行 Horizon
+## 使用systemd运行Horizon
 
 **1. 编辑/etc/systemd/system/文件**
 ```bash
@@ -47,3 +47,20 @@ systemctl daemon-reload
 systemctl start horizon.service
 systemctl enable horizon.service
 ```
+
+---
+
+## PHP编译参考
+
+1. 安装软件包
+```bash
+yum install -y gcc  autoconf libxml2-devel libcurl-devel libjpeg-turbo-devel libpng-devel freetype-devel libmcrypt-devel libxslt-devel libtool-ltdl-devel zlib libxml libjpeg freetype libpng gd curl libiconv zlib-devel gd-devel libcurl-devel libmcrypt mhash mcrypt libmcrypt openssl openssl-devel gmp-devel readline-devel wget curl
+```
+
+2. 编译参数
+```bash
+./configure --prefix=/usr/local/php --with-config-file-path=/usr/local/php/etc --enable-fpm --with-fpm-user=www --with-fpm-group=www --enable-inline-optimization --disable-debug --disable-rpath --enable-shared --enable-soap --enable-pcntl --with-xmlrpc --with-openssl --with-mcrypt --with-pcre-regex --with-sqlite3 --with-zlib --enable-bcmath --with-iconv --with-bz2--enable-calendar --with-curl --with-cdb --enable-dom --enable-exif --enable-fileinfo --enable-filter --with-pcre-dir --enable-ftp --with-gd --with-openssl-dir --with-jpeg-dir --with-png-dir --with-freetype-dir --enable-gd-native-ttf --enable-gd-jis-conv --with-gettext --with-gmp --with-mhash --enable-json --enable-mbstring --enable-mbregex --enable-mbregex-backtrack --with-libmbfl --with-onig --enable-pdo --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-zlib-dir --with-pdo-sqlite --with-readline --enable-session --enable-shmop --enable-simplexml --enable-sockets --enable-sysvmsg --enable-sysvsem --enable-sysvshm --enable-wddx --with-libxml-dir --with-xsl --enable-zip --enable-mysqlnd-compression-support --with-pear --enable-opcache
+```
+
+---
+

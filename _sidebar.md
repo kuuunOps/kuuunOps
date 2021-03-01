@@ -13,7 +13,8 @@
     - [Go](/zh-cn/go/)
   - 数据库
     - [MySQL](/zh-cn/mysql/)
-    - [Mariadb](/zh-cn/mariadb/)
+    - [MongoDB](/zh-cn/mongodb/)
+    - [MariaDB](/zh-cn/mariadb/)
     - [PostgresSQL](/zh-cn/postgressql/)
   - 部署
     - [Linux](/zh-cn/linux/)

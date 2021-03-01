@@ -1,35 +1,89 @@
 # Linux
 
 
-### SVN的http方式访问
-
-1. 安装软件包
+### Memcahced.sh启动脚本参考
 ```bash
-yum install -y httpd subversion mod_dav_svn
+#!/bin/bash
+# author:zhanghk
+# date:2017-05-30
+# description: Starts and stops the Memcached services.
+# pidfile: /tmp/memcached1.pid
+# config:  /usr/local/memcached
+# chkconfig: - 55 45
+# source function library
+. /etc/rc.d/init.d/functions
+memcached="/usr/local/memcached/bin/memcached"
+[ -e $memcached ] || exit 1
+
+start(){
+echo "Starting memcached:"daemon $memcached -d -m 1000 -u root -l 0.0.0.0 -p 11211 -c 1500 -P /tmp/memcached.pid
+}
+stop(){
+echo "Shutting down memcached"killproc memcached
+}
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart)
+        stop
+        sleep 3
+        start
+        ;;
+    *)
+        echo $"Usage: $0 {start|stop|restart}"
+        exit 1
+esac
+exit $?
 ```
 
-2. 创建svn库
-   
-3. 生成密码文件
+### java内存溢出分析
+
+1. 常见内存溢出相关的错误
+
+年老代堆空间被占满 异常： java.lang.OutOfMemoryError: Java heap space
+
+持久代被占满
+异常：java.lang.OutOfMemoryError: PermGen space
+
+堆栈溢出
+异常：java.lang.StackOverflowError
+
+线程堆栈满
+异常：Fatal: Stack size too small
+
+系统内存被占满
+异常：java.lang.OutOfMemoryError: unable to create new native thread
+
+2. 导出命令
 ```bash
-htpasswd -cb /data/project/svn/conf/httpd.passwd test test
-htpasswd -b /data/project/svn/conf/httpd.passwd test test
+jmap -dump:format=b,file=jetty_$(date +%Y%m%d).hprof 23151
 ```
 
-4. 虚拟主机参考配置
+
+---
+
+### java占用CPU过高
+
+1. 查看线程
 ```bash
-<Location /system>
-    DAV svn
-        SVNPath /data/project/svn/system
-            AuthType Basic
-                AuthName "Authorization Realm"
-                AuthUserFile /data/project/svn/conf/httpd.passwd
-                AuthzSVNAccessFile /data/project/svn/conf/authz
-                Satisfy all
-                Require valid-user
-</Location>
+ps -mp 22338 -o THREAD,tid,time
 ```
 
+2. 导出线程文件
+```bash
+jstack 28259 > /tmp/28259.log
+```
+
+3. 转换成16进制
+```bash
+echo "obase=16;29940"|bc
+```
+
+---
 
 ### iptables快速使用
 

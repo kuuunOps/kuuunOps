@@ -1,6 +1,6 @@
 # Laravel
 
-### 一、安装composer
+## 一、安装composer
 > 安装参考地址：https://developer.aliyun.com/composer
 
 **1. 下载最新稳定版compose**
@@ -20,7 +20,7 @@ composer -vvv require alibabacloud/sdk
 ```
 
 
-### 二、安装Laravel
+## 二、安装Laravel
 
 **1. 使用compose下载Laravel安装程序**
 ```bash
@@ -36,7 +36,7 @@ composer create-project --prefer-dist laravel/laravel blog "5.5.*"
 php artisan serve
 ```
 
-### 三、Laravel的nginx参考配置
+## 三、Laravel的nginx参考配置
 ```bash
 server {
     listen 80;

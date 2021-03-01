@@ -13,7 +13,8 @@
     - [Go](/zh-cn/go/)
   - 数据库
     - [MySQL](/zh-cn/mysql/)
-    - [Mariadb](/zh-cn/mariadb/)
+    - [MongoDB](/zh-cn/mongodb/)
+    - [MariaDB](/zh-cn/mariadb/)
     - [PostgresSQL](/zh-cn/postgressql/)
   - 部署
     - [Linux](/zh-cn/linux/)
@@ -21,9 +22,9 @@
     - [Openresty](/zh-cn/openresty/)
     - [Docker](/zh-cn/docker/)
       - Docker基础
-        - [Docker概述](/zh-cn/docker/base/base.md)
-        - [Docker安装](/zh-cn/docker/install/install.md)
-        - [Docker快速入门](/zh-cn/docker/quickstart/quickstart.md)
+        - [Docker概述](/zh-cn/docker/base/)
+        - [Docker安装](/zh-cn/docker/install/)
+        - [Docker快速入门](/zh-cn/docker/quickstart/)
       - Docker高级
-        - [Docker实战](/zh-cn/docker/advance/advance.md)
+        - [Docker实战](/zh-cn/docker/advance/)
   - [其他](/zh-cn/other/)

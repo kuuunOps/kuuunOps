@@ -1,7 +1,7 @@
 # Ubuntu
 
 
-### 修改网卡名称
+## 修改网卡名称
 
 **1. 修改grub配置**
 ```bash
@@ -35,11 +35,11 @@ network:
   version: 2
 ```
 
-****
+---
 
-### NFS服务
+## NFS服务
 
-#### 服务端配置
+### 服务端配置
 
 **1. 安装软件**
 ```bash
@@ -80,7 +80,7 @@ sudo rpcinfo
 sudo ss -lntp|grep 111
 ```
 
-#### 客户端
+### 客户端
 
 **1. 安装软件包**
 ```bash
@@ -104,11 +104,9 @@ sudo mkdir -p /data/project/nfs
 sudo mount -t nfs 172.16.4.18:/data/project/nfs /data/project/nfs
 ```
 
+---
 
-****
-
-
-### 时间同步
+## 时间同步
 
 **1. 设置时区**
 ```bash
@@ -137,10 +135,10 @@ server ntp.aliyun.com iburst minpoll 4 maxpoll 10
 restrict ntp.aliyun.com nomodify notrap nopeer noquery
 ```
 
-****
+---
 
 
-### 文件描述符推荐设置
+## 文件描述符推荐设置
 ```bash
 sudo vim /etc/security/limits.conf
 * soft nofile 100001
@@ -149,7 +147,9 @@ root soft nofile 100001
 root hard nofile 100002
 ```
 
-### 安装中文字体
+---
+
+## 安装中文字体
 
 **1. 安装字体管理命令**
 ```bash
@@ -168,5 +168,4 @@ sudo mkdir -p /usr/share/fonts/chinese
 sudo fc-cache
 sudo fc-list
 ```
-
-****
+---

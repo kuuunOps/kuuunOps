@@ -8,7 +8,7 @@ Linux支持的主流平台：CentOS，Debian，Fedora，Raspbian，Ubuntu
 
 ## 二、在CenOS系统上安装Docker
 
-#### 1、基础要求
+### 1、基础要求
 
 - **系统要求**
 
@@ -32,7 +32,7 @@ $ sudo yum remove docker \
 - 文件目录 `/var/lib/docker` 的内容（包括映像，容器，卷和网络）被保留。 
 - Docker Engine软件包现在称为 `docker-ce` 。
 
-#### 2、安装操作
+### 2、安装操作
 
 可以根据自身需要以不同的方式安装Docker Engine：
 
@@ -40,7 +40,7 @@ $ sudo yum remove docker \
 - 一些用户下载并手动安装RPM软件包，并完全手动管理升级。这在诸如在无法访问互联网的空白系统上安装Docker的情况下很有用。
 - 在测试和开发环境中，一些用户选择使用自动便利[脚本](./get-docker.sh)来安装Docker。
 
-#### 3、使用yum存储库安装
+### 3、使用yum存储库安装
 
 在新主机上首次安装Docker Engine之前，需要设置Docker存储库地址。之后，您可以从存储库安装和更新Docker。
 
@@ -123,7 +123,7 @@ $ sudo rm -rf /var/lib/docker
 
 ## 四、安装后可选步骤
 
-#### 1、以非root用户管理Docker
+### 1、以非root用户管理Docker
 
 ​Docker守护程序绑定到Unix套接字而不是TCP端口。默认情况下，Unix套接字是由root用户拥有的，其他用户只能使用sudo访问它。 Docker守护程序始终以root用户身份运行。如果不想使用sudo作为docker命令的开头，请创建一个名为docker的Unix组并将用户添加到其中。 Docker守护程序启动时，它将创建一个可由Docker组成员访问的Unix套接字。
 
@@ -151,14 +151,14 @@ $ newgrp docker
 $ docker run hello-world
 ```
 
-#### 2、配置Docker开机启动
+### 2、配置Docker开机启动
 
 ```bash
 $ sudo systemctl enable docker
 $ sudo systemctl disable docker
 ```
 
-#### 3、配置Docker守护程序监听链接
+### 3、配置Docker守护程序监听链接
 
 ​默认情况下，Docker守护程序在UNIX套接字上侦听连接以接受来自本地客户端的请求。通过将Docker配置为侦听IP地址和端口以及UNIX套接字，可以允许Docker接受来自远程主机的请求。
 

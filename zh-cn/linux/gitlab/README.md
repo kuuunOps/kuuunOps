@@ -1,6 +1,6 @@
 # Gitlab
 
-### Gitlab备份
+## Gitlab备份
 
 1. 执行备份命令
 ```bash
@@ -13,7 +13,7 @@ sudo gitlab-backup create
 /etc/gitlab/gitlab.rb
 ```
 
-### Gitlab升级
+## Gitlab升级
 
 - 在线升级
 
