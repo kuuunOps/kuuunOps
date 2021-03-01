@@ -21,7 +21,7 @@
     - [MariaDB](/zh-cn/mariadb/)
     - [PostgresSQL](/zh-cn/postgressql/)
   - 版本控制
-    - [Gitlab](/zh-cn/gitlab/)
+    - [Git](/zh-cn/git/)
     - [Subversion](/zh-cn/subversion/)
   - 部署
     - [Linux](/zh-cn/linux/)

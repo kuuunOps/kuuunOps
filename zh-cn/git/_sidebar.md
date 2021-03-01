@@ -10,7 +10,6 @@
   - 后端
     - [Python](/zh-cn/python/)
     - [PHP](/zh-cn/php/)
-      - [Laravel](/zh-cn/php/laravel/)
     - [Go](/zh-cn/go/)
   - 数据库
     - [MySQL](/zh-cn/mysql/)
@@ -19,6 +18,7 @@
     - [PostgresSQL](/zh-cn/postgressql/)
   - 版本控制
     - [Git](/zh-cn/git/)
+      - [Gitlab](/zh-cn/git/gitlab/)
     - [Subversion](/zh-cn/subversion/)
   - 部署
     - [Linux](/zh-cn/linux/)

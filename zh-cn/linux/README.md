@@ -1,7 +1,133 @@
 # Linux
 
+## OpenSSH
 
-### Memcahced.sh启动脚本参考
+### 版本升级
+
+#### 1. 安装软件包
+```bash
+yum install gcc pam-devel zlib-devel
+```
+
+#### 2. 启用Telnet
+
+- 安装telnet软件包
+```bash
+yum -y install telnet-server* telnet
+```
+
+- 修改配置
+```bash
+vim /etc/xinetd.d/telnet
+# disable = yes 修改为： disable = no
+```
+- 启动服务
+```bash
+/etc/init.d/xinetd  start
+chkconfig xinetd on
+```
+
+- 防火墙开通23端口
+```bash
+# 测试端口是否开通
+telnet xxx.xxx.xxx.xxx 23
+```
+#### 3. 安装OpenSSL
+
+1. 编译
+```bash
+./config enable-shared zlib
+make && make install
+```
+
+2. 配置
+```bash
+ln -s /usr/local/ssl/bin/openssl /usr/bin/openssl
+ln -s /usr/local/ssl/include/openssl /usr/include/openssl
+echo "/usr/local/ssl/lib" >> /etc/ld.so.conf
+ldconfig -v
+ln -s /usr/lib64/libssl.so.1.0.0  libssl.so.10
+ln -s /usr/lib64/libcrypto.so.1.0.0  libcrypto.so.10
+```
+
+3. 版本确认
+```bash
+openssl version -a
+```
+
+#### 4. 安装OpenSSH
+
+1. 查看当前环境已经安装的OpenSSH包
+```bash
+rpm -qa | grep openssh
+openssh-server-5.3p1-117.el6.x86_64
+openssh-clients-5.3p1-117.el6.x86_64
+openssh-5.3p1-117.el6.x86_64
+```
+
+2. 卸载
+```bash
+rpm -e --nodeps openssh-server-5.3p1-117.el6.x86_64
+rpm -e --nodeps openssh-clients-5.3p1-117.el6.x86_64
+rpm -e --nodeps openssh-5.3p1-117.el6.x86_64
+```
+
+3. 编译
+```bash
+./configure --prefix=/usr --sysconfdir=/etc/ssh --with-md5-passwords --with-pam --with-zlib --with-ssl-dir=/usr/local/ssl --with-openssl-includes=/usr/include/openssl --with-privsep-path=/var/lib/sshd
+make && make install
+```
+
+4. 配置
+```bash
+install -v -m755    contrib/ssh-copy-id /usr/bin
+install -v -m644    contrib/ssh-copy-id.1 /usr/share/man/man1
+install -v -m755 -d /usr/share/doc/openssh-7.6p1
+install -v -m644    INSTALL LICENCE OVERVIEW README* /usr/share/doc/openssh-7.6p1
+```
+
+5. 版本确认
+```bash
+ssh -V
+```
+
+6. 配置新的OpenSSH服务
+```bash
+vim /etc/ssh/sshd.conf
+X11Forwarding no  修改为 X11Forwarding yes
+UseDNS no        修改为 UseDNS yes
+PermitRootLogin prohibit-password        修改为    PermitRootLogin yes
+cp -p contrib/redHat/sshd.init /etc/init.d/sshd
+chmod +x /etc/init.d/sshd
+chkconfig  --add  sshd
+chkconfig  sshd  on
+chkconfig  --list  sshd
+service sshd restart
+```
+
+7. 配置PAM
+```bash
+vi /etc/pam.d/sshd
+#%PAM-1.0
+auth       required     pam_sepermit.so
+auth       include      password-auth
+account    required     pam_nologin.so
+account    include      password-auth
+password   include      password-auth
+# pam_selinux.so close should be the first session rule
+session    required     pam_selinux.so close
+session    required     pam_loginuid.so
+# pam_selinux.so open should only be followed by sessions to be executed in the user context
+session    required     pam_selinux.so open env_params
+session    required     pam_namespace.so
+session    optional     pam_keyinit.so force revoke
+session    include      password-auth
+```
+
+
+---
+
+## Memcahced.sh启动脚本参考
 ```bash
 #!/bin/bash
 # author:zhanghk
@@ -40,7 +166,9 @@ esac
 exit $?
 ```
 
-### java内存溢出分析
+---
+
+## java内存溢出分析
 
 1. 常见内存溢出相关的错误
 
@@ -66,7 +194,7 @@ jmap -dump:format=b,file=jetty_$(date +%Y%m%d).hprof 23151
 
 ---
 
-### java占用CPU过高
+## java占用CPU过高
 
 1. 查看线程
 ```bash
@@ -85,7 +213,7 @@ echo "obase=16;29940"|bc
 
 ---
 
-### iptables快速使用
+## iptables快速使用
 
 1. 开放一个端口
 ```bash
@@ -110,7 +238,7 @@ iptables -I INPUT -s 172.16.0.0/16 -p tcp --dport 22 -j ACCEPT
 ```
 
 
-### 设置时区
+## 设置时区
 
 - 查看当前所有的时区清单列表
 ```
@@ -122,7 +250,7 @@ timedatectl list-timezones
 timedatectl set-timezone Asia/Shanghai
 ```
 
-### XFS文件系统磁盘，扩容方案
+## XFS文件系统磁盘，扩容方案
 
 1. 卸载磁盘挂载点
 ```bash
@@ -150,9 +278,9 @@ xfs_growfs /dev/sdb1
 
 
 
-### 配置JDK
+## 配置JDK
 
-#### 1. 配置全局
+### 1. 配置全局
 
 - 解压
 ```bash
@@ -174,7 +302,7 @@ export CLASSPATH=.$CLASSPATH:$JAVA_HOME/lib:$JAVA_HOME/jre/lib:$JAVA_HOME/lib/to
 source /etc/profile
 ```
 
-#### 2. 配置项目级
+### 2. 配置项目级
 
 - 解压
 ```bash
