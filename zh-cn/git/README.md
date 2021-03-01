@@ -164,11 +164,12 @@ Switched to a new branch 'dev'
 $ git branch dev
 $ git checkout dev
 ```
+
 - 查看分支
 ```bash
 $ git branch
-* dev
-  master
+    * dev
+    master
 ```
 
 - 切换分支
