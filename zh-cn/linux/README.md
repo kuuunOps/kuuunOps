@@ -1,5 +1,21 @@
 # Linux
 
+## OpenSSH关闭CBC加密模块
+
+1. 编辑`/etc/ssh/sshd_config`
+```bash
+# 添加如下内容
+Ciphers aes128-ctr,aes192-ctr,aes256-ctr,aes128-gcm@openssh.com,aes256-gcm@openssh.com,chacha20-poly1305@openssh.com
+```
+
+2. 重启服务
+```bash
+systemctl restart sshd
+```
+
+---
+
+
 ## OpenSSH
 
 ### 版本升级
