@@ -53,19 +53,14 @@ $ git log
 commit fba83136544cb27fe44bc19f819d2cf7f7bcd443 (HEAD -> master)
 Author: xxx <xxx@163.com>
 Date:   Fri Jun 2 21:05:25 2017 +0800
-
     append GPL
-
 commit 0c41475346cf35db11762135809aaba0dc750519
 Author: xxx <xxx@163.com>
 Date:   Fri Jun 2 21:03:40 2017 +0800
-
     add distributed
-
 commit 3212aef6da9bc4dc76839cafb32f68ca86515452
 Author: xxx <xxx@163.com>
 Date:   Fri Jun 2 20:56:53 2017 +0800
-
     wrote a readme.md file
 ```
 
@@ -87,8 +82,6 @@ HEAD is now at 0c41475 add distributed
 
 - 回退到指定版本
 ```bash
-
-
 git reset --hard 3212aef
 HEAD is now at 3212aef wrote a readme.md file
 ```
@@ -201,13 +194,6 @@ Deleted branch dev (was 4155896).
 - 查看分支情况
 ```bash
 $ git log --graph --pretty=oneline --abbrev-commit
-*   639df9b (HEAD -> master) conflict fixed
-|\
-| * 19422ea (feature1) AND simple
-* | aa1b490 & simple
-|/
-* 4155896 branch test
-* 69bb74e (origin/master, origin/HEAD) Initial commit
 ```
 
 ### 17. 处理BUG分支
@@ -247,10 +233,8 @@ aa1b490 & simple
 19422ea AND simple
 4155896 branch test
 69bb74e Initial commit
-
 admin@DESKTOP-J05KT0C MINGW64 /g/git/pythoncode/gitskills (dev)
 $ git tag v0.9 aa1b490
-
 admin@DESKTOP-J05KT0C MINGW64 /g/git/pythoncode/gitskills (dev)
 $ git log --pretty=oneline --abbrev-commit
 a8c91a1 (HEAD -> dev, tag: v1.0, origin/master, origin/HEAD, master) merge with no-ff
@@ -265,7 +249,6 @@ aa1b490 (tag: v0.9) & simple
 - 为标签做说明描述
 ```bash
 $ git tag -a v0.1 -m "version 0.1 released" 69bb74e
-
 admin@DESKTOP-J05KT0C MINGW64 /g/git/pythoncode/gitskills (dev)
 $ git log --pretty=oneline --abbrev-commit
 a8c91a1 (HEAD -> dev, tag: v1.0, origin/master, origin/HEAD, master) merge with no-ff
@@ -275,13 +258,11 @@ aa1b490 (tag: v0.9) & simple
 19422ea AND simple
 4155896 branch test
 69bb74e (tag: v0.1) Initial commit
-
 admin@DESKTOP-J05KT0C MINGW64 /g/git/pythoncode/gitskills (dev)
 $ git show v0.1
 tag v0.1
 Tagger: zhanghk <vipzhanghaokun@163.com>
 Date:   Sat Jun 3 00:05:08 2017 +0800
-
 version 0.1 released
 commit 69bb74e2b80d31772c29d4bf787025290668a7b1 (tag: v0.1)
 ...
