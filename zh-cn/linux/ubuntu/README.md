@@ -1,5 +1,28 @@
 # Ubuntu
 
+## apt安装指定版本软件包
+
+### 1. 语法格式
+```bash
+apt-get install <package name>==<version>
+```
+
+### 2. 查询软件包版本情况
+```bash
+apt-cache show <package name>
+apt-cache madison <package name>
+```
+示例
+```bash
+apt-cache show nginx
+apt-cache madison nginx
+```
+列出所有来源的版本
+```bash
+apt-cache policy <package name>
+```
+
+---
 
 ## 修改网卡名称
 
