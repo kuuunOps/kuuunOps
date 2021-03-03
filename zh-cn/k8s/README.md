@@ -1423,4 +1423,42 @@ spec:
 - Containers：业务容器
   - 并行启动
 
+---
+---
 
+## 深入理解Pod对象：调度
+
+### 创建一个Pod的工作流程
+
+Kubernetes基于list-watch机制的控制器架构，实现组件间交互的解耦。其他组件监控自己负责的资源，当这些资源发生变化时，` kube apiserver `会通知这些组件，这个过程类似于发布与订阅。
+
+![pod流程](../../_media/pod-01.jpg)
+
+### Pod中影响调度的主要属性
+```yaml
+apiVersion: apps/v1 
+kind: Deployment 
+metadata: 
+  name: web 
+  namespace: default 
+spec: 
+  ... 
+  containers: 
+  - image: lizhenliang/java-demo 
+    name: java-demo 
+    imagePullPolicy: Always 
+    livenessProbe: 
+      initialDelaySeconds: 30
+      periodSeconds: 20 
+      tcpSocket: 
+        port: 8080
+    # 调度资源
+    resources: {}
+  restartPolicy: Alway
+  # 调度策略
+  schedulerName: default-scheduler 
+  nodeName: "" 
+  nodeSelector: {} 
+  affinity: {} 
+  tolerations: []
+```
