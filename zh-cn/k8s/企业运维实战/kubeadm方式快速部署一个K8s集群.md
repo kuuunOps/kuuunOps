@@ -28,7 +28,7 @@
 
 ## 2. 环境准备
 
-![单master架构](../../_media/single-master.jpg)
+![单master架构](../../../_media/single-master.jpg)
 
 | 角色       | IP          |
 | ---------- | ----------- |
