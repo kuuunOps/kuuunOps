@@ -28,5 +28,5 @@
     - [Openresty](/zh-cn/openresty/)
   - 容器
     - [Docker](/zh-cn/docker/)
-    - [K8s](/zh-cn/k8s/)
+    - [K8S(Kubernetes)](/zh-cn/k8s/)
   - [其他](/zh-cn/other/)

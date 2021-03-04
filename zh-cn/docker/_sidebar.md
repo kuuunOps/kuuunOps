@@ -31,5 +31,5 @@
       - [Docker安装](/zh-cn/docker/install/)
       - [Docker入门](/zh-cn/docker/quickstart/)
       - [Docker实战](/zh-cn/docker/advance/)
-    - [K8s](/zh-cn/k8s/)
+    - [K8S(Kubernetes)](/zh-cn/k8s/)
   - [其他](/zh-cn/other/)

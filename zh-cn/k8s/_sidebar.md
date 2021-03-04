@@ -28,4 +28,5 @@
   - 容器
     - [Docker](/zh-cn/docker/)
     - [K8S(Kubernetes)](/zh-cn/k8s/)
+      - [K8S(Kubernetes)企业运维实战](/zh-cn/k8s/企业运维实战/)
   - [其他](/zh-cn/other/)

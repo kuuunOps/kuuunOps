@@ -28,4 +28,11 @@
   - 容器
     - [Docker](/zh-cn/docker/)
     - [K8S(Kubernetes)](/zh-cn/k8s/)
+      - [K8S(Kubernetes)企业运维实战](/zh-cn/k8s/企业运维实战/)
+        - [kubeadm快速部署一个K8S集群](/zh-cn/k8s/企业运维实战/kubeadm方式快速部署一个K8s集群.md)
+        - [kubectl命令行管理工具](/zh-cn/k8s/企业运维实战/kubectl命令行管理工具.md)
+        - [资源编排YAML](/zh-cn/k8s/企业运维实战/资源编排.md)
+        - [深入理解Pod对象：基本管理](/zh-cn/k8s/企业运维实战/深入理解Pod对象_基本管理.md)
+        - [深入理解Pod对象：调度](/zh-cn/k8s/企业运维实战/深入理解Pod对象_调度.md)
+        - [常用工作负载控制器（高级管理Pod）](/zh-cn/k8s/企业运维实战/常用工作负载控制器_高级管理Pod.md)
   - [其他](/zh-cn/other/)
