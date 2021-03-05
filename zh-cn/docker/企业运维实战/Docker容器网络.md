@@ -161,3 +161,126 @@ docker0：网桥是一个二层网络设备，通过网桥可以将Linux支持�
 
 ![范文外部](../../../_media/intoout.jpg)
 
+---
+
+## 容器网络实现核心技术：iptables
+
+- **四表五链**
+
+| 表                         | 链                                      |
+| -------------------------- | --------------------------------------- |
+| filter（过滤）             | INPUT,OUTPUT,FORWARD                    |
+| nat（地址转换）            | PREROUTING,POSTROUTING,OUTPUT           |
+| mangle（拆包、修改、封装） | INPUT,OUT,PREROUTING,POSTROUTING,OUTPUT |
+| raw（数据包状态跟踪）      | PREROUTING、OUTPUT                      |
+
+- **iptables命令**
+
+![IPTABLES](../../../_media/iptables.jpg)
+
+
+- **工作流程**
+
+![IPTABLES](../../../_media/iptables-01.jpg)
+
+- INPUT链：接收的数据包是本机(入站)时，应用此链中的规则。 
+- OUTPUT链：本机向外发送数据包(出站)时，应用此链中的规则。 
+- FORWARD链：需要通过防火墙中转发送给其他地址的数据包(转发)时，应用测 链中的规则。 
+- PREROUTING链：在对数据包做路由选择之前，应用此链中的规则。DNAT 
+- POSTROUTING链：在对数据包做路由选择之后，应用此链中的规则。SNAT 
+
+- **外部访问容器：**
+
+```shell
+iptables -t nat -vnL DOCKER 
+Chain DOCKER (2 references) 
+pkts bytes target     prot opt in     out     source               destination         
+0     0 RETURN     all  -- docker0 *       0.0.0.0/0            0.0.0.0/0           
+1    52 DNAT       tcp  -- !docker0 *       0.0.0.0/0            0.0.0.0/0            tcp dpt:8080 to:172.17.0.2:80
+```
+
+- **容器访问外部：** 
+
+```shell
+iptables -t nat -vnL POSTROUTING 
+Chain POSTROUTING (policy ACCEPT 0 packets, 0 bytes) 
+pkts bytes target     prot opt in     out     source               destination         0     0 MASQUERADE  all  -- *      !docker0  172.17.0.0/16        0.0.0.0/0
+```
+
+
+---
+
+## 跨主机网络：实现Docker容器多主机通信
+
+Flannel是CoreOS维护的一个网络组件，在每个主机上运行守护进程负责维护本地路由转发，Flannel使用ETCD来存储容器网络 与主机之前的关系。
+
+**其他主流容器跨主机网络方案**
+
+- Weave 
+- Calico 
+- OpenvSwitch
+
+### 安装etcd
+
+**安装**
+```shell
+yum install etcd -y
+```
+
+**配置**
+```shell
+vi /etc/etcd/etcd.conf
+# 修改localhost为主机IP：172.16.4.13
+```
+
+**启动**
+```shell
+systemctl start etcd
+systemctl enable etcd
+```
+
+### 安装flannel
+
+>所有docker节点上安装
+
+**安装**
+```shell
+yum install flannel -y
+```
+
+**配置** ` vim /etc/sysconfig/flanneld `
+```shell
+# 修改ETCD服务地址
+FLANNEL_ETCD_ENDPOINTS="http://172.16.4.13:2379"
+```
+
+**写入数据**
+```shell
+etcdctl --endpoints="http://172.16.4.13:2379" set /atomic.io/network/config  '{ "Network": "192.168.0.0/16", "Backend": {"Type": "vxlan"}}'
+```
+
+**启动**
+```shell
+systemctl start flanneld
+systemctl enable flanneld
+```
+
+
+**修改Docker配置** ` vi /usr/lib/systemd/system/docker.service `
+```shell
+EnvironmentFile=/run/flannel/docker
+ExecStart=/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock $DOCKER_NETWORK_OPTIONS
+```
+
+**重启Docker**
+```shell
+systemctl daemon-reload
+systemctl restart docker
+```
+
+**配置IPTABLES**
+```shell
+iptables -A FORWARD -o flannel.1 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+iptables -A FORWARD -i flannel.1 ! -o flannel.1 -j ACCEPT
+iptables -A FORWARD -i flannel.1 -o flannel.1 -j ACCEPT
+```
