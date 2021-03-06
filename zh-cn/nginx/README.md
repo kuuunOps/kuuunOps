@@ -188,3 +188,31 @@ case "$1" in
 esac
 exit $RETVAL
 ```
+
+---
+
+## PHP的Nginx配置文件
+
+**配置示例**
+```nginx
+server {
+    listen 80;
+    server_name localhost;
+    index index.html index.php;
+    
+    location / {
+        root /wwwroot;
+    }
+    location ~ \.php$ {
+        root /wwwroot;
+        # 设置监听端口
+        fastcgi_pass   lnmp_php:9000;
+        # 设置nginx的默认首页文件(上面已经设置过了，可以删除)
+        fastcgi_index  index.php;
+        # 设置脚本文件请求的路径
+        fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+        # 引入fastcgi的配置文件
+        include        fastcgi_params;
+    }
+}
+```

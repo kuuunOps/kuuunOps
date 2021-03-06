@@ -1,29 +1,9 @@
-FROM centos:7
+FROM java:8-jdk-alpine
 LABEL maintainer Kuuun
-RUN yum install epel-release -y && \
-    yum install -y gcc gcc-c++ make gd-devel libxml2-devel \
-    libcurl-devel libjpeg-devel libpng-devel openssl-devel \
-    libmcrypt-devel libxslt-devel libtidy-devel autoconf \
-    iproute net-tools telnet wget curl && \
-    yum clean all && \
-    rm -rf /var/cache/yum/*
-ADD php-5.6.40.tar.gz /
-RUN cd php-5.6.40 && \
-    ./configure --prefix=/usr/local/php \
-    --with-config-file-path=/usr/local/php/etc \
-    --enable-fpm --enable-opcache \
-    --with-mysql --with-mysqli --with-pdo-mysql \
-    --with-openssl --with-zlib --with-curl --with-gd \
-    --with-jpeg-dir --with-png-dir --with-freetype-dir \
-    --enable-mbstring --with-mcrypt --enable-hash && \
-    make -j 4 && make install && \
-    cp php.ini-production /usr/local/php/etc/php.ini && \
-    cp sapi/fpm/php-fpm.conf /usr/local/php/etc/php-fpm.conf && \
-    sed -i "90a \daemonize = no" /usr/local/php/etc/php-fpm.conf && \
-    mkdir /usr/local/php/log && \
-    cd / && rm -rf php* && \
-    ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-ENV PATH $PATH:/usr/local/php/sbin
-WORKDIR /usr/local/php
-EXPOSE 9000
-CMD ["php-fpm"]
+ENV JAVA_OPTS="$JAVA_OPTS -Dfile.encoding=UTF8 -Duser.timezone=GMT+08"
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
+    apk add -U tzdata && \
+    ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime 
+COPY hello.jar /
+EXPOSE 8888
+CMD ["/bin/sh", "-c", "java -jar $JAVA_OPTS /hello.jar"]

@@ -122,26 +122,23 @@ CMD ["nginx", "-g", "daemon off;"]
 FROM centos:7
 LABEL maintainer Kuuun
 RUN yum install epel-release -y && \
-    yum install -y gcc  autoconf libxml2-devel libcurl-devel \
-    libjpeg-turbo-devel libpng-devel freetype-devel libmcrypt-devel \
-    libxslt-devel libtool-ltdl-devel zlib libxml libjpeg \
-    freetype libpng gd curl libiconv zlib-devel gd-devel \
-    libcurl-devel libmcrypt mhash mcrypt libmcrypt openssl \
-    openssl-devel && \
+    yum install -y gcc  autoconf libxml2-devel libcurl-devel libjpeg-turbo-devel libpng-devel \
+    freetype-devel libmcrypt-devel libxslt-devel libtool-ltdl-devel zlib libxml libjpeg \
+    freetype libpng gd curl libiconv zlib-devel gd-devel libcurl-devel libmcrypt \
+    mhash mcrypt libmcrypt openssl openssl-devel && \
     yum clean all && \
     rm -rf /var/cache/yum/*
 ADD php-5.6.40.tar.gz /
 RUN cd php-5.6.40 && \
     ./configure --prefix=/usr/local/php --with-config-file-path=/usr/local/php/etc  \
     --enable-mysqlnd --with-mysql=mysqlnd  --with-pdo-mysql=mysqlnd --with-mysqli=mysqlnd \
-    --with-iconv-dir --with-freetype-dir  --with-jpeg-dir  --with-png-dir  \
-    --with-zlib-dir --with-libxml-dir  --disable-rpath --enable-bcmath \
-    --enable-shmop --enable-sysvsem --enable-inline-optimization --with-curl \
-    --enable-mbregex --enable-fpm --enable-mbstring --with-mcrypt --with-gd  \
-    --enable-gd-native-ttf --with-openssl --with-mhash --enable-pcntl \
-    --enable-sockets --with-xmlrpc --enable-zip --enable-soap --enable-short-tags \
-    --enable-static --with-xsl --enable-ftp  --enable-exif \
-    --disable-ipv6 --with-mysql-sock=/tmp/mysql.sock \
+    --with-iconv-dir   --with-freetype-dir  --with-jpeg-dir  --with-png-dir  --with-zlib-dir \
+    --with-libxml-dir  --disable-rpath --enable-bcmath --enable-shmop  --enable-sysvsem \
+    --enable-inline-optimization --with-curl --enable-mbregex --enable-fpm  --enable-mbstring  \
+    --with-mcrypt   --with-gd  --enable-gd-native-ttf --with-openssl --with-mhash \
+    --enable-pcntl --enable-sockets --with-xmlrpc --enable-zip --enable-soap \
+    --enable-short-tags --enable-static --with-xsl --enable-ftp  \
+    --enable-exif --disable-ipv6 --with-mysql-sock=/tmp/mysql.sock \
     --enable-opcache=no --with-gettext && \
     make -j 4 && make install && \
     cp php.ini-production /usr/local/php/etc/php.ini && \
@@ -155,4 +152,75 @@ ENV PATH $PATH:/usr/local/php/sbin
 WORKDIR /usr/local/php
 EXPOSE 9000
 CMD ["php-fpm"]
+```
+
+---
+
+## 案例：容器化搭建个人博客系统
+
+**创建网络**
+```shell
+docker create network lnmp
+```
+
+**创建MySQL容器**
+```shell
+docker run -d --name lnmp_mysql --net lnmp --mount src=mysql-vol,dst=/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 -e MYSQL_DATABASE=wordpress  mysql:5.7  --character-set-server=utf8
+```
+
+**创建PHP容器**
+```shell
+docker run -d --name lnmp_php --net lnmp --mount src=wwwroot,dst=/wwwroot  php:v1
+```
+
+**创建Nginx容器**
+```shell
+docker run -d --name lnmp_nginx --net lnmp -p 80:80 --mount src=wwwroot,dst=/wwwroot --mount type=bind,src=$PWD/www.conf,dst=/usr/local/nginx/conf/vhost/www.conf nginx:v1
+```
+
+**准备WordPress**
+
+上传到网站根目录` wwwroot `数据卷目录上。
+
+打开浏览器访问地址：
+
+![wordpress](./../../../_media/wordpress.png)
+
+---
+
+## JAVA项目镜像构建：Tomcat
+
+**示例配置**
+```dockerfile
+FROM centos:7 
+LABEL maintainer Kuuun
+ENV VERSION=8.5.63
+RUN yum install java-1.8.0-openjdk wget curl unzip iproute net-tools -y && \
+    yum clean all && \
+    rm -rf /var/cache/yum/*
+ADD apache-tomcat-${VERSION}.tar.gz /usr/local/
+RUN mv /usr/local/apache-tomcat-${VERSION} /usr/local/tomcat && \
+    sed -i '1a JAVA_OPTS="-Djava.security.egd=file:/dev/./urandom"' /usr/local/tomcat/bin/catalina.sh && \
+    ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+ENV PATH $PATH:/usr/local/tomcat/bin
+WORKDIR /usr/local/tomcat
+EXPOSE 8080
+CMD ["catalina.sh", "run"]
+```
+
+---
+
+### JAVA微服务镜像构建：Jar
+
+**示例配置**
+```shell
+FROM java:8-jdk-alpine
+LABEL maintainer Kuuun
+ENV JAVA_OPTS="$JAVA_OPTS -Dfile.encoding=UTF8 -Duser.timezone=GMT+08"
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
+    apk add -U tzdata && \
+    ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime 
+COPY hello.jar /
+EXPOSE 8888
+CMD ["/bin/sh", "-c", "java -jar $JAVA_OPTS /hello.jar"]
 ```
