@@ -210,7 +210,7 @@ CMD ["catalina.sh", "run"]
 
 ---
 
-### JAVA微服务镜像构建：Jar
+## JAVA微服务镜像构建：Jar
 
 **示例配置**
 ```shell
