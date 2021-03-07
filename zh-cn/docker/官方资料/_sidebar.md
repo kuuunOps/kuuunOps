@@ -21,6 +21,7 @@
     - [Subversion](/zh-cn/subversion/)
   - 部署
     - [Linux](/zh-cn/linux/)
+    - [Cfssl](/zh-cn/cfssl/)
     - [Rsync](/zh-cn/rsync/)
     - [Apache](/zh-cn/apache/)
     - [Nginx](/zh-cn/nginx/)
