@@ -1,0 +1,17 @@
+verison: '3'
+services:
+  web:
+    image: nginx:v1
+    ports:
+      - "88:80"
+    networks:
+      - lnmp
+  db:
+    image: mysql:5.7
+    command: --charactor-set-server=utf8
+    environment:
+      - MYSQL_ROOT_PASSWORD=123456
+      
+
+networks:
+  lnmp: {}

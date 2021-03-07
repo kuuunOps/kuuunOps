@@ -1,0 +1,16 @@
+{
+    "CN": "Kuuun",
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [
+        {
+            "C": "CN",
+            "L": "Shenzhen",
+            "O": "CA",
+            "OU": "Devops",
+            "ST": "Guangdong"
+        }
+    ]
+}
