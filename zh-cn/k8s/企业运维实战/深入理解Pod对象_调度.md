@@ -4,7 +4,7 @@
 
 Kubernetes基于list-watch机制的控制器架构，实现组件间交互的解耦。其他组件监控自己负责的资源，当这些资源发生变化时，` kube apiserver `会通知这些组件，这个过程类似于发布与订阅。
 
-![pod流程](../../_media/pod-01.jpg)
+![pod流程](../../../_media/pod-01.jpg)
 
 ## Pod中影响调度的主要属性
 ```yaml
