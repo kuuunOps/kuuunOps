@@ -1,33 +1,21 @@
 - [首页](/)
-  - 前端
-    - [HTML](/zh-cn/html/)
-    - [CSS](/zh-cn/css/)
-    - [JavaScript](/zh-cn/js/)
-    - [Node](/zh-cn/node/)
-    - [Vue](/zh-cn/vue/)
-  - 中间件
-    - [RabbitMQ](/zh-cn/rabbitmq/)
-  - 后端
-    - [Python](/zh-cn/python/)
-    - [PHP](/zh-cn/php/)
-    - [Go](/zh-cn/go/)
-  - 数据库
+  - 基础
+    - [Linux](zh-cn/linux/)
+    - [Ubuntu](zh-cn/ubuntu/)
+    - [PHP](zh-cn/php/)
     - [MySQL](/zh-cn/mysql/)
-    - [MongoDB](/zh-cn/mongodb/)
     - [MariaDB](/zh-cn/mariadb/)
     - [PostgresSQL](/zh-cn/postgressql/)
-  - 版本控制
-    - [Git](/zh-cn/git/)
-    - [Subversion](/zh-cn/subversion/)
-  - 部署
-    - [Linux](/zh-cn/linux/)
-    - [Rsync](/zh-cn/rsync/)
-    - [Apache](/zh-cn/apache/)
     - [Nginx](/zh-cn/nginx/)
-    - [Openresty](/zh-cn/openresty/)
+    - [Cfssl](zh/../zh-cn/cfssl/)
+    - [Rsync](zh-cn/rsync/)
+    - [RabbitMQ](zh-cn/rabbitmq/)
+  - 版本库
+    - [Git](zh-cn/git/)
+    - [Subversion](zh-cn/subversion/)
   - 容器
     - [Docker](/zh-cn/docker/)
-    - [K8S(Kubernetes)](/zh-cn/k8s/)
+    - [Kubernetes](zh-cn/k8s/)
       - [K8S(Kubernetes)企业运维实战](/zh-cn/k8s/企业运维实战/)
         - [kubeadm快速部署一个K8S集群](/zh-cn/k8s/企业运维实战/kubeadm方式快速部署一个K8s集群.md)
         - [kubectl命令行管理工具](/zh-cn/k8s/企业运维实战/kubectl命令行管理工具.md)
@@ -36,4 +24,9 @@
         - [深入理解Pod对象：调度](/zh-cn/k8s/企业运维实战/深入理解Pod对象_调度.md)
         - [常用工作负载控制器（高级管理Pod）](/zh-cn/k8s/企业运维实战/常用工作负载控制器_高级管理Pod.md)
         - [深入理解Service（统一入口访问应用）](/zh-cn/k8s/企业运维实战/深入理解service.md)
-  - [其他](/zh-cn/other/)
+  - 开发
+    - [Python](/zh-cn/python/)
+    - [Golang](/zh-cn/go/)
+  - Devops
+    - [Jenkins](zh-cn/jenkins/)
+    - [Ansible](zh-cn/ansible/)

@@ -13,19 +13,20 @@
     - [Go](/zh-cn/go/)
   - 数据库
     - [MySQL](/zh-cn/mysql/)
-    - [Mariadb](/zh-cn/mariadb/)
+    - [MongoDB](/zh-cn/mongodb/)
+    - [MariaDB](/zh-cn/mariadb/)
     - [PostgresSQL](/zh-cn/postgressql/)
   - 版本控制
-    - [Gitlab](/zh-cn/gitlab/)
+    - [Git](/zh-cn/git/)
     - [Subversion](/zh-cn/subversion/)
   - 部署
     - [Linux](/zh-cn/linux/)
-      - [Shell](/zh-cn/linux/shell/)
-      - [Ubuntu](/zh-cn/linux/ubuntu/)
+    - [Cfssl](/zh-cn/cfssl/)
+    - [Rsync](/zh-cn/rsync/)
+    - [Apache](/zh-cn/apache/)
     - [Nginx](/zh-cn/nginx/)
     - [Openresty](/zh-cn/openresty/)
   - 容器
     - [Docker](/zh-cn/docker/)
     - [K8S(Kubernetes)](/zh-cn/k8s/)
   - [其他](/zh-cn/other/)
-
