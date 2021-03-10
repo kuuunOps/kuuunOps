@@ -1,6 +1,19 @@
 # kubeadm快速部署一个K8S集群
 
-主要步骤：
+部署方式：
+
+- kubeadm
+  Kubeadm是一个工具，提供kubeadm init和kubeadm join，用于快速部署Kubernetes集群。
+  
+  部署地址：https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm/
+
+- 二进制
+  推荐，从官方下载发行版的二进制包，手动部署每个组件，组成Kubernetes集群。 
+  
+  下载地址：https://github.com/kubernetes/kubernetes/releases
+
+
+>主要步骤：
 >1. 安装docker
 >2. 创建一个Master节点
 >```bash
@@ -36,7 +49,8 @@
 | k8s-node1  | 172.16.4.11 |
 | k8s-node2  | 172.16.4.12 |
 
-- 端口
+**端口**
+
   - 控制节点端口
 | 协议 | 方向 | 端口范围  | 作用                    | 使用者                       |
 | ---- | ---- | --------- | ----------------------- | ---------------------------- |
@@ -320,7 +334,7 @@ kubeadm token create --print-join-command
 
 下载配置文件
 ```shell
-wget https://docs.projectcalico.org/manifests/calico.yaml
+curl -o calico.yaml https://docs.projectcalico.org/manifests/calico.yaml
 ```
 修改字段`CALICO_IPV4POOL_CIDR`内容与`kubeadm init`指定的网络一致。
 默认为：
@@ -371,7 +385,7 @@ kubectl get pod,svc
 ## 8. 部署Web UI
 
 ```shell
-wget https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.3/aio/deploy/recommended.yaml
+curl -o  recommended.yaml https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.3/aio/deploy/recommended.yaml
 ```
 默认Dashboard只能集群内部访问，修改Service为NodePort类型，暴露到外部：
 ```yaml
