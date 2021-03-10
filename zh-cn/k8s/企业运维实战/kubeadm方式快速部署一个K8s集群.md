@@ -111,7 +111,6 @@ ntpdate time.windows.com
 ```
 
 ## 3. 安装Docker/kubeadm/kubelet(所有节点)
-Kubernetes默认CRI（容器运行时）为Docker，因此先安装Docker。
 
 1. 安装docker
 
@@ -129,12 +128,12 @@ sudo apt-get -y update
 sudo apt-get -y install docker-ce=5:19.03.15~3-0~ubuntu-bionic
 ```
 配置镜像加速
-```bash
+```shell
 curl -sSL https://get.daocloud.io/daotools/set_mirror.sh | sh -s http://f1361db2.m.daocloud.io
 ```
 
 设置docker daemon
-```bash
+```shell
 #  /etc/docker/daemon.json
 {
   "exec-opts": ["native.cgroupdriver=systemd"],
@@ -159,10 +158,9 @@ EOF
 ```
 
 3. 安装kubeadm，kubelet和kubectl
-由于版本更新频繁，这里指定版本号部署
-```bash
-    apt-get update && apt-get install -y kubelet=1.19.0-00 kubeadm=1.19.0-00 kubectl=1.19.0-00
-    systemctl enable kubelet
+```shell
+apt-get update && apt-get install -y kubelet kubeadm kubectl
+systemctl enable kubelet
 ```
 
 ## 4. 部署Kubernetes Master
@@ -172,7 +170,7 @@ EOF
 >https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/#initializing-your-control-plane-node
 
 在master上执行
-```bash
+```shell
 kubeadm init \
   --apiserver-advertise-address=172.16.4.6 \
   --image-repository registry.aliyuncs.com/google_containers \
@@ -194,7 +192,7 @@ kubeadm.conf
 ```yaml
 apiVersion: kubeadm.k8s.io/v1beta2
 kind: ClusterConfiguration
-kubernetesVersion: v1.19.0
+kubernetesVersion: v1.20.0
 imageRepository: registry.aliyuncs.com/google_containers
 networking:
   podSubnet: 10.244.0.0/16
@@ -204,7 +202,7 @@ networking:
 ```shell
 kubeadm init --config kubeadm.conf --ignore-preflight-errors=all
 W0302 12:59:11.557141    3575 configset.go:348] WARNING: kubeadm cannot validate component configs for API groups [kubelet.config.k8s.io kubeproxy.config.k8s.io]
-[init] Using Kubernetes version: v1.19.0
+[init] Using Kubernetes version: v1.20.0
 [preflight] Running pre-flight checks
 [preflight] Pulling images required for setting up a Kubernetes cluster
 [preflight] This might take a minute or two, depending on the speed of your internet connection
@@ -281,7 +279,7 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```bash
 kubectl get nodes
 NAME         STATUS     ROLES    AGE    VERSION
-k8s-master   NotReady   master   9m1s   v1.19.0
+k8s-master   NotReady   master   9m1s   v1.20.0
 ```
 
 **总结：**
@@ -366,13 +364,14 @@ kube-proxy-rfqvm                           1/1     Running   0          40m
 kube-proxy-zwzsb                           1/1     Running   0          44m
 kube-scheduler-k8s-master                  1/1     Running   1          110m
 ```
+
 再确认节点状态
 ```shell
 kubectl get nodes
 NAME         STATUS   ROLES    AGE    VERSION
-k8s-master   Ready    master   112m   v1.19.0
-k8s-node1    Ready    <none>   46m    v1.19.0
-k8s-node2    Ready    <none>   42m    v1.19.0
+k8s-master   Ready    master   112m   v1.20.0
+k8s-node1    Ready    <none>   46m    v1.20.0
+k8s-node2    Ready    <none>   42m    v1.20.0
 ```
 
 ## 7. 测试

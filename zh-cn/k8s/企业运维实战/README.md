@@ -7,5 +7,4 @@
 
 官方文档：https://kubernetes.io/zh/docs/home/
 
-## Kubernetes集群架构与组件
-
+重点熟悉：概念和任务
