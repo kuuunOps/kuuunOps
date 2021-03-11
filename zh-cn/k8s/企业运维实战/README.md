@@ -7,4 +7,8 @@
 
 官方文档：https://kubernetes.io/zh/docs/home/
 
+K8S免费实验室：(https://labs.play-with-k8s.com/)
+
 重点熟悉：概念和任务
+
+---

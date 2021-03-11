@@ -52,15 +52,15 @@
   <tbody>
     <tr>
       <td>k8s-master</td>
-      <td>172.16.4.6</td>
+      <td>172.16.4.41</td>
     </tr>
     <tr>
       <td>k8s-node1</td>
-      <td>172.16.4.11</td>
+      <td>172.16.4.52</td>
     </tr>
     <tr>
       <td>k8s-node2</td>
-      <td>172.16.4.12</td>
+      <td>172.16.4.52</td>
     </tr>
   </tbody>
 </table>
@@ -102,14 +102,21 @@ sudo vim /etc/fstab  # 永久
 
 - 设置主机名
 ```shell
-sudo hostnamectl set-hostname <hostname>
+# 节点主机 k8s-master
+hostnamectl set-hostname k8s-master
+# 节点主机 k8s-node1
+hostnamectl set-hostname k8s-node1
+# 节点主机 k8s-node2
+hostnamectl set-hostname k8s-node2
 ```
 
-- master上添加hosts解析
+- master/node上添加hosts解析
 ```shell
-  172.16.4.6 k8s-master
-  172.16.4.11 k8s-node1
-  172.16.4.12 k8s-node2
+  cat >> /etc/hosts << EOF
+  172.16.4.41 k8s-master
+  172.16.4.51 k8s-node1
+  172.16.4.52 k8s-node2
+  EOF
 ```
 
 - 将桥接的IPv4流量传递到iptables的链
@@ -132,20 +139,29 @@ ntpdate time.windows.com
 ---
 ## 3. 安装Docker/kubeadm/kubelet(所有节点)
 
-1. 安装docker
+### 3.1 安装docker
 
 **CentOS系统**
+
+网易镜像地址：http://mirrors.163.com/docker-ce/linux/centos/docker-ce.repo
+
+阿里镜像地址：https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+
+清华大学镜像地址：https://mirrors.tuna.tsinghua.edu.cn/docker-ce/linux/centos/docker-ce.repo
+
 ```shell
 # step 1: 安装必要的一些系统工具
 sudo yum install -y yum-utils device-mapper-persistent-data lvm2
 # Step 2: 添加软件源信息
-sudo yum-config-manager --add-repo https://mirrors.aliyun.com/repo/docker-ce.repo
+
+sudo yum-config-manager --add-repo https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
 # Step 3: 更新并安装Docker-CE
 sudo yum makecache fast
 sudo yum -y install docker-ce
 # Step 4: 开启Docker服务
 sudo service docker start
- 
+sudo systemctl enable docker.service
+
 # 注意：
 # 官方软件源默认启用了最新的软件，您可以通过编辑软件源的方式获取各个版本的软件包。例如官方并没有将测试版本的软件源置为可用，您可以通过以下方式开启。同理可以开启各种测试版本等。
 # vim /etc/yum.repos.d/docker-ee.repo
@@ -176,6 +192,10 @@ sudo add-apt-repository "deb [arch=amd64] https://maven.aliyun.com/repository/do
 # Step 4: 更新并安装Docker-CE
 sudo apt-get -y update
 sudo apt-get -y install docker-ce
+# Step 5: 开启Docker服务
+sudo service docker start
+sudo systemctl enable docker.service
+
 # 安装指定版本的Docker-CE:
 # Step 1: 查找Docker-CE的版本:
 # apt-cache madison docker-ce
@@ -184,16 +204,14 @@ sudo apt-get -y install docker-ce
 # Step 2: 安装指定版本的Docker-CE: (VERSION例如上面的17.03.1~ce-0~ubuntu-xenial)
 # sudo apt-get -y install docker-ce=[VERSION]
 ```
-<<<<<<< HEAD
 
-
-2. 配置镜像加速
+### 3.2 配置镜像加速
 ```bash
-curl -sSL https://get.daocloud.io/daotools/set_mirror.sh | sh -s b9pmyelo.mirror.aliyuncs.com
+curl -sSL https://get.daocloud.io/daotools/set_mirror.sh | sh -s https://b9pmyelo.mirror.aliyuncs.com
 ```
 
 
-3. 添加阿里云kubernetes镜像源
+### 3.3 添加阿里云kubernetes镜像源
 
 **CentOS系统**
 ```shell
@@ -226,11 +244,6 @@ apt-get update && apt-get install -y kubelet kubeadm kubectl
 systemctl enable kubelet
 ```
 
-1. 安装kubeadm，kubelet和kubectl
-```shell
-apt-get update && apt-get install -y kubelet kubeadm kubectl
-systemctl enable kubelet
-```
 ---
 ## 4. 部署Master
 官方文档初始化参考
@@ -238,14 +251,17 @@ systemctl enable kubelet
 >
 >https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/#initializing-your-control-plane-node
 
+**初始化集群方式**
 
-1. **使用命令行初始化**
+- 命令行
+- 配置文件
+
+#### **使用命令行初始化**
 
 ```shell
 kubeadm init \
-  --apiserver-advertise-address=172.16.4.6 \
+  --apiserver-advertise-address=172.16.4.41 \
   --image-repository registry.aliyuncs.com/google_containers \
-  --kubernetes-version v1.20.0 \
   --service-cidr=10.96.0.0/12 \
   --pod-network-cidr=10.244.0.0/16 \
   --ignore-preflight-errors=all
@@ -260,38 +276,47 @@ kubeadm init \
 | pod-network-cidr            | Pod网络，与下面部署的CNI网络组件yaml中保持一致 |
 
 
-1. **使用配置文件初始化**
+#### **使用配置文件初始化**
 
 ```yaml
 apiVersion: kubeadm.k8s.io/v1beta2
 kind: ClusterConfiguration
-kubernetesVersion: v1.20.0
 imageRepository: registry.aliyuncs.com/google_containers
 networking:
   podSubnet: 10.244.0.0/16
   serviceSubnet: 10.96.0.0/12
 ```
 
-3. **执行初始化命令**
+#### 执行初始化命令
 ```shell
-kubeadm init --config kubeadm.yml --ignore-preflight-errors=all
-W0302 12:59:11.557141    3575 configset.go:348] WARNING: kubeadm cannot validate component configs for API groups [kubelet.config.k8s.io kubeproxy.config.k8s.io]
-[init] Using Kubernetes version: v1.20.0
+ kubeadm init \
+>   --apiserver-advertise-address=172.16.4.41 \
+>   --image-repository registry.aliyuncs.com/google_containers \
+>   --service-cidr=10.96.0.0/12 \
+>   --pod-network-cidr=10.244.0.0/16 \
+>   --ignore-preflight-errors=all
+W0311 23:13:13.910622   19181 version.go:102] could not fetch a Kubernetes version from the internet: unable to get URL "https://dl.k8s.io/release/stable-1.txt": Get "https://dl.k8s.io/release/stable-1.txt": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+W0311 23:13:13.910756   19181 version.go:103] falling back to the local client version: v1.20.4
+[init] Using Kubernetes version: v1.20.4
 [preflight] Running pre-flight checks
+        [WARNING Service-Docker]: docker service is not enabled, please run 'systemctl enable docker.service'
+        [WARNING IsDockerSystemdCheck]: detected "cgroupfs" as the Docker cgroup driver. The recommended driver is "systemd". Please follow the guide at https://kubernetes.io/docs/setup/cri/
+        [WARNING SystemVerification]: this Docker version is not on the list of validated versions: 20.10.5. Latest validated version: 19.03
 [preflight] Pulling images required for setting up a Kubernetes cluster
 [preflight] This might take a minute or two, depending on the speed of your internet connection
 [preflight] You can also perform this action in beforehand using 'kubeadm config images pull'
 [certs] Using certificateDir folder "/etc/kubernetes/pki"
 [certs] Generating "ca" certificate and key
 [certs] Generating "apiserver" certificate and key
-[certs] apiserver serving cert is signed for DNS names [k8s-master kubernetes kubernetes.default kubernetes.default.svc kubernetes.default.svc.cluster.local] and IPs [10.96.0.1 172.16.4.6][certs] Generating "apiserver-kubelet-client" certificate and key
+[certs] apiserver serving cert is signed for DNS names [k8s-master kubernetes kubernetes.default kubernetes.default.svc kubernetes.default.svc.cluster.local] and IPs [10.96.0.1 172.16.4.41]
+[certs] Generating "apiserver-kubelet-client" certificate and key
 [certs] Generating "front-proxy-ca" certificate and key
 [certs] Generating "front-proxy-client" certificate and key
 [certs] Generating "etcd/ca" certificate and key
 [certs] Generating "etcd/server" certificate and key
-[certs] etcd/server serving cert is signed for DNS names [k8s-master localhost] and IPs [172.16.4.6 127.0.0.1 ::1]
+[certs] etcd/server serving cert is signed for DNS names [k8s-master localhost] and IPs [172.16.4.41 127.0.0.1 ::1]
 [certs] Generating "etcd/peer" certificate and key
-[certs] etcd/peer serving cert is signed for DNS names [k8s-master localhost] and IPs [172.16.4.6 127.0.0.1 ::1]
+[certs] etcd/peer serving cert is signed for DNS names [k8s-master localhost] and IPs [172.16.4.41 127.0.0.1 ::1]
 [certs] Generating "etcd/healthcheck-client" certificate and key
 [certs] Generating "apiserver-etcd-client" certificate and key
 [certs] Generating "sa" key and public key
@@ -309,13 +334,14 @@ W0302 12:59:11.557141    3575 configset.go:348] WARNING: kubeadm cannot validate
 [control-plane] Creating static Pod manifest for "kube-scheduler"
 [etcd] Creating static Pod manifest for local etcd in "/etc/kubernetes/manifests"
 [wait-control-plane] Waiting for the kubelet to boot up the control plane as static Pods from directory "/etc/kubernetes/manifests". This can take up to 4m0s
-[apiclient] All control plane components are healthy after 20.003496 seconds
+[kubelet-check] Initial timeout of 40s passed.
+[apiclient] All control plane components are healthy after 68.004258 seconds
 [upload-config] Storing the configuration used in ConfigMap "kubeadm-config" in the "kube-system" Namespace
 [kubelet] Creating a ConfigMap "kubelet-config-1.20" in namespace kube-system with the configuration for the kubelets in the cluster
 [upload-certs] Skipping phase. Please see --upload-certs
-[mark-control-plane] Marking the node k8s-master as control-plane by adding the label "node-role.kubernetes.io/master=''"
+[mark-control-plane] Marking the node k8s-master as control-plane by adding the labels "node-role.kubernetes.io/master=''" and "node-role.kubernetes.io/control-plane='' (deprecated)"
 [mark-control-plane] Marking the node k8s-master as control-plane by adding the taints [node-role.kubernetes.io/master:NoSchedule]
-[bootstrap-token] Using token: 325oi8.pfs18g5blz29qlo8
+[bootstrap-token] Using token: i8h92d.twyoqkzbaokka06i
 [bootstrap-token] Configuring bootstrap tokens, cluster-info ConfigMap, RBAC Roles
 [bootstrap-token] configured RBAC rules to allow Node Bootstrap tokens to get nodes
 [bootstrap-token] configured RBAC rules to allow Node Bootstrap tokens to post CSRs in order for nodes to get long term certificate credentials
@@ -325,23 +351,27 @@ W0302 12:59:11.557141    3575 configset.go:348] WARNING: kubeadm cannot validate
 [kubelet-finalize] Updating "/etc/kubernetes/kubelet.conf" to point to a rotatable kubelet client certificate and key
 [addons] Applied essential addon: CoreDNS
 [addons] Applied essential addon: kube-proxy
-  
+
 Your Kubernetes control-plane has initialized successfully!
-  
+
 To start using your cluster, you need to run the following as a regular user:
-  
+
   mkdir -p $HOME/.kube
   sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
   sudo chown $(id -u):$(id -g) $HOME/.kube/config
-  
+
+Alternatively, if you are the root user, you can run:
+
+  export KUBECONFIG=/etc/kubernetes/admin.conf
+
 You should now deploy a pod network to the cluster.
 Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
   https://kubernetes.io/docs/concepts/cluster-administration/addons/
-  
+
 Then you can join any number of worker nodes by running the following on each as root:
-  
-kubeadm join 172.16.4.6:6443 --token 325oi8.pfs18g5blz29qlo8 \
-    --discovery-token-ca-cert-hash sha256:118fe896af1c01afe5e543cacc880a92c6018ae9ab40af4b1b4b15e747d2a2ac
+
+kubeadm join 172.16.4.41:6443 --token i8h92d.twyoqkzbaokka06i \
+    --discovery-token-ca-cert-hash sha256:baae370b27c6be8b42eb376cadcc616f9a5a3658b958077d7897641f41c2bc75
 ```
 
 拷贝kubectl使用的连接k8s认证文件到默认路径
@@ -349,6 +379,10 @@ kubeadm join 172.16.4.6:6443 --token 325oi8.pfs18g5blz29qlo8 \
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
+```
+或者设置环境变量
+```shell
+export KUBECONFIG=/etc/kubernetes/admin.conf
 ```
 
 查看节点
@@ -378,11 +412,11 @@ kubeadm初始化流程
 
 在node节点上执行集群添加命令，命令为kubeadm init输出的kubeadm join命令
 ```shell
-kubeadm join 172.16.4.6:6443 --token 325oi8.pfs18g5blz29qlo8 \
-    --discovery-token-ca-cert-hash sha256:118fe896af1c01afe5e543cacc880a92c6018ae9ab40af4b1b4b15e747d2a2ac
+kubeadm join 172.16.4.41:6443 --token i8h92d.twyoqkzbaokka06i \
+    --discovery-token-ca-cert-hash sha256:baae370b27c6be8b42eb376cadcc616f9a5a3658b958077d7897641f41c2bc75
 ```
 
-
+---
 
 ## 6. 部署容器网络组件(CNI)
 
@@ -401,12 +435,12 @@ kubeadm join 172.16.4.6:6443 --token 325oi8.pfs18g5blz29qlo8 \
 ```shell
 curl -o calico.yaml https://docs.projectcalico.org/manifests/calico.yaml
 ```
-修改字段`CALICO_IPV4POOL_CIDR`内容与`kubeadm init`指定的网络一致。
-默认为：
+修改字段`CALICO_IPV4POOL_CIDR`内容与`kubeadm init`指定的网络一致（`--podSubnet`）。
+
 ```yaml
 ...
 - name: CALICO_IPV4POOL_CIDR
-  value: "192.168.0.0/16"
+  value: "10.244.0.0/16"
 ...
 ```
 应用配置文件
