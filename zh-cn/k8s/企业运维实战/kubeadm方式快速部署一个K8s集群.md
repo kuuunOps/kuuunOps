@@ -209,26 +209,8 @@ EOF
  
 yum makecache fast && yum install -y kubelet kubeadm kubectl
 systemctl enable kubelet
-=======
-配置镜像加速
-```shell
-curl -sSL https://get.daocloud.io/daotools/set_mirror.sh | sh -s http://f1361db2.m.daocloud.io
 ```
 
-设置docker daemon
-```shell
-#  /etc/docker/daemon.json
-{
-  "exec-opts": ["native.cgroupdriver=systemd"],
-  "log-driver": "json-file",
-  "log-opts": {
-    "max-size": "100m"
-  },
-  "storage-driver": "overlay2"
-}
-sudo systemctl restart docker.service
->>>>>>> 98efae778879585defc25dbe446ac051e71169b1
-```
 
 **Ubuntu系统**
 ```shell
