@@ -232,7 +232,7 @@ apt-get update && apt-get install -y kubelet kubeadm kubectl
 systemctl enable kubelet
 ```
 ---
-## 4. 部署Kubernetes Master
+## 4. 部署Master
 官方文档初始化参考
 >https://kubernetes.io/zh/docs/reference/setup-tools/kubeadm/kubeadm-init/#config-file
 >
@@ -374,7 +374,7 @@ kubeadm初始化流程
 
 ---
 
-## 5. 添加node节点
+## 5. 部署Node
 
 在node节点上执行集群添加命令，命令为kubeadm init输出的kubeadm join命令
 ```shell
@@ -382,19 +382,7 @@ kubeadm join 172.16.4.6:6443 --token 325oi8.pfs18g5blz29qlo8 \
     --discovery-token-ca-cert-hash sha256:118fe896af1c01afe5e543cacc880a92c6018ae9ab40af4b1b4b15e747d2a2ac
 ```
 
-默认token有效期为24小时，当过期之后，该token就不可用了。这时就需要重新创建token，操作如下：
-```shell
-kubeadm token create
-kubeadm token list
-openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'
-118fe896af1c01afe5e543cacc880a92c6018ae9ab40af4b1b4b15e747d2a2ac
-kubeadm join 192.168.31.61:6443 --token 325oi8.pfs18g5blz29qlo8 --discovery-token-ca-cert-hash sha256:118fe896af1c01afe5e543cacc880a92c6018ae9ab40af4b1b4b15e747d2a2ac
-```
-或者使用快捷命令生成
-```bash
-kubeadm token create --print-join-command
-```
-[参考文献](https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-join/)
+
 
 ## 6. 部署容器网络组件(CNI)
 
@@ -533,7 +521,7 @@ kubectl create clusterrolebinding dashboard-admin --clusterrole=cluster-admin --
 kubectl describe secrets -n kube-system $(kubectl -n kube-system get secret | awk '/dashboard-admin/{print $1}')
 ```
 
-## 故障
+## 故障及说明
 
 - 初始化错误后
 ```shell
@@ -572,6 +560,22 @@ etcd-0               Healthy   {"health":"true"}
 }
 sudo systemctl restart docker.service
 ```
+
+- 关于Token
+
+默认token有效期为24小时，当过期之后，该token就不可用了。这时就需要重新创建token，操作如下：
+```shell
+kubeadm token create
+kubeadm token list
+openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'
+118fe896af1c01afe5e543cacc880a92c6018ae9ab40af4b1b4b15e747d2a2ac
+kubeadm join 192.168.31.61:6443 --token 325oi8.pfs18g5blz29qlo8 --discovery-token-ca-cert-hash sha256:118fe896af1c01afe5e543cacc880a92c6018ae9ab40af4b1b4b15e747d2a2ac
+```
+或者使用快捷命令生成
+```bash
+kubeadm token create --print-join-command
+```
+[参考文献](https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-join/)
 
 ---
 
