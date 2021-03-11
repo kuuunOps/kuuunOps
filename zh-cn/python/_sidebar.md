@@ -7,7 +7,7 @@
     - [MariaDB](/zh-cn/mariadb/)
     - [PostgresSQL](/zh-cn/postgressql/)
     - [Nginx](/zh-cn/nginx/)
-    - [Cfssl](zh/../zh-cn/cfssl/)
+    - [Cfssl](/zh-cn/cfssl/)
     - [Rsync](zh-cn/rsync/)
     - [RabbitMQ](zh-cn/rabbitmq/)
   - 版本库
@@ -25,4 +25,3 @@
     - [Golang](/zh-cn/go/)
   - Devops
     - [Jenkins](zh-cn/jenkins/)
-    - [Ansible](zh-cn/ansible/)
