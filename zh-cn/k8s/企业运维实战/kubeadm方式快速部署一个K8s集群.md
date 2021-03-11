@@ -226,30 +226,21 @@ apt-get update && apt-get install -y kubelet kubeadm kubectl
 systemctl enable kubelet
 ```
 
-<<<<<<< HEAD
----
-=======
-3. 安装kubeadm，kubelet和kubectl
+1. 安装kubeadm，kubelet和kubectl
 ```shell
 apt-get update && apt-get install -y kubelet kubeadm kubectl
 systemctl enable kubelet
 ```
-
->>>>>>> 98efae778879585defc25dbe446ac051e71169b1
+---
 ## 4. 部署Kubernetes Master
 官方文档初始化参考
 >https://kubernetes.io/zh/docs/reference/setup-tools/kubeadm/kubeadm-init/#config-file
 >
 >https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/#initializing-your-control-plane-node
 
-<<<<<<< HEAD
-### 初始化操作
 
 1. **使用命令行初始化**
 
-=======
-在master上执行
->>>>>>> 98efae778879585defc25dbe446ac051e71169b1
 ```shell
 kubeadm init \
   --apiserver-advertise-address=172.16.4.6 \
@@ -269,7 +260,7 @@ kubeadm init \
 | pod-network-cidr            | Pod网络，与下面部署的CNI网络组件yaml中保持一致 |
 
 
-2. **使用配置文件初始化**
+1. **使用配置文件初始化**
 
 ```yaml
 apiVersion: kubeadm.k8s.io/v1beta2
@@ -352,7 +343,6 @@ Then you can join any number of worker nodes by running the following on each as
 kubeadm join 172.16.4.6:6443 --token 325oi8.pfs18g5blz29qlo8 \
     --discovery-token-ca-cert-hash sha256:118fe896af1c01afe5e543cacc880a92c6018ae9ab40af4b1b4b15e747d2a2ac
 ```
-
 
 拷贝kubectl使用的连接k8s认证文件到默认路径
 ```bash
