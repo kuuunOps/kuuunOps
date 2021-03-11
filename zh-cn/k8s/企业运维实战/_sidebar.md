@@ -25,6 +25,7 @@
         - [深入理解Pod对象：调度](/zh-cn/k8s/企业运维实战/深入理解Pod对象_调度.md)
         - [常用工作负载控制器（高级管理Pod）](/zh-cn/k8s/企业运维实战/常用工作负载控制器_高级管理Pod.md)
         - [深入理解Service（统一入口访问应用）](/zh-cn/k8s/企业运维实战/深入理解service.md)
+        - [Ingress](/zh-cn/k8s/企业运维实战/ingress.md)
   - 开发
     - [Python](/zh-cn/python/)
     - [Golang](/zh-cn/go/)

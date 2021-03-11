@@ -137,3 +137,67 @@ scheduler: "rr"
 ```
 
 注：参考不同资料，文件名可能不同。
+
+---
+
+## Service DNS名称解析
+
+CoreDNS：是一个DNS服务器，Kubernetes默认采用，以Pod部署在集群中，CoreDNS服务监视Kubernetes API，为每一个Service创建DNS记录用于域名解析。
+
+CoreDNS YAML文件：
+
+https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/dns/coredns 
+
+ClusterIP A记录格式：` <service-name>.<namespace-name>.svc.cluster.local `
+
+示例：` my-svc.my-namespace.svc.cluster.local `
+
+![coredns](../../../_media/coredns.jpg)
+
+1. **默认deufalt命名空间**
+```shell
+kubectl run -it dns-test --image=busybox:1.28.4 -- sh
+If you don't see a command prompt, try pressing enter.
+/ #
+/ # nslookup web-nodeport
+Server:    10.96.0.10
+Address 1: 10.96.0.10 kube-dns.kube-system.svc.cluster.local
+
+Name:      web-nodeport
+Address 1: 10.100.185.234 web-nodeport.default.svc.cluster.local
+/ #
+```
+
+2. **跨命名空间访问**
+```shell
+# kubectl get svc -n kube-system
+NAME       TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)                  AGE
+kube-dns   ClusterIP   10.96.0.10   <none>        53/UDP,53/TCP,9153/TCP   28h
+# kubectl attach dns-test -c dns-test -it
+If you don't see a command prompt, try pressing enter.
+/ # nslookup kube-dns
+Server:    10.96.0.10
+Address 1: 10.96.0.10 kube-dns.kube-system.svc.cluster.local
+
+nslookup: can't resolve 'kube-dns'
+/ # nslookup kube-dns.kube-system
+Server:    10.96.0.10
+Address 1: 10.96.0.10 kube-dns.kube-system.svc.cluster.local
+
+Name:      kube-dns.kube-system
+Address 1: 10.96.0.10 kube-dns.kube-system.svc.cluster.local
+```
+
+---
+
+# iptables与IPVS对比
+
+Iptables：
+- 灵活，功能强大
+- 规则遍历匹配和更新，呈线性时延
+
+IPVS： 
+- 工作在内核态，有更好的性能 
+- 调度算法丰富：rr，wrr，lc，wlc，ip hash... 
+
+
