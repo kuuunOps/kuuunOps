@@ -1,6 +1,6 @@
 # Kubernetes集群架构与组件
 
-![kubernetes架构图](../../../_media/kubernetes.jpg)
+![kubernetes架构图](./../../../_media/components-of-kubernetes.svg)
 
 **组件作用**
 
