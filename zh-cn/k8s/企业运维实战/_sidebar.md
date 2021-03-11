@@ -17,6 +17,7 @@
     - [Docker](/zh-cn/docker/)
     - [Kubernetes](zh-cn/k8s/)
       - [K8S(Kubernetes)企业运维实战](/zh-cn/k8s/企业运维实战/)
+        - [Kubernetes集群架构与组件](/zh-cn/k8s/企业运维实战/kubernetes集群架构与组件.md)
         - [kubeadm快速部署一个K8S集群](/zh-cn/k8s/企业运维实战/kubeadm方式快速部署一个K8s集群.md)
         - [kubectl命令行管理工具](/zh-cn/k8s/企业运维实战/kubectl命令行管理工具.md)
         - [资源编排YAML](/zh-cn/k8s/企业运维实战/资源编排.md)

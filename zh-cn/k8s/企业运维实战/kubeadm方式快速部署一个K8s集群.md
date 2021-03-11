@@ -1,6 +1,19 @@
 # kubeadm快速部署一个K8S集群
 
-主要步骤：
+部署方式：
+
+- kubeadm
+  Kubeadm是一个工具，提供kubeadm init和kubeadm join，用于快速部署Kubernetes集群。
+  
+  部署地址：https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm/
+
+- 二进制
+  推荐，从官方下载发行版的二进制包，手动部署每个组件，组成Kubernetes集群。 
+  
+  下载地址：https://github.com/kubernetes/kubernetes/releases
+
+
+>主要步骤：
 >1. 安装docker
 >2. 创建一个Master节点
 >```bash
@@ -53,7 +66,8 @@
 </table>
 
 
-- 端口
+**端口**
+
   - 控制节点端口
 | 协议 | 方向 | 端口范围  | 作用                    | 使用者                       |
 | ---- | ---- | --------- | ----------------------- | ---------------------------- |
@@ -117,7 +131,6 @@ ntpdate time.windows.com
 
 ---
 ## 3. 安装Docker/kubeadm/kubelet(所有节点)
-Kubernetes默认CRI（容器运行时）为Docker，因此先安装Docker。
 
 1. 安装docker
 
@@ -171,6 +184,7 @@ sudo apt-get -y install docker-ce
 # Step 2: 安装指定版本的Docker-CE: (VERSION例如上面的17.03.1~ce-0~ubuntu-xenial)
 # sudo apt-get -y install docker-ce=[VERSION]
 ```
+<<<<<<< HEAD
 
 
 2. 配置镜像加速
@@ -195,6 +209,25 @@ EOF
  
 yum makecache fast && yum install -y kubelet kubeadm kubectl
 systemctl enable kubelet
+=======
+配置镜像加速
+```shell
+curl -sSL https://get.daocloud.io/daotools/set_mirror.sh | sh -s http://f1361db2.m.daocloud.io
+```
+
+设置docker daemon
+```shell
+#  /etc/docker/daemon.json
+{
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m"
+  },
+  "storage-driver": "overlay2"
+}
+sudo systemctl restart docker.service
+>>>>>>> 98efae778879585defc25dbe446ac051e71169b1
 ```
 
 **Ubuntu系统**
@@ -211,17 +244,30 @@ apt-get update && apt-get install -y kubelet kubeadm kubectl
 systemctl enable kubelet
 ```
 
+<<<<<<< HEAD
 ---
+=======
+3. 安装kubeadm，kubelet和kubectl
+```shell
+apt-get update && apt-get install -y kubelet kubeadm kubectl
+systemctl enable kubelet
+```
+
+>>>>>>> 98efae778879585defc25dbe446ac051e71169b1
 ## 4. 部署Kubernetes Master
 官方文档初始化参考
 >https://kubernetes.io/zh/docs/reference/setup-tools/kubeadm/kubeadm-init/#config-file
 >
 >https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/#initializing-your-control-plane-node
 
+<<<<<<< HEAD
 ### 初始化操作
 
 1. **使用命令行初始化**
 
+=======
+在master上执行
+>>>>>>> 98efae778879585defc25dbe446ac051e71169b1
 ```shell
 kubeadm init \
   --apiserver-advertise-address=172.16.4.6 \
@@ -425,6 +471,7 @@ kube-proxy-rfqvm                           1/1     Running   0          40m
 kube-proxy-zwzsb                           1/1     Running   0          44m
 kube-scheduler-k8s-master                  1/1     Running   1          110m
 ```
+
 再确认节点状态
 ```shell
 kubectl get nodes
@@ -450,10 +497,11 @@ kubectl get pod,svc
 ```shell
 curl -o  dashboard.yaml https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.3/aio/deploy/recommended.yaml
 ```
+
 默认Dashboard只能集群内部访问，修改Service为NodePort类型，暴露到外部：
+
 ```yaml
 ---
-
 kind: Service
 apiVersion: v1
 metadata:
