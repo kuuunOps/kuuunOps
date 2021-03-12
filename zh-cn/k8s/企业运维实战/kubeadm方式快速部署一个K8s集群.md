@@ -557,59 +557,15 @@ kubectl describe secrets -n kube-system $(kubectl -n kube-system get secret | aw
 
 ## 故障及说明
 
-- 初始化错误后
-```shell
-# 执行清除并初始化环境
-kubeadm reset
-```
-- 拉取镜像慢或pod未就绪
 
-节点主机上手动拉取一下
+| 问题描述                            | 解决方案                                                                                                                                                 |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 初始化错误                          | 执行`kubeadm reset`进行环境重新初始化，再进行`kubeadm init`                                                                                              |
+| 拉取镜像慢或pod未就绪               | 到节点主机上手动拉取一下镜像                                                                                                                             |
+| 关于systemd的警告                   | 设置`docker daemon`，在`/etc/docker/daemon.json`中添加参数，`"exec-opts": ["native.cgroupdriver=systemd"]`，重启Docker`systemctl restart docker.service` |
+| `kubeadm join`的token过期           | 执行命令`kubeadm token create --print-join-command`生成新的token，[参考文献](https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-join/)     |
+| `kubectl get cs`组件状态`Unhealthy` | 主要是`/etc/kubernetes/manifests/kube-controller-manager.yaml`和`/etc/kubernetes/manifests/kube-scheduler.yaml`中的port=0，需要将其注释，再重启kubelet.  |
 
-- `kubectl get cs`组件状态`Unhealthy`
-
-主要是`/etc/kubernetes/manifests/kube-controller-manager.yaml`和`/etc/kubernetes/manifests/kube-scheduler.yaml`中的port=0，需要将其注释，再重启kubelet.
-
-```shell
-kubectl get cs
-Warning: v1 ComponentStatus is deprecated in v1.19+
-NAME                 STATUS    MESSAGE             ERROR
-controller-manager   Healthy   ok
-scheduler            Healthy   ok
-etcd-0               Healthy   {"health":"true"}
-```
-
-- 关于systemd的警告
-  
-设置docker daemon
-```shell
-# vi /etc/docker/daemon.json
-{
-  "exec-opts": ["native.cgroupdriver=systemd"],
-  "log-driver": "json-file",
-  "log-opts": {
-    "max-size": "100m"
-  },
-  "storage-driver": "overlay2"
-}
-sudo systemctl restart docker.service
-```
-
-- 关于Token
-
-默认token有效期为24小时，当过期之后，该token就不可用了。这时就需要重新创建token，操作如下：
-```shell
-kubeadm token create
-kubeadm token list
-openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'
-118fe896af1c01afe5e543cacc880a92c6018ae9ab40af4b1b4b15e747d2a2ac
-kubeadm join 192.168.31.61:6443 --token 325oi8.pfs18g5blz29qlo8 --discovery-token-ca-cert-hash sha256:118fe896af1c01afe5e543cacc880a92c6018ae9ab40af4b1b4b15e747d2a2ac
-```
-或者使用快捷命令生成
-```bash
-kubeadm token create --print-join-command
-```
-[参考文献](https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-join/)
 
 ---
 

@@ -42,8 +42,21 @@ ingress-nginx-controller-79b54d448c-l7c69   1/1     Running     0          21m
 
 **注意事项：** 
 
-- 镜像地址修改成国内的：bitnami/nginx-ingress-controller 
-- 将Ingress Controller暴露，一般使用宿主机网络（hostNetwork: true）或者使用NodePort 
+- 镜像地址修改成国内的：` bitnami/nginx-ingress-controller:0.44.0 ` 
+- 将Ingress Controller暴露，一般使用宿主机网络（hostNetwork: true）或者使用NodePort
+  ```yaml
+  ...
+      spec:
+      dnsPolicy: ClusterFirst
+      hostNetwork: True
+      containers:
+        - name: controller
+          image: bitnami/nginx-ingress-controller:0.44.0
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            preStop:
+  ...
+  ```
 
 其他控制器：https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/
 
@@ -78,3 +91,55 @@ spec:
             port: 
               number: 80
 ```
+
+---
+
+## 配置HTTPS访问
+
+配置HTTPS步骤： 
+
+1. 准备域名证书文件（来自：openssl/cfssl工具自签或者权威机构颁发）
+2. 将证书文件保存到Secret
+   ```shell
+    kubectl create secret tls www-kuuun-com --cert=www.kuuun.com.pem --key=www.kuuun.com-key.pem 
+   ```
+3. Ingress规则配置tls
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: www-https
+spec: 
+  tls: 
+  - hosts: 
+    - www.kuuun.com
+    secretName: www-kuuun-com 
+  rules: 
+  - host: www.kuuun.com
+    http: 
+      paths: 
+      - path: / 
+        pathType: Prefix 
+        backend: 
+          service: 
+            name: web 
+            port: 
+              number: 80
+```
+
+---
+
+## Ingress小结
+
+**Ingress工作流程**
+
+Ingress Contronler通过与Kubernetes API交互，动态的去感知集群中Ingress规则变化，然后读取它，按照自定义的规则，规则就是写明了哪个域名对应哪个service，生成一段Nginx配置，应用到管理的Nginx服务，然后热加载生效。以此来达到Nginx负载均衡器配置及动态更新的问题。 
+
+流程包流程：**客户端**  ->**Ingress Controller（nginx）**  -> **分布在各节点Pod**
+
+**Ingress高可用**
+
+一般Ingress Controller会以DaemonSet+nodeSelector部署到几台特定 Node，然后将这几台挂载到公网负载均衡器对外提供服务。
+
+![ingress-nodeselector](../../../_media/ingress-nodeselector.jpg)
