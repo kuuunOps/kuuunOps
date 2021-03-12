@@ -692,7 +692,8 @@ controller-manager   Healthy   ok
 scheduler            Healthy   ok
 etcd-0               Healthy   {"health":"true"}
 ```
-通过`kubectl api-resources`可以查看所有的资源缩写
+
+- 通过`kubectl api-resources`可以查看所有的资源及缩写
 
 
 - 查看Apiserver代理的URL
