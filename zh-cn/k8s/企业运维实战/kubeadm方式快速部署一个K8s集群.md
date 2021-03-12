@@ -555,7 +555,99 @@ kubectl create clusterrolebinding dashboard-admin --clusterrole=cluster-admin --
 kubectl describe secrets -n kube-system $(kubectl -n kube-system get secret | awk '/dashboard-admin/{print $1}')
 ```
 
-## 故障及说明
+
+---
+
+# 附：使用`Containerd`作为容器运行时
+
+1. 安装`containerd`依赖模块
+```shell
+# 配置模块
+cat <<EOF | sudo tee /etc/modules-load.d/containerd.conf
+overlay
+br_netfilter
+EOF
+sudo modprobe overlay
+sudo modprobe br_netfilter
+```
+
+2. 配置内核参数
+```shell
+# 配置内核参数
+cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes-cri.conf
+net.bridge.bridge-nf-call-iptables  = 1
+net.ipv4.ip_forward                 = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+EOF
+# 应用参数
+sudo sysctl --system
+```
+
+3. 安装`containerd`
+```shell
+# 安装软件包
+sudo yum install -y yum-utils device-mapper-persistent-data lvm2
+# 配置Docker镜像源
+sudo yum-config-manager --add-repo https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+# 配置 containerd
+sudo mkdir -p /etc/containerd
+containerd config default | sudo tee /etc/containerd/config.toml
+# 重启 containerd
+sudo systemctl restart containerd
+```
+
+4. 配置`containerd`镜像，Cgroup
+   
+`vi /etc/containerd/config.toml`
+```toml
+...
+...
+  [plugins."io.containerd.grpc.v1.cri"]
+    disable_tcp_service = true
+    stream_server_address = "127.0.0.1"
+    stream_server_port = "0"
+    stream_idle_timeout = "4h0m0s"
+    enable_selinux = false
+    selinux_category_range = 1024
+    <!-- 配置pause镜像仓库地址 -->
+    sandbox_image = "registry.aliyuncs.com/google_containers/pause:3.2"
+...
+...
+      [plugins."io.containerd.grpc.v1.cri".containerd.runtimes]
+        [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+        <!-- 配置Cgroup -->
+          SystemdCgroup = true
+...
+...
+    [plugins."io.containerd.grpc.v1.cri".registry]
+      [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+        [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
+        <!-- 配置镜像加速地址 -->
+          endpoint = ["https://b9pmyelo.mirror.aliyuncs.com"]
+...
+...
+```
+
+5. 设置kubelet
+   
+`vi /etc/sysconfig/kubelet`
+```shell
+KUBELET_EXTRA_ARGS="--container-runtime=remote --container-runtime-endpoint=/run/containerd/containerd.sock"
+```
+
+6. 重启kubelet
+```shell
+systemctl restart kubelet
+```
+
+7. 验证
+```shell
+kubectl get nodes -o wide
+```
+
+
+---
+# 故障及说明
 
 
 | 问题描述                            | 解决方案                                                                                                                                                 |
@@ -569,7 +661,7 @@ kubectl describe secrets -n kube-system $(kubectl -n kube-system get secret | aw
 
 ---
 
-## CNI组件的作用
+# CNI组件的作用
 CNI（container netowork interface，容器网络接口）：是一个容器网络规范，Kubernetes网络采用的就是这个CNI规范
 
 CNI要求:
@@ -580,7 +672,7 @@ CNI要求:
 
 主流网络组件推荐：Flannel、Calico等
 
-## 查看集群状态
+# k8s基本操作
 
 - 查看节点
 ```shell
@@ -606,8 +698,8 @@ etcd-0               Healthy   {"health":"true"}
 - 查看Apiserver代理的URL
 ```shell
 kubectl cluster-info
-Kubernetes master is running at https://172.16.4.6:6443
-KubeDNS is running at https://172.16.4.6:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+Kubernetes control plane is running at https://172.16.4.41:6443
+KubeDNS is running at https://172.16.4.41:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
 ```
 
 - 查看集群详情
