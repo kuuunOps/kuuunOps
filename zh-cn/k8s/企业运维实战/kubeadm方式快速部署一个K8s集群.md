@@ -281,8 +281,10 @@ sudo systemctl restart containerd
 ...
       [plugins."io.containerd.grpc.v1.cri".containerd.runtimes]
         [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
-        <!-- 配置Cgroup -->
-          SystemdCgroup = true
+          ...
+          <!-- 配置Cgroup -->
+          [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+            SystemdCgroup = true
 ...
 ...
     [plugins."io.containerd.grpc.v1.cri".registry]
@@ -363,7 +365,16 @@ apt-get update && apt-get install -y kubelet kubeadm
 systemctl enable --now kubelet
 ```
 
-### 4.4 集群初始化
+### 4.4 配置kubelet（可选）
+
+> 使用containerd作为容器运行时需要配置` /etc/sysconfig/kubelet `
+
+```shell
+KUBELET_EXTRA_ARGS="--container-runtime=remote --container-runtime-endpoint=unix:///run/containerd/containerd.sock --cgroup-driver=systemd"
+```
+
+
+### 4.5 集群初始化
 
 >在Master节点执行初始化操作
 
@@ -461,7 +472,7 @@ export KUBECONFIG=/etc/kubernetes/admin.conf
 11. 拷贝k8s认证文件
 
 
-### 4.5 添加Node节点
+### 4.6 添加Node节点
 
 在node节点上执行集群添加命令，命令为kubeadm init输出的kubeadm join命令
 ```shell
