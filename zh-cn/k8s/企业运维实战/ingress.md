@@ -60,8 +60,7 @@ ingress-nginx-controller-79b54d448c-l7c69   1/1     Running     0          21m
 
 其他控制器：https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/
 
-
-
+---
 
 ### 部署`Ingress`服务
 
@@ -103,30 +102,29 @@ spec:
    ```shell
     kubectl create secret tls www-kuuun-com --cert=www.kuuun.com.pem --key=www.kuuun.com-key.pem 
    ```
-3. Ingress规则配置tls
-
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: www-https
-spec: 
-  tls: 
-  - hosts: 
-    - www.kuuun.com
-    secretName: www-kuuun-com 
-  rules: 
-  - host: www.kuuun.com
-    http: 
-      paths: 
-      - path: / 
-        pathType: Prefix 
-        backend: 
-          service: 
-            name: web 
-            port: 
-              number: 80
-```
+3. Ingress规则配置` tls `
+    ```yaml
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      name: www-https
+    spec: 
+      tls: 
+      - hosts: 
+        - www.kuuun.com
+        secretName: www-kuuun-com 
+      rules: 
+      - host: www.kuuun.com
+        http: 
+          paths: 
+          - path: / 
+            pathType: Prefix 
+            backend: 
+              service: 
+                name: web 
+                port: 
+                  number: 80
+    ```
 
 ---
 
