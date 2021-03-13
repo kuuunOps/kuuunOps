@@ -26,6 +26,7 @@
         - [七、常用工作负载控制器（高级管理Pod）](/zh-cn/k8s/企业运维实战/常用工作负载控制器_高级管理Pod.md)
         - [八、深入理解Service（统一入口访问应用）](/zh-cn/k8s/企业运维实战/深入理解service.md)
         - [九、Ingress](/zh-cn/k8s/企业运维实战/ingress.md)
+        - [十、Kubernetes存储](/zh-cn/k8s/企业运维实战/kubernetes存储.md)
   - 开发
     - [Python](/zh-cn/python/)
     - [Golang](/zh-cn/go/)
