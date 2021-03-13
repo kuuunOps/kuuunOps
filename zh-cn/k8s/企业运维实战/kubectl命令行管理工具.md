@@ -9,7 +9,9 @@ kubectl命令默认会读取`$HOME/.kube/config`配置文件，否则会访问`l
 kubectl get node --kubeconfig=admin.conf
 ```
 
-## 文件格式：
+---
+
+## 文件格式
 
 **集群**
 ```yaml
@@ -44,9 +46,9 @@ user:
     client-key-data: 
 ```
 
-## 牛刀小试
+---
 
-### 常见命令
+## 常见命令
 [参考文献](https://kubernetes.io/zh/docs/reference/kubectl/overview/)
 <table>
 <thead>
