@@ -256,6 +256,7 @@ sudo yum install -y yum-utils device-mapper-persistent-data lvm2
 # 配置Docker镜像源
 sudo yum-config-manager --add-repo https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
 # 配置 containerd
+yum update -y && sudo yum install -y containerd.io
 sudo mkdir -p /etc/containerd
 containerd config default | sudo tee /etc/containerd/config.toml
 # 重启 containerd
@@ -367,12 +368,11 @@ systemctl enable --now kubelet
 
 ### 4.4 配置kubelet（可选）
 
-> 使用containerd作为容器运行时需要配置` /etc/sysconfig/kubelet `
+> 使用containerd作为容器运行时需要配置`vi /etc/sysconfig/kubelet `
 
 ```shell
 KUBELET_EXTRA_ARGS="--container-runtime=remote --container-runtime-endpoint=unix:///run/containerd/containerd.sock --cgroup-driver=systemd"
 ```
-
 
 ### 4.5 集群初始化
 
@@ -456,8 +456,6 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 export KUBECONFIG=/etc/kubernetes/admin.conf
 ```
 
-
-
 **kubeadm初始化流程：**
 1. preflight：环境检查和拉取镜像
 2. certs： 生成k8s证书和etcd证书，默认证书路径：/etc/kubernetes/pki
@@ -470,22 +468,6 @@ export KUBECONFIG=/etc/kubernetes/admin.conf
 9. bootstrap-token：自动为kubelet颁发证书
 10. addons：安装插件`CoreDNS`，`kube-proxy`
 11. 拷贝k8s认证文件
-
-
-### 4.6 添加Node节点
-
-在node节点上执行集群添加命令，命令为kubeadm init输出的kubeadm join命令
-```shell
-kubeadm join 172.16.4.41:6443 --token i8h92d.twyoqkzbaokka06i \
-    --discovery-token-ca-cert-hash sha256:baae370b27c6be8b42eb376cadcc616f9a5a3658b958077d7897641f41c2bc75
-```
-
-查看节点
-```bash
-kubectl get nodes
-NAME         STATUS     ROLES    AGE    VERSION
-k8s-master   NotReady   master   9m1s   v1.20.4
-```
 
 ---
 
@@ -518,37 +500,50 @@ curl -o calico.yaml https://docs.projectcalico.org/manifests/calico.yaml
 ```bash
 kubectl apply -f calico.yaml
 ```
-再次查看节点状态
+
+查看PODS状态
 ```bash
 kubectl get pods -n kube-system
 NAME                                       READY   STATUS    RESTARTS   AGE
-calico-kube-controllers-6949477b58-j9szj   1/1     Running   0          16m
-calico-node-2qnqz                          1/1     Running   0          16m
-calico-node-czwl8                          1/1     Running   1          16m
-calico-node-qpc7k                          1/1     Running   0          16m
-coredns-6d56c8448f-5vfdc                   1/1     Running   0          109m
-coredns-6d56c8448f-sjcmd                   1/1     Running   0          109m
-etcd-k8s-master                            1/1     Running   1          110m
-kube-apiserver-k8s-master                  1/1     Running   1          110m
-kube-controller-manager-k8s-master         1/1     Running   2          110m
-kube-proxy-clpdg                           1/1     Running   2          109m
-kube-proxy-rfqvm                           1/1     Running   0          40m
-kube-proxy-zwzsb                           1/1     Running   0          44m
-kube-scheduler-k8s-master                  1/1     Running   1          110m
+calico-kube-controllers-69496d8b75-k9kzr   1/1     Running   0          6m54s
+calico-node-dctfc                          1/1     Running   0          6m54s
+coredns-7f89b7bc75-7ps6t                   1/1     Running   0          9m6s
+coredns-7f89b7bc75-bx2hn                   1/1     Running   0          9m6s
+etcd-k8s-master                            1/1     Running   0          9m23s
+kube-apiserver-k8s-master                  1/1     Running   0          9m23s
+kube-controller-manager-k8s-master         1/1     Running   0          9m23s
+kube-proxy-gn922                           1/1     Running   0          9m6s
+kube-scheduler-k8s-master                  1/1     Running   0          9m23s
 ```
 
-再确认节点状态
+确认节点状态
 ```shell
 kubectl get nodes
-NAME         STATUS   ROLES    AGE    VERSION
-k8s-master   Ready    master   112m   v1.20.0
-k8s-node1    Ready    <none>   46m    v1.20.0
-k8s-node2    Ready    <none>   42m    v1.20.0
+NAME         STATUS   ROLES                  AGE   VERSION
+k8s-master   Ready    control-plane,master   10m   v1.20.4
+```
+
+---
+## 6. 添加Node节点
+
+在node节点上执行集群添加命令，命令为kubeadm init输出的kubeadm join命令
+```shell
+kubeadm join 172.16.4.41:6443 --token 0a2ndm.hg1plutf762btynv \
+    --discovery-token-ca-cert-hash sha256:a74297b357905497873b3697eb55cef476bf1a71799566b61bb4dbcb81314654
+```
+
+查看节点，Node节点状态为：`NotReady`，需要等待Node节点的`calico`组件安装完成并运行
+```bash
+kubectl get nodes -w
+NAME         STATUS     ROLES                  AGE   VERSION
+k8s-master   Ready      control-plane,master   11m   v1.20.4
+k8s-node1    NotReady   <none>                 3s    v1.20.4
+k8s-node2    NotReady   <none>                 1s    v1.20.4
 ```
 
 ---
 
-## 6. 测试
+## 7. 测试
 ```shell
 kubectl create deployment nginx --image=nginx
 kubectl expose deployment nginx --port=80 --type=NodePort
@@ -557,7 +552,7 @@ kubectl get pod,svc
 
 ---
 
-## 7. 部署Web UI
+## 8. 部署Web UI
 
 ```shell
 curl -o  dashboard.yaml https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.3/aio/deploy/recommended.yaml
