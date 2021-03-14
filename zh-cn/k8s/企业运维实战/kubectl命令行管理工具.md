@@ -239,40 +239,306 @@ kubectl get service
 http://NodeIP:Port
 
 
+---
+
 ## 基本资源概念
 
-- Pod：k8s最小部署单元，一组容器的集合
-- Deployment：最常见的工作负载控制器，用于更高级部署和管理Pod
-- Service：为一组Pod提供负载均衡，对外提供统一访问入口
-- Label：标签，附加到某个资源上，拥有关联对象、查询和筛选
-  - 查看标签
-  ```shell
-  kubectl get pods --show-labels
-  NAME                     READY   STATUS    RESTARTS   AGE     LABELS
-  nginx-6799fc88d8-qt6wh   1/1     Running   1          7h11m   app=nginx,pod-template-hash=6799fc88d8
-  web-674477549d-2c7v6     1/1     Running   0          5h27m   app=web,pod-template-hash=674477549d
-  web-674477549d-d8mx8     1/1     Running   0          5m      app=web,pod-template-hash=674477549d
-  web-674477549d-gtxqk     1/1     Running   0          5m      app=web,pod-template-hash=674477549d
-  ```
-  - 筛选
-  ```shell
-  kubectl get pods -l app=nginx
-  NAME                     READY   STATUS    RESTARTS   AGE
-  nginx-6799fc88d8-qt6wh   1/1     Running   1          7h12m
-  ```
-- Namespaces：命名空间，将对象逻辑上隔离，也利于权限控制，从而形成多个虚拟集群
-  - 应用场景
-    - 根据不同团队划分命名空间
-    - 根据项目划分命名空间
-  - `kubectl get namespace`查看命名空间
-    - default：默认命名空间
-    - kube-system：K8S系统方面的命名空间
-    - kube-public：公开的命名空间，谁都可以访问
-    - kube-node-lease：K8S内容命名空间
-  - 命名空间的指定
-    - 命令行：`-n`
-    - 配置文件：`namespace`字段
-  - 创建命名空间
-  ```shell
-  kubectl create namespace test
-  ```
+### Pod
+>k8s最小部署单元，一组容器的集合
+
+#### 创建
+
+1. **命令式**
+- 语法基本格式：`kubectl run NAME --image=image`
+- 语法完全格式：`kubectl run NAME --image=image [--env="key=value"] [--port=port] [--dry-run=server|client] [--overrides=inline-json][--command] -- [COMMAND] [args...] [options]`
+
+**示例：**
+```shell
+kubectl run my-pod --image=nginx:1.18 --port=80
+```
+
+2. **声明式**
+
+语法格式：`kubectl apply -f my-pod.yaml`
+
+**示例YAML:**
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: my-pod
+  name: my-pod
+spec:
+  containers:
+  - image: nginx:1.18
+    name: my-pod
+    ports:
+    - containerPort: 80
+```
+
+#### 查看
+
+1. **查看清单**
+
+语法格式：`kubectl get pods -n NAMESPACE`
+
+默认`NAMESPACE`为`default`。
+
+**示例**
+```shell
+kubectl get pods -n kube-system
+```
+
+2. **查看日志**
+
+语法格式：`kubectl logs [-f] [-p] (POD | TYPE/NAME) [-c CONTAINER] [options]`
+
+**示例**
+```shell
+kubectl logs calico-node-9sdsl -n kube-system
+```
+
+3. **查看详细信息**
+
+语法格式：`kubectl describe (-f FILENAME | TYPE [NAME_PREFIX | -l label] | TYPE/NAME) [options]`
+
+**示例**
+```shell
+kubectl describe pods mysql
+```
+
+#### 删除
+
+语法格式：`kubectl delete ([-f FILENAME] | [-k DIRECTORY] | TYPE [(NAME | -l label | --all)]) [options]`
+
+**示例**
+```shell
+kubectl delete -f my-pod.yaml
+kubectl delete pods my-pod
+```
+
+---
+
+### Deployment
+>最常见的工作负载控制器，用于更高级部署和管理Pod
+
+#### 创建
+
+1. **命令式**
+
+语法格式：`kubectl create deployment NAME --image=image -- [COMMAND] [args...] [options]`
+
+**示例**
+```shell
+kubectl create deployment my-dep --image=busybox
+```
+
+2. **声明式**
+
+语法格式：`kubectl apply -f FILE_NAME.yaml`
+
+**示例**
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: my-dep
+  name: my-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-dep
+  template:
+    metadata:
+      labels:
+        app: my-dep
+    spec:
+      containers:
+      - image: busybox
+        name: busybox
+```
+
+#### 查看
+
+1. **查看清单**
+
+**示例**
+```shell
+# 查看某一命名空间下所有的deployment资源
+kubectl get deployments
+# 查看某一命名空间下的某一个deployment资源
+kubectl get deployments web
+```
+
+2. **查看详细信息**
+
+**示例**
+```shell
+kubectl describe deployments web
+```
+
+#### 删除
+
+**示例**
+```shell
+kubectl delete deployments web
+```
+
+---
+
+### Service
+>为deployment,Pod,service等资源提供负载均衡，对外提供统一访问入口
+
+#### 创建
+
+1. **命令式**
+   
+语法格式：`kubectl expose (-f FILENAME | TYPE NAME) [--port=port] [--protocol=TCP|UDP|SCTP] [--target-port=number-or-name] [--name=name] [--external-ip=external-ip-of-service] [--type=type] [options]`
+
+**示例**
+```shell
+kubectl expose deployment tomcat --port=80 --target-port=80 --target-port=8080 --name=tomcat-service --type=NodePort
+```
+
+2. **声明式**
+
+**示例**
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: tomcat
+  name: tomcat-service
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: tomcat
+  type: NodePort
+```
+
+#### 查看
+
+1. **查看清单**
+
+```shell
+# services 可以缩写为 svc
+kubectl get services
+```
+
+#### 删除
+
+**示例**
+```shell
+kubectl delete svc tomcat-service
+```
+
+---
+
+### Label
+>标签，附加到某个资源上，拥有关联对象、查询和筛选
+
+
+#### 标签添加
+
+语法格式：`kubectl label [--overwrite] (-f FILENAME | TYPE NAME) KEY_1=VAL_1 ... KEY_N=VAL_N [--resource-version=version]`
+
+**示例**
+```shell
+kubectl label nodes k8s-node2 disk=ssd
+```
+#### 标签查看
+
+**示例**
+```shell
+kubectl get pods --show-labels
+NAME                     READY   STATUS    RESTARTS   AGE     LABELS
+nginx-6799fc88d8-qt6wh   1/1     Running   1          7h11m   app=nginx,pod-template-hash=6799fc88d8
+web-674477549d-2c7v6     1/1     Running   0          5h27m   app=web,pod-template-hash=674477549d
+web-674477549d-d8mx8     1/1     Running   0          5m      app=web,pod-template-hash=674477549d
+web-674477549d-gtxqk     1/1     Running   0          5m      app=web,pod-template-hash=674477549d
+```
+
+#### 标签筛选
+
+**示例**
+```shell
+kubectl get pods -l app=nginx
+NAME                     READY   STATUS    RESTARTS   AGE
+nginx-6799fc88d8-qt6wh   1/1     Running   1          7h12m
+```
+
+#### 标签删除
+
+**示例**
+```shell
+kubectl label nodes k8s-node2 disk-
+```
+
+---
+
+### Namespaces
+>命名空间，将对象逻辑上隔离，也利于权限控制，从而形成多个虚拟集群
+
+应用场景：
+  - 根据不同团队划分命名空间
+  - 根据项目划分命名空间
+
+默认命名空间：
+ - default：默认命名空间
+ - kube-system：K8S系统方面的命名空间
+ - kube-public：公开的命名空间，谁都可以访问
+ - kube-node-lease：K8S内容命名空间
+
+#### 创建命名空间
+
+1. **命令式**
+
+**示例**
+```shell
+kubectl create namespace test
+```
+
+2. **声明式**
+
+**示例**
+```shell
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nginx-ns
+```
+
+
+#### 查看
+
+1. **查看已创建的命名空间**
+
+**示例**
+```shell
+kubectl get namespace
+# 等效于kubectl get ns
+```
+
+2. **指定命名空间查看资源**
+
+**示例**
+```shell
+kubectl get pods --namespace=kube-system
+# 等效于kubectl get pods -n kube-system
+```
+
+#### 删除
+
+**示例**
+```shell
+kubectl delete ns nginx-ns
+```
+
+---
