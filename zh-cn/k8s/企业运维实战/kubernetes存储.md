@@ -125,6 +125,143 @@ secret.code.lives=30
 
 ---
 
+### 创建
+
+语法格式：`kubectl create configmap NAME [--from-file=[key=]source] [--from-literal=key1=value1] [--dry-run=server|client|none]`
+
+### 基于字面值创建，多用于Pod环境变量注入
+
+```shell
+kubectl create configmap my-config --from-literal=NAME=admin --from-literal=PASSWORD=123456
+```
+
+**配置样式**
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-config
+data:
+  NAME: admin
+  PASSWORD: "123456"
+```
+
+---
+
+### 基于文件创建，多用于数据卷挂载配置
+
+```shell
+kubectl create configmap my-config --from-file=redis.conf
+```
+
+等效于
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-config
+data:
+  redis.conf: |
+    redis_host = 127.0.0.1
+    redis_port = 6379
+    requirepass = '123456'
+```
+
+---
+
+### 基于目录创建，多用于含有多个配置文件
+  
+```shell
+kubectl create configmap my-config --from-file=config/
+```
+
+等效于
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-config
+data:
+  my.cnf: |
+    [client]
+    socket = /tmp/mysql.sock
+
+    [mysqld]
+    port = 3306
+    user = mysql
+    basedir = /usr/local/mysql
+    datadir = /usr/local/mysql/data
+    port=3306
+    server-id = 1
+    socket=/tmp/mysql.sock
+    character-set-server = utf8
+
+    [mysqldump]
+    quick
+    max_allowed_packet = 16M
+
+    [myisamchk]
+    key_buffer_size = 8M
+    sort_buffer_size = 8M
+    read_buffer = 4M
+    write_buffer = 4
+  redis.conf: |
+    redis_host = 127.0.0.1
+    redis_port = 6379
+    requirepass = '123456'
+```
+
+---
+
+### 基于环境变量文件创建，多用于注入的变量值过多
+
+```shell
+kubectl create configmap my-config --from-env-file=mysql.env
+```
+
+等效于
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-config
+data:
+  MYSQL_DATABASE: test
+  MYSQL_PASSWORD: test
+  MYSQL_ROOT_PASSWORD: "123456"
+  MYSQL_USER: test
+```
+
+---
+
+### 基于`kustomization.yaml`创建，不常用，一般用于`Secret`
+
+`kustomization`配置样式
+```yaml
+configmapGenerator:
+- name: my-config
+  literals:
+  - username=admin
+  - password=123456
+```
+
+或
+
+```yaml
+configmapGenerator:
+- name: my-config
+  files:
+  - my.cnf
+  - redis.conf
+```
+
+创建
+```shell
+kubectl apply -k . 
+```
+
+---
+
 ## 2. Secret 
 
 >` Secret `对象类型用来保存敏感信息，例如密码、` OAuth `令牌和 SSH 密钥。

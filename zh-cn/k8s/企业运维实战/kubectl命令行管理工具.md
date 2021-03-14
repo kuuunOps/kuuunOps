@@ -8,10 +8,7 @@ kubectl命令默认会读取`$HOME/.kube/config`配置文件，否则会访问`l
 ```shell
 kubectl get node --kubeconfig=admin.conf
 ```
-
----
-
-## 文件格式
+### 文件格式
 
 **集群**
 ```yaml
@@ -49,7 +46,9 @@ user:
 ---
 
 ## 常见命令
-[参考文献](https://kubernetes.io/zh/docs/reference/kubectl/overview/)
+
+>参考文献：https://kubernetes.io/zh/docs/reference/kubectl/overview/
+
 <table>
 <thead>
   <tr>
@@ -221,13 +220,20 @@ user:
 </tbody>
 </table>
 
-## 使用deployment控制器部署
+---
+## 牛刀小试
+
+### 使用deployment控制器部署
+
+**示例**
 ```shell
-kubectl create deployment web --image=lizhenliang/java-demo
+kubectl create deployment web --image=nginx:1.18
 kubectl get deploy,pods
 ```
 
-## 使用service将pod暴露出去
+### 使用service将pod暴露出去
+
+**示例**
 ```shell
 kubectl expose deployment web --port=80 --target-port=8080 --type=NodePort
 kubectl get service
