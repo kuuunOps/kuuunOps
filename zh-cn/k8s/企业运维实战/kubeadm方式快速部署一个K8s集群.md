@@ -398,7 +398,7 @@ EOF
 
 >在Master节点执行初始化操作
 
-- 使用命令行初始化
+- **使用命令行初始化**
 
 ```shell
 kubeadm init \
@@ -418,10 +418,10 @@ kubeadm init \
 | service-cidr                | 集群内部虚拟网络，Pod统一访问入口              |
 | pod-network-cidr            | Pod网络，与下面部署的CNI网络组件yaml中保持一致 |
 
+---
+- **使用配置文件初始化**
 
-- 使用配置文件初始化
-
-` kubectl apply -f xxx.yml `
+`kubeadm init --config xxx.yml `
 
 **配置文件示例**
 ```yaml
