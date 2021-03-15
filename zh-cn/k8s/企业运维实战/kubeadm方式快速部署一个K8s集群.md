@@ -275,25 +275,33 @@ sudo systemctl restart containerd
     stream_idle_timeout = "4h0m0s"
     enable_selinux = false
     selinux_category_range = 1024
-    <!-- 配置pause镜像仓库地址 -->
+    # 配置pause镜像仓库地址
     sandbox_image = "registry.aliyuncs.com/google_containers/pause:3.2"
 ... ...
       [plugins."io.containerd.grpc.v1.cri".containerd.runtimes]
         [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
           ...
-          <!-- 配置Cgroup -->
+          # 配置Cgroup
           [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
             SystemdCgroup = true
 ... ...
-    [plugins."io.containerd.grpc.v1.cri".registry]
-      [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-        [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
-        <!-- 配置镜像加速地址 -->
-          endpoint = ["https://b9pmyelo.mirror.aliyuncs.com"]
+     [plugins."io.containerd.grpc.v1.cri".registry]
+       [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+         [plugins."io.containerd.grpc.v1.cri".registry.mirrors."b9pmyelo.mirror.aliyuncs.com"]
+           # 配置镜像加速地址
+           endpoint = ["https://b9pmyelo.mirror.aliyuncs.com"]
+      # 私有镜像仓库配置
+      [plugins."io.containerd.grpc.v1.cri".registry.configs]
+        [plugins."io.containerd.grpc.v1.cri".registry.configs."reg.kuuun.com".tls]
+          insecure_skip_verify = true
+        [plugins."io.containerd.grpc.v1.cri".registry.configs."reg.kuuun.com".auth]
+          username = "admin"
+          password = "Harbor12345"
 ... ...
 ```
 重启` containerd `
 ```shell
+sudo systemctl enable containerd
 sudo systemctl restart containerd
 ```
 
@@ -362,13 +370,29 @@ apt-get update && apt-get install -y kubelet kubeadm
 systemctl enable --now kubelet
 ```
 
-### 4.4 配置kubelet（可选）
+### 4.4 配置kubelet/crictl（可选）
 
-> 使用containerd作为容器运行时需要配置`vi /etc/sysconfig/kubelet `
+> 使用containerd作为容器运行时需要进行额外配置
+ 
+1. `/etc/sysconfig/kubelet `
 
 ```shell
+cat >/etc/sysconfig/kubelet << EOF
 KUBELET_EXTRA_ARGS="--container-runtime=remote --container-runtime-endpoint=unix:///run/containerd/containerd.sock --cgroup-driver=systemd"
+EOF
 ```
+
+2. `/etc/crictl.yaml`
+
+```shell
+cat >/etc/crictl.yaml << EOF
+runtime-endpoint: unix:///run/containerd/containerd.sock
+image-endpoint: unix:///run/containerd/containerd.sock
+timeout: 10
+debug: false
+EOF
+```
+
 
 ### 4.5 集群初始化
 
