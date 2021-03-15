@@ -21,7 +21,9 @@
 - K8S资源（configmap，secret等）
 
 ---
-# emptyDir
+
+# 数据卷
+## emptyDir
 
 >Pod 启动时为空，存储空间来自本地的 kubelet 根目录（通常是根磁盘）或内存
 
@@ -49,7 +51,7 @@ spec:
 ```
 ---
 
-# hostPath
+## hostPath
 
 >hostPath卷：挂载Node文件系统（Pod所在节点）上文件或者目 录到Pod中的容器。
 
@@ -95,7 +97,7 @@ spec:
 
 ---
 
-# NFS
+## NFS
 
 1. 准备
 
@@ -144,3 +146,7 @@ spec:
 ```
 
 ---
+
+# 持久卷
+
+1. 创建PV（PersistentVolume）卷
