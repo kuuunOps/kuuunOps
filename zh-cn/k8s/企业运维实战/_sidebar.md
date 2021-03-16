@@ -19,6 +19,7 @@
       - [K8S(Kubernetes)企业运维实战](/zh-cn/k8s/企业运维实战/)
         - [一、Kubernetes集群架构与组件](/zh-cn/k8s/企业运维实战/kubernetes集群架构与组件.md)
         - [二、使用kubeadm快速部署一个K8S集群](/zh-cn/k8s/企业运维实战/kubeadm方式快速部署一个K8s集群.md)
+        - [资源监控](/zh-cn/k8s/企业运维实战/资源监控.md)
         - [三、命令行管理工具kubectl](/zh-cn/k8s/企业运维实战/kubectl命令行管理工具.md)
         - [四、资源编排YAML](/zh-cn/k8s/企业运维实战/资源编排.md)
         - [五、深入理解Pod对象：基本管理](/zh-cn/k8s/企业运维实战/深入理解Pod对象_基本管理.md)
