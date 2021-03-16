@@ -1,6 +1,6 @@
-# Ingress
+# Ingress入口控制器
 
-## Ingress是什么
+# Ingress是什么
 
 NodePort存在的不足： 
 
@@ -16,7 +16,7 @@ Ingress公开了从集群外部到集群内服务的HTTP和HTTPS路由的规则�
 
 ---
 
-## `Ingress Controller`部署
+# `Ingress Controller`部署
 
 Ingress Controller有很多实现，我们这里采用官方维护的Nginx控制器。
 
@@ -24,7 +24,7 @@ Ingress Controller有很多实现，我们这里采用官方维护的Nginx控制
 
 官方文献：https://kubernetes.github.io/ingress-nginx
 
-### 部署`Ingress`组件：
+## 部署`Ingress`组件：
 ```shell
 curl -o nginx-ingress.yaml https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.44.0/deploy/static/provider/baremetal/deploy.yaml
 kubectl apply -f nginx-ingress.yaml
@@ -62,7 +62,7 @@ ingress-nginx-controller-79b54d448c-l7c69   1/1     Running     0          21m
 
 ---
 
-### 部署`Ingress`服务
+## 部署`Ingress`服务
 
 1. 创建：
 ` kubectl apply -f xxx.yaml `
@@ -93,7 +93,7 @@ spec:
 
 ---
 
-## 配置HTTPS访问
+# 配置HTTPS访问
 
 配置HTTPS步骤： 
 
@@ -128,7 +128,7 @@ spec:
 
 ---
 
-## Ingress小结
+# Ingress小结
 
 **Ingress工作流程**
 

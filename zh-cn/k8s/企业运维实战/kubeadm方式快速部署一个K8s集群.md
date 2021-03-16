@@ -759,7 +759,7 @@ CNI要求:
 
 # k8s基本操作
 
-- 查看节点
+- **查看节点**
 ```shell
 kubectl get node
 NAME         STATUS   ROLES    AGE     VERSION
@@ -768,7 +768,7 @@ k8s-node1    Ready    <none>   133m    v1.20.4
 k8s-node2    Ready    <none>   128m    v1.20.4
 ```
 
-- 查看组件状态
+- **查看组件状态**
 ```shell
 kubectl get cs
 Warning: v1 ComponentStatus is deprecated in v1.19+
@@ -778,22 +778,24 @@ scheduler            Healthy   ok
 etcd-0               Healthy   {"health":"true"}
 ```
 
-- 通过`kubectl api-resources`可以查看所有的资源及缩写
+- **查看所有的资源及缩写**
+  
+  `kubectl api-resources`
 
 
-- 查看Apiserver代理的URL
+- **查看Apiserver代理的URL**
 ```shell
 kubectl cluster-info
 Kubernetes control plane is running at https://172.16.4.41:6443
 KubeDNS is running at https://172.16.4.41:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
 ```
 
-- 查看集群详情
+- **查看集群详情**
 ```shell
 kubectl cluster-info dump
 ```
 
-- 查看资源信息
+- **查看资源信息**
 ```shell
 kubectl describe 资源类型/资源名称
 ```
@@ -803,7 +805,7 @@ kubectl describe pods/nginx-6799fc88d8-qt6wh
 kubectl describe svc/nginx
 ```
 
-- 查看集群最新事件
+- **查看集群最新事件**
 ```shell
 kubectl get event
 ```
