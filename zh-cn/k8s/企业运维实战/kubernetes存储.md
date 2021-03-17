@@ -280,3 +280,4 @@ kubectl apply -f rbac.yaml
 # 查看存储类
 # kubectl get sc
 ```
+
