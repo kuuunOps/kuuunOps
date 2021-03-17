@@ -41,8 +41,10 @@ sudo grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
 **3. 修改网卡配置**
-```bash
-sudo vim /etc/netplan/00-installer-config.yaml
+
+`sudo vim /etc/netplan/00-installer-config.yaml`
+
+```yaml
 # This is the network config written by 'subiquity'
 network:
   ethernets:
@@ -57,6 +59,11 @@ network:
         - 172.16.1.3
   version: 2
 ```
+**4. 应用配置**
+```shell
+sudo netplan apply
+```
+
 
 ---
 
@@ -77,7 +84,7 @@ sudo mkdir -p /data/project/nfs
 **3. 编辑配置**
 ```bash
 sudo vim /etc/exports
-/data/project/nfs *(rw,sync,no_subtree_check,no_root_squash)
+/data/project/nfs *(rw,sync,no_root_squash)
 ```
 
 **4. 重启服务**
