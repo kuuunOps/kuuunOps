@@ -266,18 +266,131 @@ AccessModes 是用来对 PV 进行访问模式的设置，用于描述用户应�
 
 # NFS
 
+Github旧地址：https://github.com/kubernetes-retired/external-storage
+
+Github新地址：https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner
+
 ## 安装NFS-Client插件
 
+
+**非helm安装**
+
+1. 下载
 ```shell
-git clone https://gitee.com/kuuun/external-storage.git
-cd external-storage/nfs-client/deploy
-# 授权访问apiserver
-kubectl apply -f rbac.yaml
-# 部署插件，需修改里面NFS服务器地址与共享目录
-# kubectl apply -f deployment.yaml
-# 创建存储类 
-# kubectl apply -f class.yaml
-# 查看存储类
-# kubectl get sc
+git clone https://gitee.com/kuuun/nfs-subdir-external-provisioner.git
+cd nfs-subdir-external-provisioner
 ```
 
+2. 配置环境
+```shell
+NS=$(kubectl config get-contexts|grep -e "^\*" |awk '{print $5}')
+NAMESPACE=${NS:-default}
+sed -i'' "s/namespace:.*/namespace: $NAMESPACE/g" ./deploy/rbac.yaml ./deploy/deployment.yaml
+```
+
+3. 授权访问apiserver
+```shell
+kubectl apply -f deploy/rbac.yaml
+```
+
+4. 部署deployment，需修改`deploy/deployment.yaml`里面NFS服务器地址与共享目录
+```yaml
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: nfs-client-provisioner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nfs-client-provisioner
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: nfs-client-provisioner
+    spec:
+      serviceAccountName: nfs-client-provisioner
+      containers:
+        - name: nfs-client-provisioner
+        # 修改非google镜像地址
+          image: kuuun/nfs-subdir-external-provisioner:v4.0.0
+          volumeMounts:
+            - name: nfs-client-root
+              mountPath: /persistentvolumes
+          env:
+            - name: PROVISIONER_NAME
+              value: k8s-sigs.io/nfs-subdir-external-provisioner
+            - name: NFS_SERVER
+              value: <YOUR NFS SERVER HOSTNAME>
+            - name: NFS_PATH
+              value: /var/nfs
+      volumes:
+        - name: nfs-client-root
+          nfs:
+            server: <YOUR NFS SERVER HOSTNAME>
+            path: /var/nfs
+```
+部署
+```shell
+kubectl apply -f deploy/deployment.yaml
+```
+
+1. 创建存储类 
+```shell
+kubectl apply -f deploy/class.yaml
+```
+
+6. 查看存储类
+```shell
+kubectl get sc
+```
+
+## 测试
+
+**示例配置**
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: my-web-sc
+  name: my-web-sc
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-web-sc
+  template:
+    metadata:
+      labels:
+        app: my-web-sc
+    spec:
+      containers:
+      - image: nginx
+        name: nginx
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: wwwroot
+          mountPath: /usr/share/nginx/html
+
+      volumes:
+      - name: wwwroot
+        persistentVolumeClaim:
+          claimName: wwwroot-sc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wwwroot-sc
+spec:
+  # 这里的名字要与kubectl get sc命令中NAME字段一致
+  storageClassName: managed-nfs-storage
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 15Gi
+```
