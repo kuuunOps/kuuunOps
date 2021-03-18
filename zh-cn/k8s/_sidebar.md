@@ -1,4 +1,26 @@
 - [首页](/)
+  - 容器
+    - [Docker](/zh-cn/docker/)
+    - [Kubernetes](zh-cn/k8s/)
+        - [一、Kubernetes集群架构与组件](/zh-cn/k8s/kubernetes集群架构与组件.md)
+        - [二、搭建Kubernetes集群](/zh-cn/k8s/搭建K8s集群.md)
+        - [三、资源监控与日志收集](/zh-cn/k8s/资源监控与日志收集.md)
+        - [四、命令行管理工具kubectl](/zh-cn/k8s/kubectl命令行管理工具.md)
+        - [五、资源编排YAML](/zh-cn/k8s/资源编排.md)
+        - [六、深入理解Pod对象：基本管理](/zh-cn/k8s/深入理解Pod对象_基本管理.md)
+        - [七、深入理解Pod对象：调度](/zh-cn/k8s/深入理解Pod对象_调度.md)
+        - [八、常用工作负载控制器（高级管理Pod）](/zh-cn/k8s/常用工作负载控制器_高级管理Pod.md)
+        - [九、深入理解Service（统一入口访问应用）](/zh-cn/k8s/深入理解service.md)
+        - [十、入口控制器Ingress](/zh-cn/k8s/入口控制器ingress.md)
+        - [十一、Kubernetes管理应用程序配置](/zh-cn/k8s/kubernetes管理应用程序配置.md)
+        - [十二、Kubernetes存储](/zh-cn/k8s/kubernetes存储.md)
+        - [十三、有状态应用](/zh-cn/k8s/有状态应用.md)
+  - 开发
+    - [Python](/zh-cn/python/)
+    - [Golang](/zh-cn/go/)
+  - Devops
+    - [Jenkins](zh-cn/jenkins/)
+    - [Ansible](zh-cn/ansible/)
   - 基础
     - [Linux](zh-cn/linux/)
     - [Ubuntu](zh-cn/ubuntu/)
@@ -13,12 +35,3 @@
   - 版本库
     - [Git](zh-cn/git/)
     - [Subversion](zh-cn/subversion/)
-  - 容器
-    - [Docker](/zh-cn/docker/)
-    - [Kubernetes](zh-cn/k8s/)
-      - [K8S(Kubernetes)企业运维实战](/zh-cn/k8s/企业运维实战/)
-  - 开发
-    - [Python](/zh-cn/python/)
-    - [Golang](/zh-cn/go/)
-  - Devops
-    - [Jenkins](zh-cn/jenkins/)

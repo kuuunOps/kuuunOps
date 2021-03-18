@@ -1,4 +1,4 @@
-# Ingress入口控制器
+# 入口控制器Ingress
 
 # Ingress是什么
 

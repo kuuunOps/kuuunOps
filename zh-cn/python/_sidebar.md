@@ -1,4 +1,16 @@
 - [首页](/)
+  - 容器
+    - [Docker](/zh-cn/docker/)
+    - [Kubernetes](zh-cn/k8s/)
+  - 开发
+    - [Python](/zh-cn/python/)
+      - [基础知识(更新中)](/zh-cn/python/base/)
+      - [爬虫(更新中)](/zh-cn/python/reptile/)
+      - [Django(更新中)](/zh-cn/python/django/)
+      - [django-rest-framework(更新中)](/zh-cn/python/drf/)
+    - [Golang](/zh-cn/go/)
+  - Devops
+    - [Jenkins](zh-cn/jenkins/)
   - 基础
     - [Linux](zh-cn/linux/)
     - [Ubuntu](zh-cn/ubuntu/)
@@ -13,15 +25,3 @@
   - 版本库
     - [Git](zh-cn/git/)
     - [Subversion](zh-cn/subversion/)
-  - 容器
-    - [Docker](/zh-cn/docker/)
-    - [Kubernetes](zh-cn/k8s/)
-  - 开发
-    - [Python](/zh-cn/python/)
-      - [基础知识(更新中)](/zh-cn/python/base/)
-      - [爬虫(更新中)](/zh-cn/python/reptile/)
-      - [Django(更新中)](/zh-cn/python/django/)
-      - [django-rest-framework(更新中)](/zh-cn/python/drf/)
-    - [Golang](/zh-cn/go/)
-  - Devops
-    - [Jenkins](zh-cn/jenkins/)

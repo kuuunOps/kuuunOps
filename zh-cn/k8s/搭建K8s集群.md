@@ -1,9 +1,9 @@
-# kubeadm快速部署一个K8S集群
+# 搭建Kubernetes集群
 
 部署方式：
 
 - kubeadm
-  Kubeadm是一个工具，提供kubeadm init和kubeadm join，用于快速部署Kubernetes集群。
+  `kubeadm`是一个工具，提供`kubeadm init`和`kubeadm join`，用于快速部署Kubernetes集群。
   
   部署地址：https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm/
 
@@ -12,6 +12,8 @@
   
   下载地址：https://github.com/kubernetes/kubernetes/releases
 
+
+# 使用kubeadm搭建
 
 >主要步骤：
 >1. 安装docker

@@ -1,23 +1,27 @@
-# 常用工作负载控制器（高级管理Pod）
+## 工作负载
+### 工作负载控制器是什么
 
-## 工作负载控制器是什么
 工作负载控制器（Workload Controllers）是K8s的一个抽象概念，用于更高级层次对象，部署和管理Pod。
 
-**常用工作负载控制器：** 
-- ` Deployment `： 无状态应用部署 
+### 常用工作负载控制器
+
+- ` Deployment `与` ReplicaSet `： `Deployment`用来部署无状态应用。
 - ` StatefulSet `： 有状态应用部署 
 - ` DaemonSet `： 确保所有Node运行同一个Pod 
 - ` Job `： 一次性任务 
 - ` Cronjob `： 定时任务
 
-控制器的作用： 
+### 控制器的作用
+
 - 管理Pod对象 
 - 使用标签与Pod关联 
 - 控制器实现了Pod的运维，例如滚动更新、伸缩、副本管理、维护Pod状态等。
 
 ---
 
-## Deployment控制器：介绍与简单部署
+# Deployment控制器
+
+## 介绍与简单部署
 
 ### 介绍
 
@@ -230,7 +234,8 @@ spec:
         operator: Exists
 ```
 
-## Job控制器：一次性任务
+---
+# Job控制器：一次性任务
 
 Job控制器分为普通任务（Job）和定时任务（CronJob）
 - Job一次性执行
@@ -260,7 +265,9 @@ spec:
 kubectl get job
 ```
 
-## CronJob控制器：定时任务
+---
+
+# CronJob控制器：定时任务
 
 定时任务：CronJob用于实现定时任务，像Linux的Crontab一样。
 应用场景：通知，备份

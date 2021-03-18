@@ -126,6 +126,8 @@ kubectl get pods -o wide
 NAME                   READY   STATUS    RESTARTS   AGE     IP               NODE        NOMINATED NODE   READINESS GATES
 web-6c57bdf5f4-6x8ct   1/1     Running   0          4h24m   10.244.169.140   k8s-node2   <none>           <none>
 ```
+
+### Pod的阶段
 - Pending：Pod未调度，或者Pod已调度正在拉去镜像中
 - Running：Pod已经运行
 - Failed：Pod内容器停止运行
