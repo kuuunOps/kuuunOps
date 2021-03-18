@@ -1,5 +1,5 @@
 - [首页](/)
-  - 容器
+  - CNCF
     - [Docker](/zh-cn/docker/)
     - [Kubernetes](zh-cn/k8s/)
     - [Helm](zh-cn/helm/)

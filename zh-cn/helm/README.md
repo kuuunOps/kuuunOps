@@ -1,37 +1,11 @@
 # Helm
 
-# Helm安装
+>Helm 是查找、分享和使用软件构建Kubernetes 的最优方式。
 
-```shell
-curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
-chmod 700 get_helm.sh
-./get_helm.sh
-```
+官网：https://helm.sh/zh/
 
-# 镜像仓库
+Github：
 
-## 添加
-```shell
-helm repo add  aliyun https://kubernetes.oss-cn-hangzhou.aliyuncs.com/charts
-# 或
-helm repo add  azure http://mirror.azure.cn/kubernetes/charts/
-```
+# Helm 是什么？
 
-## 查看
-```shell
-helm repo list
-NAME    URL
-aliyun  https://kubernetes.oss-cn-hangzhou.aliyuncs.com/charts
-azure   http://mirror.azure.cn/kubernetes/charts/
-```
-
-## 删除
-```shell
-helm repo remove  azure
-```
-
-
-## 搜索镜像
-```shell
-helm  search repo mysql
-```
+Helm 帮助您管理 Kubernetes 应用——Helm 图表，即使是最复杂的 Kubernetes 应用程序，都可以帮助您定义，安装和升级。
