@@ -2,6 +2,7 @@
   - 容器
     - [Docker](/zh-cn/docker/)
     - [Kubernetes](zh-cn/k8s/)
+    - [Helm](zh-cn/helm/)
   - 开发
     - [Python](/zh-cn/python/)
       - [基础知识(更新中)](/zh-cn/python/base/)

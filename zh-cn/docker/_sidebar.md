@@ -4,6 +4,7 @@
       - [Docker企业运维实战](/zh-cn/docker/企业运维实战/)
       - [Docker官方文献](/zh-cn/docker/官方资料/)
     - [Kubernetes](zh-cn/k8s/)
+    - [Helm](zh-cn/helm/)
   - 开发
     - [Python](/zh-cn/python/)
     - [Golang](/zh-cn/go/)
