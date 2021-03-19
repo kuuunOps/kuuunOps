@@ -14,6 +14,7 @@
       - [基于Docker构建企业Jenkins CI平台](/zh-cn/docker/基于Docker构建企业Jenkins平台.md)
     - [Kubernetes](zh-cn/k8s/)
     - [Helm](zh-cn/helm/)
+    - [Prometheus](zh-cn/prometheus/)
   - 开发
     - [Python](/zh-cn/python/)
     - [Golang](/zh-cn/go/)
