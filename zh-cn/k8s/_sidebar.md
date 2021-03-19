@@ -15,6 +15,7 @@
         - [十一、Kubernetes管理应用程序配置](/zh-cn/k8s/kubernetes管理应用程序配置.md)
         - [十二、Kubernetes存储](/zh-cn/k8s/kubernetes存储.md)
         - [十三、有状态应用](/zh-cn/k8s/有状态应用.md)
+        - [十四、Kubernetes API 访问控制](/zh-cn/k8s/安全框架.md)
     - [Helm](zh-cn/helm/)
   - 开发
     - [Python](/zh-cn/python/)

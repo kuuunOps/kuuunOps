@@ -150,17 +150,54 @@ spec:
     ...
 ```
 
+---
+
 ## Deployment控制器：发布失败回滚
+
+为当前资源添加版本信息等说明信息
+
+```shell
+kubectl annotate deployments.apps web kubernetes.io/change-cause="deployment nginx image 1.16"
+```
+
+也可以通过`annotations`添加`kubernetes.io/change-cause`在YAML标识用于说明变更原因，用于记录版本信息，方便回滚查询。
+
+**示例配置**
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kubernetes.io/change-cause: deployment nginx image 1.16
+  labels:
+    app: web
+  name: web
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - image: nginx:1.16
+        name: nginx
+        ports:
+        - containerPort: 80
+```
 
 **查看历史版本**
 
 ```shell
-kubectl rollout history deployment web
+# kubectl rollout history deployment web
 deployment.apps/web
 REVISION  CHANGE-CAUSE
-1         <none>
-2         <none>
-3         <none>
+1         deployment nginx image 1.16
+2         update nginx image 1.17
+3         kubectl set image deployment/web nginx=nginx:1.18 --record=true
 ```
 
 **回滚到上一版本**
