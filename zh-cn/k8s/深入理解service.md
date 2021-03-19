@@ -77,7 +77,7 @@ spec:
     app: web
 ```
 
-![clusterip](../../../_media/clusterip.jpg)
+![clusterip](../../_media/clusterip.jpg)
 
 **NodePort**
 
@@ -105,11 +105,13 @@ selector:
 
 与NodePort类似，在每个节点上启用一个端口来暴 露服务。除此之外，Kubernetes会请求底层云平台（例如阿里云、腾 讯云、AWS等）上的负载均衡器，将每个Node（[NodeIP]:[NodePort]）作为后端添加进去。
 
-![loadbalancer](../../../_media/loadbalancer.jpg)
+![loadbalancer](../../_media/loadbalancer.jpg)
 
+---
 ## Service负载均衡实现之Iptables
 
 
+---
 ## Service负载均衡实现之IPVS
 
 iptables 转换为 IPVS
@@ -154,7 +156,7 @@ ClusterIP A记录格式：` <service-name>.<namespace-name>.svc.cluster.local `
 
 ![coredns](../../../_media/coredns.jpg)
 
-1. **默认deufalt命名空间**
+**默认deufalt命名空间**
 ```shell
 kubectl run -it dns-test --image=busybox:1.28.4 -- sh
 If you don't see a command prompt, try pressing enter.
@@ -162,13 +164,13 @@ If you don't see a command prompt, try pressing enter.
 / # nslookup web-nodeport
 Server:    10.96.0.10
 Address 1: 10.96.0.10 kube-dns.kube-system.svc.cluster.local
-
+ 
 Name:      web-nodeport
 Address 1: 10.100.185.234 web-nodeport.default.svc.cluster.local
 / #
 ```
 
-2. **跨命名空间访问**
+**跨命名空间访问**
 ```shell
 # kubectl get svc -n kube-system
 NAME       TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)                  AGE
@@ -178,12 +180,12 @@ If you don't see a command prompt, try pressing enter.
 / # nslookup kube-dns
 Server:    10.96.0.10
 Address 1: 10.96.0.10 kube-dns.kube-system.svc.cluster.local
-
+ 
 nslookup: can't resolve 'kube-dns'
 / # nslookup kube-dns.kube-system
 Server:    10.96.0.10
 Address 1: 10.96.0.10 kube-dns.kube-system.svc.cluster.local
-
+ 
 Name:      kube-dns.kube-system
 Address 1: 10.96.0.10 kube-dns.kube-system.svc.cluster.local
 ```
