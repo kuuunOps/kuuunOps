@@ -227,16 +227,57 @@ user:
 
 **示例**
 ```shell
-kubectl create deployment web --image=nginx:1.18
+kubectl create deployment web --image=nginx:1.18 --port=80
 kubectl get deploy,pods
 ```
+等效于
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: web
+  name: web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - image: nginx:1.18
+        name: nginx
+        ports:
+        - containerPort: 80
+```
+
 
 ### 使用service将pod暴露出去
 
 **示例**
 ```shell
-kubectl expose deployment web --port=80 --target-port=8080 --type=NodePort
+kubectl expose deployment web --port=80 --target-port=80 --type=NodePort
 kubectl get service
+```
+等效于
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: web
+    release: db
+  type: NodePort
 ```
 
 **访问应用**
@@ -254,16 +295,20 @@ http://NodeIP:Port
 
 #### 创建
 
-1. **命令式**
+---
+
+**命令式**
+
 - 语法基本格式：`kubectl run NAME --image=image`
 - 语法完全格式：`kubectl run NAME --image=image [--env="key=value"] [--port=port] [--dry-run=server|client] [--overrides=inline-json][--command] -- [COMMAND] [args...] [options]`
 
 **示例：**
+
 ```shell
 kubectl run my-pod --image=nginx:1.18 --port=80
 ```
 
-2. **声明式**
+**声明式**
 
 语法格式：`kubectl apply -f my-pod.yaml`
 
@@ -285,7 +330,9 @@ spec:
 
 #### 查看
 
-1. **查看清单**
+----
+
+**查看清单**
 
 语法格式：`kubectl get pods -n NAMESPACE`
 
@@ -296,7 +343,7 @@ spec:
 kubectl get pods -n kube-system
 ```
 
-2. **查看日志**
+**查看日志**
 
 语法格式：`kubectl logs [-f] [-p] (POD | TYPE/NAME) [-c CONTAINER] [options]`
 
@@ -305,7 +352,7 @@ kubectl get pods -n kube-system
 kubectl logs calico-node-9sdsl -n kube-system
 ```
 
-3. **查看详细信息**
+**查看详细信息**
 
 语法格式：`kubectl describe (-f FILENAME | TYPE [NAME_PREFIX | -l label] | TYPE/NAME) [options]`
 
@@ -315,6 +362,8 @@ kubectl describe pods mysql
 ```
 
 #### 删除
+
+---
 
 语法格式：`kubectl delete ([-f FILENAME] | [-k DIRECTORY] | TYPE [(NAME | -l label | --all)]) [options]`
 
@@ -331,7 +380,9 @@ kubectl delete pods my-pod
 
 #### 创建
 
-1. **命令式**
+---
+
+**命令式**
 
 语法格式：`kubectl create deployment NAME --image=image -- [COMMAND] [args...] [options]`
 
@@ -340,7 +391,7 @@ kubectl delete pods my-pod
 kubectl create deployment my-dep --image=busybox
 ```
 
-2. **声明式**
+**声明式**
 
 语法格式：`kubectl apply -f FILE_NAME.yaml`
 
@@ -369,7 +420,9 @@ spec:
 
 #### 查看
 
-1. **查看清单**
+---
+
+**查看清单**
 
 **示例**
 ```shell
@@ -379,7 +432,7 @@ kubectl get deployments
 kubectl get deployments web
 ```
 
-2. **查看详细信息**
+**查看详细信息**
 
 **示例**
 ```shell
@@ -387,6 +440,8 @@ kubectl describe deployments web
 ```
 
 #### 删除
+
+---
 
 **示例**
 ```shell
@@ -400,7 +455,9 @@ kubectl delete deployments web
 
 #### 创建
 
-1. **命令式**
+---
+
+**命令式**
    
 语法格式：`kubectl expose (-f FILENAME | TYPE NAME) [--port=port] [--protocol=TCP|UDP|SCTP] [--target-port=number-or-name] [--name=name] [--external-ip=external-ip-of-service] [--type=type] [options]`
 
@@ -409,7 +466,7 @@ kubectl delete deployments web
 kubectl expose deployment tomcat --port=80 --target-port=80 --target-port=8080 --name=tomcat-service --type=NodePort
 ```
 
-2. **声明式**
+**声明式**
 
 **示例**
 ```yaml
@@ -431,7 +488,9 @@ spec:
 
 #### 查看
 
-1. **查看清单**
+---
+
+**查看清单**
 
 ```shell
 # services 可以缩写为 svc
@@ -439,6 +498,8 @@ kubectl get services
 ```
 
 #### 删除
+
+---
 
 **示例**
 ```shell
@@ -504,27 +565,28 @@ kubectl label nodes k8s-node2 disk-
 
 #### 创建命名空间
 
-1. **命令式**
+**命令式**
 
 **示例**
 ```shell
 kubectl create namespace test
 ```
 
-2. **声明式**
+**声明式**
 
 **示例**
-```shell
+```yaml
 apiVersion: v1
 kind: Namespace
 metadata:
   name: nginx-ns
 ```
 
-
 #### 查看
 
-1. **查看已创建的命名空间**
+---
+
+**查看已创建的命名空间**
 
 **示例**
 ```shell
@@ -532,7 +594,7 @@ kubectl get namespace
 # 等效于kubectl get ns
 ```
 
-2. **指定命名空间查看资源**
+**指定命名空间查看资源**
 
 **示例**
 ```shell
@@ -541,6 +603,8 @@ kubectl get pods --namespace=kube-system
 ```
 
 #### 删除
+
+---
 
 **示例**
 ```shell
