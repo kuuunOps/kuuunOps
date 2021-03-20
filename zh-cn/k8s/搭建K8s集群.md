@@ -1,19 +1,531 @@
 # 搭建Kubernetes集群
 
-部署方式：
+<br>
+<span style="font-size:25px">部署方式：</span>
 
-- kubeadm
+- <span style="font-size:20px;"><b>1、kubeadm</b></span>
+  
   `kubeadm`是一个工具，提供`kubeadm init`和`kubeadm join`，用于快速部署Kubernetes集群。
   
   部署地址：https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm/
 
-- 二进制
+- <span style="font-size:20px;"><b>2、二进制</b></span>
+  
   推荐，从官方下载发行版的二进制包，手动部署每个组件，组成Kubernetes集群。 
   
   下载地址：https://github.com/kubernetes/kubernetes/releases
 
+---
 
-# 使用kubeadm搭建
+<span style="font-size:25px">安装要求：</span>
+
+
+- 一台或多台机器，操作系统：Ubuntu 16.04+，CentOS 7+
+- CPU:2核+
+- 内存：2GB+
+- 集群中所有机器内网或外网互通
+- 禁止swap分区
+
+---
+
+<span style="font-size:25px">K8s集群相关端口说明</span>
+
+  - 控制节点端口
+| 协议 | 方向 | 端口范围  | 作用                    | 使用者                       |
+| ---- | ---- | --------- | ----------------------- | ---------------------------- |
+| TCP  | 入站 | 6443      | Kubernetes API 服务器   | 所有组件                     |
+| TCP  | 入站 | 2379-2380 | etcd 服务器客户端 API   | kube-apiserver, etcd         |
+| TCP  | 入站 | 10250     | Kubelet API             | kubelet 自身、控制平面组件   |
+| TCP  | 入站 | 10251     | kube-scheduler          | kube-scheduler 自身          |
+| TCP  | 入站 | 10252     | kube-controller-manager | kube-controller-manager 自身 |
+  - 工作节点端口
+| 协议 | 方向 | 端口范围    | 作用           | 使用者                     |
+| ---- | ---- | ----------- | -------------- | -------------------------- |
+| TCP  | 入站 | 10250       | Kubelet API    | kubelet 自身、控制平面组件 |
+| TCP  | 入站 | 30000-32767 | NodePort 服务† | 所有组件                   |
+
+---
+
+# 基于二进制安装
+
+## 一、服务器初始化
+
+### 1. 主机规划
+
+---
+
+<table>
+  <caption style="font-size:20px;"><strong>服务器基本规划</strong><caption>
+  <br>
+  <thead>
+    <tr>
+      <th>角色</th>
+      <th>IP</th>
+      <th>组件</th>
+    <tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>k8s-master1</td>
+      <td>172.16.4.63</td>
+      <td>kube-apiserver<br>nkube-controller-manager<br>kube-scheduler<br>etcd</td>
+    </tr>
+    <tr>
+      <td>k8s-master2</td>
+      <td>172.16.4.64</td>
+      <td>kube-apiserver<br>nkube-controller-manager<br>kube-scheduler</td>
+    </tr>
+    <tr>
+      <td>k8s-node1</td>
+      <td>172.16.4.65</td>
+      <td>kubelet<br>kube-proxy<br>docker<br>etcd</td>
+    </tr>
+    <tr>
+      <td>k8s-node2</td>
+      <td>172.16.4.66</td>
+      <td>kubelet<br>kube-proxy<br>docker<br>etcd</td>
+    </tr>
+    <tr>
+      <td>Load Balancer(Master)</td>
+      <td>172.16.4.61<br>172.16.4.60(VIP)</td>
+      <td>Nginx</td>
+    </tr>
+    <tr>
+      <td>Load Balancer(Backup))</td>
+      <td>172.16.4.62</td>
+      <td>Nginx</td>
+    </tr>
+  </tbody>
+</table>
+
+### 2. 主机设置
+
+**关闭防火墙**
+```shell
+systemctl stop firewalld
+systemctl disable firewalld
+```
+
+**关闭selinux**
+
+```shell
+sudo sed -i 's/enforcing/disabled/' /etc/selinux/config  # 永久
+sudo setenforce 0  # 临时
+```
+
+**关闭swap**
+
+```shell
+sudo swapoff -a  # 临时
+sudo vim /etc/fstab  # 永久
+```
+
+**设置主机名**
+
+```shell
+# 节点主机 k8s-master1
+hostnamectl set-hostname k8s-master1
+# 节点主机 k8s-master2
+hostnamectl set-hostname k8s-master2
+# 节点主机 k8s-node1
+hostnamectl set-hostname k8s-node1
+# 节点主机 k8s-node2
+hostnamectl set-hostname k8s-node2
+```
+
+**hosts解析**
+
+```shell
+# 在所有节点上添加解析
+cat >> /etc/hosts << EOF
+172.16.4.63 k8s-master1
+172.16.4.64 k8s-master2
+172.16.4.65 k8s-node1
+172.16.4.66 k8s-node2
+EOF
+```
+
+**时间同步**
+
+```shell
+yum install ntpdate -y
+ntpdate time.windows.com
+```
+
+---
+
+## 二、准备TSL证书
+
+### 1. 安装`cfssl`工具
+```shell
+curl -s -L https://pkg.cfssl.org/R1.2/cfssl_linux-amd64 -o /usr/bin/cfssl
+curl -s -L https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64 -o /usr/bin/cfssljson
+curl -s -L https://pkg.cfssl.org/R1.2/cfssl-certinfo_linux-amd64 -o /usr/bin/cfssl-certinfo
+chmod +x /usr/bin/cfssl*
+```
+
+## 三、 安装etcd集群
+### 1. 生成etcd相关证书
+
+#### 1. 创建一个目录用于存放etcd相关证书
+
+```shell
+mkdir -p ~/cert/etcd
+cd  ~/cert/etcd
+```
+
+
+#### 2. 创建一个的JSON配置文件，用于生成etcd的CA文件` ca-config.json `
+
+```shell
+cat > ca-config.json << EOF
+{
+  "signing": {
+    "default": {
+      "expiry": "87600h"
+    },
+    "profiles": {
+      "etcd": {
+        "expiry": "87600h",
+        "usages": [
+          "signing",
+          "key encipherment",
+          "server auth",
+          "client auth"
+        ]
+      },
+      "server": {
+        "expiry": "87600h",
+        "usages": [
+          "signing",
+          "key encipherment",
+          "server auth"
+        ]
+      },
+      "client": {
+        "expiry": "87600h",
+        "usages": [
+          "signing",
+          "key encipherment",
+          "client auth"
+        ]
+      }
+    }
+  }
+}
+EOF
+```
+
+#### 3. 创建一个 JSON 配置文件，用于 CA 证书签名请求（CSR）` ca-csr.json `
+
+```shell
+cat > ca-csr.json << EOF
+{
+    "CN": "etcd-ca",
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [{}]
+}
+EOF
+# 生成 CA 秘钥文件（ ca-key.pem ）和证书文件（ ca.pem ）
+cfssl gencert -initca ca-csr.json | cfssljson -bare ca
+```
+
+#### 4. 创建一个JSON配置文件，用于Server端和Peer集群成员生成秘钥和证书（` server-peer-csr.json `）
+
+```shell
+cat > server-peer-csr.json << EOF
+{
+    "CN": "kube-etcd",
+    "hosts": [
+        "k8s-master1",
+        "k8s-node1",
+        "k8s-node2",
+        "172.16.4.63",
+        "172.16.4.65",
+        "172.16.4.66",
+        "localhost",
+        "127.0.0.1"
+    ],
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [{}]
+}
+EOF
+# 签发Sever端证书文件
+cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=etcd server-peer-csr.json | cfssljson -bare server
+# 签发Peer集群成员证书文件
+cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=etcd server-peer-csr.json | cfssljson -bare peer
+```
+
+#### 5. 创建一个JSON配置文件，用于Client端健康检查生成秘钥和证书（` healthcheck-client-csr.json `）
+
+```shell
+cat > healthcheck-client-csr.json << EOF
+{
+    "CN": "kube-etcd-healthcheck-client",
+    "hosts": [],
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [{
+        "O": "system:masters"
+    }]
+}
+EOF
+# 签发客户端检查证书文件
+cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=client healthcheck-client-csr.json | cfssljson -bare healthcheck-client
+```
+
+#### 6. 创建一个JSON配置文件，用于API server的Client端健康检查生成秘钥和证书（` apiserver-etcd-client-csr.json `）
+
+```shell
+cat > healthcheck-client-csr.json << EOF
+{
+    "CN": "kube-apiserver-etcd-client",
+    "hosts": [],
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [{
+        "O": "system:masters"
+    }]
+}
+EOF
+# 签发客户端检查证书文件
+cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=client healthcheck-client-csr.json | cfssljson -bare apiserver-etcd-client
+```
+
+### 2. 安装etcd集群
+
+#### 1. 准备etcd二进制文件安装包
+
+```shell
+tar xf etcd-v3.4.15-linux-amd64.tar
+cd etcd-v3.4.15-linux-amd64
+mv etcd etcdctl /usr/bin/
+```
+
+#### 2. 创建相关文件目录
+
+```shell
+# 创建证书存放目录
+mkdir -p /etc/kubernetes/pki/etcd/
+# 复制相关证书到目录
+cp ca.pem server.pem server-key.pem peer.pem peer-key.pem /etc/kubernetes/pki/etcd/
+# 创建数据存放目录
+mkdir -p /var/lib/etcd
+# 创建配置文件存放目录
+mkdir -p /etc/etcd/
+```
+
+#### 3. 创建配置文件
+
+**配置文件` /etc/etcd/etcd.yaml `示例**
+```yaml
+name: 'etcd-1'
+data-dir: /var/lib/etcd/
+snapshot-count: 10000
+listen-peer-urls: https://172.16.4.63:2380
+listen-client-urls: https://172.16.4.63:2379
+initial-cluster: 'etcd-1=https://172.16.4.63:2380,etcd-2=https://172.16.4.65:2380,etcd-3=https://172.16.4.66:2380'
+initial-advertise-peer-urls: https://172.16.4.63:2380
+advertise-client-urls: https://172.16.4.63:2379
+initial-cluster-token: 'etcd-cluster'
+initial-cluster-state: 'new'
+client-transport-security:
+  cert-file: /etc/kubernetes/pki/etcd/server.pem
+  key-file: /etc/kubernetes/pki/etcd/server-key.pem
+  client-cert-auth: true
+  trusted-ca-file: /etc/kubernetes/pki/etcd/ca.pem
+peer-transport-security:
+  cert-file: /etc/kubernetes/pki/etcd/peer.pem
+  key-file: /etc/kubernetes/pki/etcd/peer-key.pem
+  client-cert-auth: true
+  trusted-ca-file: /etc/kubernetes/pki/etcd/ca.pem
+```
+
+
+
+
+#### 4. 配置systemd用于管理etcd
+
+```shell
+cat > /usr/lib/systemd/system/etcd.service << EOF
+[Unit]
+Description=Etcd Server
+After=network.target
+After=network-online.target
+Wants=network-online.target
+ 
+[Service]
+Type=notify
+ExecStart=/usr/bin/etcd --config-file=/etc/etcd/etcd.yaml
+Restart=on-failure
+LimitNOFILE=65536
+ 
+[Install]
+WantedBy=multi-user.target
+EOF
+ 
+sudo systemctl daemon-reload
+sudo systemctl enable etcd
+sudo systemctl start etcd
+```
+
+#### 5. 验证集群
+
+```shell
+etcdctl endpoint health \
+--cacert=/etc/kubernetes/pki/etcd/ca.pem \
+--cert=/etc/kubernetes/pki/etcd/healthcheck-client.pem \
+--key=/etc/kubernetes/pki/etcd/healthcheck-client-key.pem \
+--endpoints="https://172.16.4.63:2379,https://172.16.4.65:2379,https://172.16.4.66:2379"
+# 正常返回值
+# https://172.16.4.63:2379 is healthy: successfully committed proposal: took = 22.19453ms
+# https://172.16.4.66:2379 is healthy: successfully committed proposal: took = 30.647915ms
+# https://172.16.4.65:2379 is healthy: successfully committed proposal: took = 30.835832ms
+```
+
+---
+
+## 四、 安装kubernetes集群
+
+### 1. 生成kubernetes相关证书
+
+#### 1. 创建一个目录用于存放kubernetes相关证书
+
+```shell
+mkdir -p ~/cert/k8s
+cd ~/cert/k8s
+```
+
+#### 2. 创建一个的JSON配置文件，用于生成etcd的CA文件` ca-config.json `
+
+```shell
+cat > ca-config.json << EOF
+{
+  "signing": {
+    "default": {
+      "expiry": "87600h"
+    },
+    "profiles": {
+      "kubernetes": {
+        "expiry": "87600h",
+        "usages": [
+          "signing",
+          "key encipherment",
+          "server auth",
+          "client auth"
+        ]
+      },
+      "server": {
+        "expiry": "87600h",
+        "usages": [
+          "signing",
+          "key encipherment",
+          "server auth"
+        ]
+      },
+      "client": {
+        "expiry": "87600h",
+        "usages": [
+          "signing",
+          "key encipherment",
+          "client auth"
+        ]
+      }
+    }
+  }
+}
+EOF
+```
+
+#### 3. 创建一个 JSON 配置文件，用于 CA 证书签名请求（CSR）` ca-csr.json `
+
+```shell
+cat > ca-csr.json << EOF
+{
+    "CN": "kubernetes-ca",
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [{}]
+}
+EOF
+# 生成 CA 秘钥文件（ ca-key.pem ）和证书文件（ ca.pem ）
+cfssl gencert -initca ca-csr.json | cfssljson -bare ca
+```
+
+#### 4. 创建一个 JSON 配置文件，用于生成API server证书文件` server-csr.json `
+
+```shell
+cat > server-csr.json << EOF
+{
+    "CN": "kube-apiserver",
+    "hosts": [
+        "k8s-master1",
+        "k8s-master2",
+        "172.16.4.60",
+        "172.16.4.61",
+        "172.16.4.62",
+        "172.16.4.63",
+        "172.16.4.64",
+        "kubernetes",
+        "kubernetes.default",
+        "kubernetes.default.svc",
+        "kubernetes.default.svc.cluster.local"
+    ],
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [{}]
+}
+EOF
+
+cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=server server-csr.json | cfssljson -bare apiserver
+```
+
+#### 5. 创建一个 JSON 配置文件，用于生成kubelet的Client端证书文件` kubelet-client-csr.json `
+
+```shell
+cat > kubelet-client-csr.json << EOF
+{
+    "CN": "kube-apiserver-kubelet-client",
+    "hosts": [],
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [{
+      "O": "system:masters"
+    }]
+}
+EOF
+cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=client kubelet-client-csr.json | cfssljson -bare apiserver-kubelet-client
+```
+
+#### 6. 安装kubernetes的master
+
+>Github: https://github.com/kubernetes/kubernetes/releases/
+
+
+
+---
+## 三、安装容器运行时
+
+### 1. 基于Docker
+
+### 2. 基于Containerd
+# 基于kubeadm搭建
 
 >主要步骤：
 >1. 安装docker
@@ -31,19 +543,10 @@
 >```
 >5. 部署Web UI（Dashboard）
 
-# 服务器初始化配置
+##  一、服务器初始化
 
-## 1. 安装要求
+### 1. 主机规划
 
-- 一台或多台机器，操作系统：Ubuntu 16.04+，CentOS 7+
-- CPU:2核+
-- 内存：2GB+
-- 集群中所有机器内网或外网互通
-- 禁止swap分区
-
-## 2. 环境准备
-
-### 2.1 主机规划
 <table style="text-align:center">
   <thead>
     <tr>
@@ -70,40 +573,30 @@
   </tbody>
 </table>
 
-### 2.2 关闭防火墙
+### 2. 主机设置
+
+**关闭防火墙**
 ```shell
 systemctl stop firewalld
 systemctl disable firewalld
 ```
 
-**K8s集群相关端口**
-  - 控制节点端口
-| 协议 | 方向 | 端口范围  | 作用                    | 使用者                       |
-| ---- | ---- | --------- | ----------------------- | ---------------------------- |
-| TCP  | 入站 | 6443      | Kubernetes API 服务器   | 所有组件                     |
-| TCP  | 入站 | 2379-2380 | etcd 服务器客户端 API   | kube-apiserver, etcd         |
-| TCP  | 入站 | 10250     | Kubelet API             | kubelet 自身、控制平面组件   |
-| TCP  | 入站 | 10251     | kube-scheduler          | kube-scheduler 自身          |
-| TCP  | 入站 | 10252     | kube-controller-manager | kube-controller-manager 自身 |
-  - 工作节点端口
-| 协议 | 方向 | 端口范围    | 作用           | 使用者                     |
-| ---- | ---- | ----------- | -------------- | -------------------------- |
-| TCP  | 入站 | 10250       | Kubelet API    | kubelet 自身、控制平面组件 |
-| TCP  | 入站 | 30000-32767 | NodePort 服务† | 所有组件                   |
+**关闭selinux**
 
-### 2.3关闭selinux
 ```shell
 sudo sed -i 's/enforcing/disabled/' /etc/selinux/config  # 永久
 sudo setenforce 0  # 临时
 ```
 
-### 2.4 关闭swap
+**关闭swap**
+
 ```shell
 sudo swapoff -a  # 临时
 sudo vim /etc/fstab  # 永久
 ```
 
-### 2.5 设置主机名
+**设置主机名**
+
 ```shell
 # 节点主机 k8s-master
 hostnamectl set-hostname k8s-master
@@ -113,7 +606,8 @@ hostnamectl set-hostname k8s-node1
 hostnamectl set-hostname k8s-node2
 ```
 
-### 2.6 hosts解析
+**hosts解析**
+
 ```shell
 # 在所有节点上添加解析
 cat >> /etc/hosts << EOF
@@ -123,8 +617,9 @@ cat >> /etc/hosts << EOF
 EOF
 ```
 
-### 2.7 时间同步
-```bash
+**时间同步**
+
+```shell
 # apt install ntpdate -y
 yum install ntpdate -y
 ntpdate time.windows.com
@@ -132,9 +627,9 @@ ntpdate time.windows.com
 
 ---
 
-## 3. 安装容器运行时（runC）
+## 二、安装容器运行时（runC）
 
-### 3.1 使用Docker作为容器运行时
+### 1. 使用Docker作为容器运行时
 
 >仅在kubernetes1.23版本以前支持，以后请使用其他容器运行时
 
@@ -225,8 +720,8 @@ sudo systemctl enable docker.service
 ```shell
 curl -sSL https://get.daocloud.io/daotools/set_mirror.sh | sh -s https://b9pmyelo.mirror.aliyuncs.com
 ```
-
-### 3.2 使用Containerd作为容器运行时
+---
+### 2. 使用Containerd作为容器运行时
 
 1. 安装`containerd`依赖模块
 ```shell
@@ -309,9 +804,9 @@ sudo systemctl restart containerd
 
 ---
 
-## 4. 安装` kubernetes `
+## 三、安装` kubernetes `
 
-### 4.1 配置` kubernetes `镜像
+### 1. 配置` kubernetes `镜像
    
 **CentOS系统**
 ```shell
@@ -344,7 +839,7 @@ EOF
 >
 >https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/#initializing-your-control-plane-node
 
-### 4.2 安装Master
+### 2. 安装Master
 
 **CentOS**
 ```shell
@@ -358,7 +853,7 @@ apt-get update && apt-get install -y kubelet kubeadm kubectl
 systemctl enable --now kubelet
 ```
 
-### 4.3 安装Node
+### 3. 安装Node
 
 **CentOS**
 ```shell
@@ -372,7 +867,7 @@ apt-get update && apt-get install -y kubelet kubeadm
 systemctl enable --now kubelet
 ```
 
-### 4.4 配置kubelet/crictl（可选）
+### 4. 配置kubelet/crictl（可选）
 
 > 使用containerd作为容器运行时需要进行额外配置
  
@@ -396,7 +891,7 @@ EOF
 ```
 
 
-### 4.5 集群初始化
+### 5. 集群初始化
 
 >在Master节点执行初始化操作
 
@@ -493,7 +988,7 @@ export KUBECONFIG=/etc/kubernetes/admin.conf
 
 ---
 
-## 5. 部署网络组件(CNI)
+## 四、部署网络组件(CNI)
 
 [参考文献](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/#pod-network)
 
@@ -546,7 +1041,7 @@ k8s-master   Ready    control-plane,master   10m   v1.20.4
 ```
 
 ---
-## 6. 添加Node节点
+## 五、添加Node节点
 
 在node节点上执行集群添加命令，命令为kubeadm init输出的kubeadm join命令
 ```shell
@@ -565,7 +1060,7 @@ k8s-node2    NotReady   <none>                 1s    v1.20.4
 
 ---
 
-## 7. 测试
+## 六、 测试
 ```shell
 kubectl create deployment nginx --image=nginx
 kubectl expose deployment nginx --port=80 --type=NodePort
@@ -574,7 +1069,7 @@ kubectl get pod,svc
 
 ---
 
-## 8. 部署Web UI
+## 七、部署Web UI
 
 ```shell
 curl -o  dashboard.yaml https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.3/aio/deploy/recommended.yaml
