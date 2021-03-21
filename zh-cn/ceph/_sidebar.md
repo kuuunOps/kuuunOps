@@ -12,6 +12,8 @@
     - [Ansible](/zh-cn/ansible/)
   - 存储
     - [Ceph](/zh-cn/ceph/)
+      - [Ceph入门到实战](/zh-cn/ceph/ceph入门到实战/)
+      - [Rook构建Ceph云原生存储实战](/zh-cn/ceph/rook构建ceph云原生存储实战/)
   - 基础
     - [Linux](/zh-cn/linux/)
     - [Ubuntu](/zh-cn/ubuntu/)

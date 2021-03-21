@@ -21,6 +21,8 @@
   - Devops
     - [Jenkins](zh-cn/jenkins/)
     - [Ansible](zh-cn/ansible/)
+  - 存储
+    - [Ceph](/zh-cn/ceph/)
   - 基础
     - [Linux](zh-cn/linux/)
     - [Ubuntu](zh-cn/ubuntu/)
