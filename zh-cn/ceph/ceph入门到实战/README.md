@@ -173,7 +173,7 @@ Ceph集群五大表：
 
 - `Monitor Map`：包含每个`Monitor`的群集FSID，位置，名称地址和端口。
 - `OSD Map`：包含群集FSID，当创建地图并上次修改时，池列表，副本大小，PG编号，OSDS列表及其状态
-- `PG Map`：包含PG版本，其时间戳，最后一个OSD地图epoch，全比例和详细信息，如PG ID，UP集，作用集，PG状态（例如，Active + Clean的状态） ）和每个池的数据使用统计信息。
+- `PG Map`：包含PG版本，其时间戳，最后一个OSD表epoch，全比例和详细信息，如PG ID，UP集，作用集，PG状态（例如，Active + Clean的状态） ）和每个池的数据使用统计信息。
 - `CRUSH Map`：包含存储设备列表，故障域层次结构（例如，设备，主机，机架，行，房间等）以及在存储数据时遍历层次结构的规则。
 - `MDS MAP`：包含当前MDS映射epoch，当创建地图时，最后一次更改。它还包含用于存储元数据的池，元数据服务器列表，以及哪些元数据服务器始终为。
 
@@ -188,6 +188,8 @@ Ceph集群五大表：
 ## Ceph数据写入流程
 
 File-->Objects(oid)-->PGs(pgid)-->CRUSH(pgid)-->OSDs
+
+![](../../../_media/ceph-write-data.png)
 
 ---
 
@@ -219,19 +221,19 @@ File-->Objects(oid)-->PGs(pgid)-->CRUSH(pgid)-->OSDs
         <td>ceph-deploy</td>
     </tr>
     <tr>
-        <td>ceph-node1</td>
+        <td>ceph-node-1</td>
         <td>mon.node-1<br>rgw.node-1<br>mds<br>ceph-osd</td>
         <td>172.16.4.61<br>172.16.4.62</td>
         <td></td>
     </tr>
     <tr>
-        <td>ceph-node2</td>
+        <td>ceph-node-2</td>
         <td>mon.node-1<br>rgw.node-1<br>mds<br>ceph-osd</td>
         <td>172.16.4.63<br>172.16.4.64</td>
         <td></td>
     </tr>
     <tr>
-        <td>ceph-node3</td>
+        <td>ceph-node-3</td>
         <td>mon.node-1<br>mds<br>ceph-osd</td>
         <td>172.16.4.65<br>172.16.4.66</td>
         <td></td>
@@ -245,18 +247,18 @@ File-->Objects(oid)-->PGs(pgid)-->CRUSH(pgid)-->OSDs
 
 ```shell
 cat >>/etc/hosts<<EOF
-172.16.4.61 node-1
-172.16.4.63 node-2
-172.16.4.65 node-3
+172.16.4.61 ceph-node-1
+172.16.4.63 ceph-node-2
+172.16.4.65 ceph-node-3
 EOF
 ```
 ### 配置SSH秘钥，免密码登录
 
 ```shell
 ssh-keygen
-ssh-copy-id -i /root/.ssh/id_rsa.pub node-1
-ssh-copy-id -i /root/.ssh/id_rsa.pub node-2
-ssh-copy-id -i /root/.ssh/id_rsa.pub node-3
+ssh-copy-id -i /root/.ssh/id_rsa.pub ceph-node-1
+ssh-copy-id -i /root/.ssh/id_rsa.pub ceph-node-2
+ssh-copy-id -i /root/.ssh/id_rsa.pub ceph-node-3
 ```
 
 ### 关闭Selinux
@@ -268,7 +270,7 @@ ssh-copy-id -i /root/.ssh/id_rsa.pub node-3
 ### 配置yum源
 
 ```shell
-cat > ceph.repo << EOF
+cat > /etc/yum.repos.d/ceph.repo << EOF
 [norch]
 name=norch
 baseurl=http://mirrors.aliyun.com/ceph/rpm-nautilus/el7/noarch
@@ -300,28 +302,28 @@ mkdir ceph-cluster
 cd ceph-cluster
 ```
 
-### 初始化集群
-
-```shell
-ceph-deploy new --public-network=172.16.4.0/24 --cluster-network=172.16.4.0/24 node-1
-```
-
 ### node节点安装软件
 
 ```shell
 yum install ceph ceph-mon ceph-mgr ceph-radosgw ceph-mds -y
 ```
 
-### monitor初始化
+### 初始化集群
 
 ```shell
-ceph-deploy mon create-initial
+ceph-deploy new --public-network=172.16.4.0/24 --cluster-network=172.16.4.0/24 ceph-node-1
 ```
 
 ### 复制配置文件和秘钥
 
 ```shell
-ceph-deploy admin node-1 node-2 node-2
+ceph-deploy admin ceph-node-1 ceph-node-2 ceph-node-3
+```
+
+### monitor初始化
+
+```shell
+ceph-deploy mon create-initial
 ```
 
 ### 到node节点上查看状态
@@ -347,7 +349,7 @@ ceph-deploy admin node-1 node-2 node-2
 ### 将node-1配置为mgr
 
 ```shell
-ceph-deploy mgr create node-1
+ceph-deploy mgr create ceph-node-1
 ```
 再次查看状态，增加了一个mgr节点
 ```shell
@@ -383,15 +385,15 @@ sdc      8:32   0  200G  0 disk
 ```
 添加OSD磁盘
 ```shell
-ceph-deploy osd create --data /dev/sdb node-1
-ceph-deploy osd create --data /dev/sdb node-2
-ceph-deploy osd create --data /dev/sdb node-3
+ceph-deploy osd create --data /dev/sdb ceph-node-1
+ceph-deploy osd create --data /dev/sdb ceph-node-2
+ceph-deploy osd create --data /dev/sdb ceph-node-3
 ```
 到节点上检测集群状态
 ```shell
-# ssh node-1 sudo ceph health
+# ssh ceph-node-1 sudo ceph health
 HEALTH_OK
-# ssh node-1 sudo ceph -s
+# ssh ceph-node-1 sudo ceph -s
   cluster:
     id:     43279ef2-e520-47c9-8252-565a1788dad5
     health: HEALTH_OK
@@ -406,7 +408,7 @@ HEALTH_OK
     objects: 0 objects, 0 B
     usage:   3.0 GiB used, 597 GiB / 600 GiB avail
     pgs:
-# ssh node-1 sudo ceph osd tree
+# ssh ceph-node-1 sudo ceph osd tree
 ID CLASS WEIGHT  TYPE NAME       STATUS REWEIGHT PRI-AFF
 -1       0.58589 root default
 -3       0.19530     host node-1
@@ -422,37 +424,34 @@ ID CLASS WEIGHT  TYPE NAME       STATUS REWEIGHT PRI-AFF
 ### 扩展mon
 
 ```shell
-ceph-deploy mon add node-2
+ceph-deploy mon add ceph-node-2
+ceph-deploy mon add ceph-node-3
 ```
 查看mon集群状态
 ```shell
 ceph quorum_status --format json-pretty
 ```
-添加node-3
-```shell
-ceph-deploy mon add node-3
-```
 再次查看mon集群状态
 ```shell
-# ceph mon dump
+# ssh ceph-node-1 ceph mon dump
 dumped monmap epoch 3
 epoch 3
-fsid 43279ef2-e520-47c9-8252-565a1788dad5
-last_changed 2021-03-21 22:55:21.339292
-created 2021-03-21 22:29:00.948463
+fsid 5626b796-05ec-4812-9fe8-c84feabcac13
+last_changed 2021-03-22 13:10:57.851312
+created 2021-03-22 13:01:35.974792
 min_mon_release 14 (nautilus)
-0: [v2:172.16.4.61:3300/0,v1:172.16.4.61:6789/0] mon.node-1
-1: [v2:172.16.4.63:3300/0,v1:172.16.4.63:6789/0] mon.node-2
-2: [v2:172.16.4.65:3300/0,v1:172.16.4.65:6789/0] mon.node-3
+0: [v2:172.16.4.61:3300/0,v1:172.16.4.61:6789/0] mon.ceph-node-1
+1: [v2:172.16.4.62:3300/0,v1:172.16.4.62:6789/0] mon.ceph-node-2
+2: [v2:172.16.4.63:3300/0,v1:172.16.4.63:6789/0] mon.ceph-node-3
 ```
 ### 扩展mgr
 
 ```shell
-ceph-deploy mgr create node-2 node-3
+ceph-deploy mgr create ceph-node-2 ceph-node-3
 ```
 当前集群状态为：
 ```shell
-# ssh node-1 sudo ceph -s
+# ssh ceph-node-1 sudo ceph -s
   cluster:
     id:     43279ef2-e520-47c9-8252-565a1788dad5
     health: HEALTH_OK
@@ -475,22 +474,132 @@ ceph-deploy mgr create node-2 node-3
 
 查看当前资源池
 ```shell
-ssh node-1 sudo ceph osd lspools
+ssh ceph-node-1 sudo ceph osd lspools
 ```
 
 创建资源池
 ```shell
-# ssh node-1 sudo ceph osd pool create ceph-demo 64 64
+# ssh ceph-node-1 sudo ceph osd pool create ceph-demo 64 64
 pool 'ceph-demo' created
 ```
 
+
+
 查看资源池具体信息
 ```shell
-ssh node-1 sudo ceph osd pool get ceph-demo -h
+ssh ceph-node-1 sudo ceph osd pool get ceph-demo -h
+```
+
+##  RBD块存储创建和映射
+
+### RBD块存储常见操作 
+
+1. 查看RBD块清单
+
+```shell
+rbd -p ceph-demo ls
+```
+
+2. 初始化资源池
+```shell
+rbd pool init ceph-demo
+```
+
+3. 创建RBD块
+
+```shell
+rbd create ceph-demo/rbd-demo.img --size=10G
+```
+
+4. 检索RBD块详情
+
+```shell
+rbd info ceph-demo/rbd-demo.img
+```
+
+5. 移除RBD块
+
+```shell
+rbd rm ceph-demo/rbd-demo-1.img
+```
+
+6. 关闭feature
+   
+```shell
+rbd feature disable ceph-demo/rbd-demo.img deep-flatten,fast-diff,object-map,exclusive-lock
+```
+
+7. 映射RBD
+
+```shell
+rbd map ceph-demo/rbd-demo.img
+```
+
+8. 查看RBD块设备清单
+   
+```shell
+rbd device ls
+```
+
+9. 使用RBD块设备
+
+```shell
+mkfs.ext4 /dev/rbd0
+mkdir -p /mnt/rbd-demo
+mount /dev/rbd0 /mnt/rbd-demo
+```
+
+## RBD块扩容
+
+底层块扩容
+```shell
+rbd resize ceph-demo/rbd-demo.img --size=20G
+```
+文件系统扩容
+```shell
+resize2fs /dev/rbd0
+```
+
+## RBD块数据写入流程
+
+查看Object落盘位置
+```shell
+# ceph osd map ceph-demo rbd_data.114c3b7f402f.000000000000043d
+osdmap e25 pool 'ceph-demo' (1) object 'rbd_data.114c3b7f402f.000000000000043d' -> pg 1.c64ce563 (1.63) -> up ([0,2,1], p0) acting ([0,2,1], p0)
+```
+
+## Ceph告警处理
+
+1. 查看健康详情
+
+```shell
+ceph health detail
+```
+
+2. 对告警内容打包
+
+```shell
+# 查看告警清单
+ceph crash ls
+# 告警打包
+ceph crash archive <id>
+ceph crash archive-all
 ```
 
 ---
 # 第五章 RGW对象存储
+
+## 部署RGW存储网关
+
+
+```shell
+# 安装软件包
+yum install ceph-radosgw -y
+# 创建存储网关
+ceph-deploy --overwrite-conf rgw create ceph-node-1
+```
+
+
 ---
 # 第六章 CephFS文件存储
 ---
