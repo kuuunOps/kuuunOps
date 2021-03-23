@@ -38,15 +38,74 @@ Github：https://github.com/prometheus
 
 ### 二进制部署
 
+#### 1. 准备安装包
 ```shell
 curl -o prometheus-2.25.2.linux-amd64.tar.gz https://github.com/prometheus/prometheus/releases/download/v2.25.2/prometheus-2.25.2.linux-amd64.tar.gz
 tar xf prometheus-2.25.2.linux-amd64.tar.gz
-cd prometheus-2.25.2.linux-amd64
-./prometheus
+mv prometheus-2.25.2.linux-amd64 /opt/prometheus
+chmod +x /opt/prometheus/prometheus
+chmod +x /opt/prometheus/promtool
+ln -sf /opt/prometheus/prometheus /usr/bin/prometheus
+ln -sf /opt/prometheus/promtool /usr/bin/promtool
 ```
-通过浏览器访问：http://ip:9090
 
-`prometheus`命令常用参数选项
+#### 2. 创建相关目录
+```shell
+# 创建配置文件存放目录
+mkdir -p /opt/prometheus/conf
+# 创建数据存放目录
+mkdir -p /opt/prometheus/data
+```
+
+#### 3. 配置`prometheus.yml`示例
+```yaml
+# 全局配置
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+# 告警配置
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      # - alertmanager:9093
+# 规则配置
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+# 采集配置
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+    - targets: ['localhost:9090']
+```
+
+#### 4. 配置`systemd`
+```shell
+cat >/usr/lib/systemd/system/prometheus.service <<EOF
+[Unit]
+Description=prometheus
+[Service]
+ExecStart=/opt/prometheus/prometheus --config.file=/opt/prometheus/conf/prometheus.yml --storage.tsdb.path=/opt/prometheus/data/ --storage.tsdb.retention.time=30d
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl daemon-reload 
+systemctl start prometheus 
+systemctl enable prometheus
+```
+
+#### 4. 验证
+  
+通过浏览器访问默认端口为`9090`
+
+![](../../_media/prometheus.png)
+
+#### 5. `prometheus`命令常用参数选项
+<br>
 
 | 参数选项                               | 描述                   |
 | -------------------------------------- | ---------------------- |
@@ -58,9 +117,10 @@ cd prometheus-2.25.2.linux-amd64
 | `--storage.tsdb.retention.time=15d`    | 数据保存时间，默认15天 |
 
 
-
+---
 ### Docker部署
 
+#### docker命令行
 ```shell
 docker run \
     -p 9090:9090 \
@@ -68,25 +128,26 @@ docker run \
     prom/prometheus
 ```
 
----
-
-## 配置系统服务
-
-配置`systemd`
-```shell
-cat >/usr/lib/systemd/system/prometheus.service <<EOF
-[Unit]
-Description=prometheus
-[Service]
-ExecStart=/opt/monitor/prometheus/prometheus --config.file=/opt/monitor/prometheus/prometheus.yml ExecReload=/bin/kill -HUP $MAINPID
-KillMode=process
-Restart=on-failure
-[Install]
-WantedBy=multi-user.target
-EOF
-systemctl daemon-reload 
-systemctl start prometheus 
-systemctl enable prometheus
+#### docker-compose
+```yaml
+version: "3.6"
+services:
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=60d
+      - --web.console.libraries=/usr/share/prometheus/console_libraries
+      - --web.console.templates=/usr/share/prometheus/consoles
+      - --web.enable-lifecycle
+    volumes:
+      - ./prometheus/conf:/etc/prometheus
+      - ./prometheus/data:/prometheus
 ```
 
 ---
@@ -138,4 +199,298 @@ remote_write:
 # Settings related to the remote read feature.
 remote_read:
   [ - <remote_read> ... ]
+```
+
+---
+
+## 监控指标数据模型
+
+### 数据模型： 
+- Prometheus将所有数据存储为时间序列
+- 具有相同度量名称以及标签属于同一个指标
+- 每个时间序列都由度量标准名称和一组键值对（称为标签）唯一标识， 通过标签查询指定指标。 
+
+### 指标格式： 
+`<metric name>{<label name>=<label value>,...}`
+**示例**
+```shell
+prometheus_http_requests_total{code="200",handler="/metrics"}
+```
+![](../../_media/prometheus-data-model.png)
+
+---
+
+# Grafana
+
+>官网地址：https://grafana.com/
+>
+>官方文档：https://grafana.com/docs/grafana/latest/
+
+## 部署Grafana数据可视化
+
+### 二进制部署
+
+#### 1. 准备安装包
+
+```shell
+wget https://dl.grafana.com/oss/release/grafana-7.4.5.linux-amd64.tar.gz
+tar -zxvf grafana-7.4.5.linux-amd64.tar.gz
+```
+
+#### 2. 配置系统服务`systemd`
+```shell
+cat > /usr/lib/systemd/system/grafana.service << EOF
+[Unit]
+Description=grafana
+[Service]
+ExecStart=/opt/monitor/grafana/bin/grafana-server -homepath=/opt/monitor/grafana
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl daemon-reload 
+systemctl start prometheus 
+systemctl enable prometheus
+```
+
+### docker部署
+
+
+**docker-compose.yaml示例**
+```shell
+version: "3.6"
+services:
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    user: "472"
+    volumes:
+      - ./grafana/data:/var/lib/grafana
+      - ./grafana/log:/var/log/grafana
+```
+
+## 验证
+
+默认端口为`3000`，账号：`admin`，密码：`admin`。
+
+![](../../_media/grafana.png)
+
+
+## 添加数据源
+
+![](../../_media/grafana-setting.png)
+
+`Grafana`支持大量数据来源，这里添加选择`Prometheus`
+
+![](../../_media/grafana-data.png)
+
+输入`Prometheus`访问地址，保存测试，返回页面
+
+![](./../../_media/grafana-prometheus.png)
+
+
+---
+
+# 监控案例
+
+通过安装采集插件，采集相关信息到`Prometheus`中，做数据汇总。
+
+插件文档参考：https://prometheus.io/docs/instrumenting/exporters/
+## 监控Linux服务器
+
+安装采集插件`node_exporter`，用于监控Linux系统的指标采集器。
+
+Github地址：https://github.com/prometheus/node_exporter
+
+### 二进制部署
+
+```shell
+cat > /usr/lib/systemd/system/node_exporter.service << EOF
+[Unit] 
+Description=node_exporter
+ 
+[Service]
+ExecStart=/usr/local/node_exporter/node_exporter --web.config=/usr/local/node_exporter/web-config.yml
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+ 
+[Install] 
+WantedBy=multi-user.target
+EOF
+systemctl daemon-reload 
+systemctl start node_exporter 
+systemctl enable node_exporter
+```
+
+
+### docker部署`node_exporter`
+
+配置密码加密访问
+```yaml
+# Usernames and hashed passwords that have full access to the web
+# server via basic authentication. If empty, no basic authentication is
+# required. Passwords are hashed with bcrypt.+
+basic_auth_users:
+  [ <string>: <secret> ... ]
+```
+加密方法
+```shell
+# yum install httpd-tools -y
+# htpasswd -nBC 12 "" | tr -d ':\n'
+# 对密码123456进行加密
+New password:
+Re-type new password:
+$2y$12$J517vkthd0JNgIxcJ1mIgeLR/oPU06.2WvlGeMmsEbJuuSrnuYBUO
+```
+配置`web-config.yml`示例
+```shell
+cat > web-config.yml << EOF
+basic_auth_users:
+  prometheus: $2y$12$J517vkthd0JNgIxcJ1mIgeLR/oPU06.2WvlGeMmsEbJuuSrnuYBUO
+EOF
+```
+
+
+`docker-compose.yaml`示例：
+```yaml
+version: '3.8'
+
+services:
+  node_exporter:
+    image: prom/node-exporter:latest
+    container_name: node_exporter
+    command:
+      - '--path.rootfs=/host'
+      - '--web.config=/web-config.yml'
+    network_mode: host
+    network_mode: host
+    pid: host
+    restart: unless-stopped
+    volumes:
+      - '/:/host:ro,rslave'
+      - './node-exporter/conf/web-config.yml:/web-config.yml:ro'
+```
+
+监听端口为：`9100`
+
+### 配置`Prometheus`
+
+**参考配置结构**
+```yaml
+... ...
+scrape_configs:
+  - job_name: node
+    basic_auth:
+      username: prometheus
+      password: 123456
+    static_configs:
+    - targets: ['172.16.4.245:9100']
+```
+重启服务`docker-compose restart`
+
+### 使用`Grafana`展示`node_exporter`数据指标
+
+推荐使用模板ID：9276
+
+![](../../_media/grafana-node.png)
+
+配置数据源
+
+![](../../_media/grafana-dashbaord.png)
+
+
+### 采集系统服务
+
+`node_exporter`插件增加参数选项
+```shell
+ --collector.systemd
+ --collector.systemd.unit-whitelist="(docker|sshd|nginx)\.service"
+#  新版本已更换参数名称
+#  --collector.systemd.unit-include="(docker|sshd|nginx)\.service"
+```
+
+---
+
+## 监控Docker容器
+
+### cAdvisor
+
+`cAdvisor`：用于收集正在运行的容器资源使用和性能信息。
+
+项目地址：https://github.com/google/cadvisor
+
+推荐仪表盘ID：193
+
+
+```shell
+cat > docker-compose.yaml << EOF
+version: "3.6"
+
+services:
+  cadvisor:
+    image: google/cadvisor:latest
+    container_name: cadvisor
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+EOF
+```
+
+### 变量的使用
+
+![](../../_media/grafana-var.png)
+
+---
+
+## 监控MySQL
+
+`mysqld_exporter`：MySQL数据库监控
+
+Github地址：https://github.com/prometheus/mysqld_exporter
+
+
+### 授权
+
+```mysql
+CREATE USER 'exporter'@'%' IDENTIFIED BY '123456' WITH MAX_USER_CONNECTIONS 3;
+GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO 'exporter'@'%';
+```
+
+### 部署
+
+
+`docker-compose.yaml`示例
+```shell
+cat > docker-compose.yml << EOF
+version: "3.6"
+
+services:
+  mysqld_exporter:
+    image: prom/mysqld-exporter
+    container_name: mysqld-exporter
+    command:
+      - --config.my-cnf=/.my.cnf
+    ports:
+      - "9104:9104"
+    volumes:
+      - ./conf/.my.cnf:/.my.cnf:ro
+EOF
+```
+`.my.cnf`配置示例
+```cnf
+[client] 
+user=exporter 
+password=123456
 ```

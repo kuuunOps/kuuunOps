@@ -1,106 +1,108 @@
 # Ceph入门到实战
 ---
-# 第一章 存储介绍
+# 初阶
+
+## 第一章 存储介绍
 
 - DAS
 - NAS
 - SAN
 - Object Storage
 
-## DAS存储介绍
+### DAS存储介绍
 
-### 1. 概念
+#### 1. 概念
 
 `Direct Attached Storage` 直接附加存储
 
-### 2. 方式
+#### 2. 方式
 
 服务器使用SCSI或FC协议连接到存储阵列
 
-### 3. 协议类型
+#### 3. 协议类型
 
 - SCSI总线
 - FC光纤
 
-### 4. 表现形式
+#### 4. 表现形式
 
 一块空间大小裸磁盘如`/dev/sdb`
 
-### 5. 优点
+#### 5. 优点
 
 组网简单，成本低廉，第一代
 
-### 6. 缺点
+#### 6. 缺点
 
 可扩展性有限，不灵活，无法多机共享
 
-### 7. 产品举例
+#### 7. 产品举例
 
 目前很少使用
 
 ---
 
-## NAS存储介绍
+### NAS存储介绍
 
-### 1. 概念
+#### 1. 概念
 
 `Network Attached Storage` 网络附加存储
 
-### 2. 方式
+#### 2. 方式
 
 服务器使用TCP网络协议连接至文件共享存储
 
-### 3. 协议类型
+#### 3. 协议类型
 
 - NFS
 - CIFS
 
-### 4. 表现形式
+#### 4. 表现形式
 
 映射到存储的一个目录，如/data
 
-### 5. 优点
+#### 5. 优点
 
 使用简单，通过IP协议实现互访，多机同时共享同个存储
 
-### 6. 缺点
+#### 6. 缺点
 
 性能有限，可靠性不高
 
-### 7. 产品举例
+#### 7. 产品举例
 
 - NFS，samba，GlusterFS，存储厂商提供的NAS存储
 - 公有云：AWS EFS，腾讯云CFS，阿里云NAS
 
 ---
 
-## SAN存储介绍
+### SAN存储介绍
 
-### 1. 概念
+#### 1. 概念
 
 `Storage Area Network` 存储区域网络
 
-### 2. 方式
+#### 2. 方式
 
 服务器使用一个存储区域网络IP或FC连接到存储阵列
 
-### 3. 表现形式
+#### 3. 表现形式
 
 一块有空间大小的裸磁盘，如/dev/sdb  
-### 4. 协议类型
+#### 4. 协议类型
 
 - IP-SAN
 - FC-SAN
 
-### 5. 优点
+#### 5. 优点
 
 性能好，可扩展性
 
-### 6. 缺点
+#### 6. 缺点
 
 成本高，尤其是FC存储，需要HBA卡，FC交换机，FC存储
 
-### 7. 产品举例
+#### 7. 产品举例
 
 - iSCSI,EMC，NetApp，HP等存储
 - 公有云：AWS EBS，腾讯云CBS，阿里云块存储
@@ -108,42 +110,42 @@
 
 ---
 
-## Object Storage存储介绍
+### Object Storage存储介绍
 
-### 1. 概念
+#### 1. 概念
 
 `Object Storage`对象存储
 
-### 2. 方式
+#### 2. 方式
 
 通过网络使用API访问一个无线扩展的分布式存储系统
 
-### 3. 表现形式
+#### 3. 表现形式
 
 无限使用的存储空间，通过PUT/GET无限上传和下载
-### 4. 协议类型
+#### 4. 协议类型
 
 - 兼容于S3风格
 - 原生PUT/GET类型
 
-### 5. 优点
+#### 5. 优点
 
 可扩展性强，使用简单，通过PUT/GET无限上传和下载
 
-### 6. 缺点
+#### 6. 缺点
 
 只使用与静态不可编辑文件，无法为服务器提供块级别存储
 
-### 7. 产品举例
+#### 7. 产品举例
 
 - HDFC,FastDFS，swift
 - 公有云：AWS S3，腾讯云COS，阿里云OSS
 
 
 ---
-# 第二章 Ceph存储架构
+## 第二章 Ceph存储架构
 
-## Ceph存储简介
+### Ceph存储简介
 
 >官网：https://ceph.io
 >
@@ -156,13 +158,13 @@
 - 易于管理
 - 开源
 
-## Ceph整体架构
+### Ceph整体架构
 
 Ceph提供了一个基于RADOS的无限扩展的Ceph存储集群.
 
 ![ceph](../../../_media/ceph-stack.png)
 
-## Ceph组件剖析
+### Ceph组件剖析
 
 - `Ceph Monitor`：维护群集映射的主副本。如果监视器守护程序失败，则为一群Ceph监视器确保高可用性。存储群集客户端从Ceph监视器检索群集映射的副本。
 - `Ceph OSD`：检查其自己的状态和其他OSD的状态，并报告回`Monitor`。
@@ -185,7 +187,7 @@ Ceph集群五大表：
 
 ![](../../../_media/osd-object.png)
 
-## Ceph数据写入流程
+### Ceph数据写入流程
 
 File-->Objects(oid)-->PGs(pgid)-->CRUSH(pgid)-->OSDs
 
@@ -193,16 +195,16 @@ File-->Objects(oid)-->PGs(pgid)-->CRUSH(pgid)-->OSDs
 
 ---
 
-# 第三章 Ceph集群部署
+## 第三章 Ceph集群部署
 
-## Ceph安装方法
+### Ceph安装方法
 
 - `ceph-deploy`：版本为`Nautilus`以前的适用。
 - `cephadm`：通过SSH连接到来自Manager守护程序的主机部署并管理Ceph集群，以添加，删除或更新Ceph守护程序容器。版本为：`Octopus`以后的适用。
 - `MANUAL`：手动安装。
 - `Rook`：部署和管理在Kubernetes中运行的Ceph集群，同时还通过Kubernetes API启用存储资源和配置。
 
-## Ceph主机规划
+### Ceph主机规划
 
 <table>
 <thead>
@@ -241,9 +243,9 @@ File-->Objects(oid)-->PGs(pgid)-->CRUSH(pgid)-->OSDs
 </tbody>
 </table>
 
-## 基础环境准备
+### 基础环境准备
 
-### 主机名与hosts解析
+#### 主机名与hosts解析
 
 ```shell
 cat >>/etc/hosts<<EOF
@@ -252,7 +254,7 @@ cat >>/etc/hosts<<EOF
 172.16.4.65 ceph-node-3
 EOF
 ```
-### 配置SSH秘钥，免密码登录
+#### 配置SSH秘钥，免密码登录
 
 ```shell
 ssh-keygen
@@ -261,13 +263,13 @@ ssh-copy-id -i /root/.ssh/id_rsa.pub ceph-node-2
 ssh-copy-id -i /root/.ssh/id_rsa.pub ceph-node-3
 ```
 
-### 关闭Selinux
+#### 关闭Selinux
 
-### 关闭防火墙
+#### 关闭防火墙
 
-### 时间同步
+#### 时间同步
 
-### 配置yum源
+#### 配置yum源
 
 ```shell
 cat > /etc/yum.repos.d/ceph.repo << EOF
@@ -286,14 +288,14 @@ EOF
 yum makecache fast
 ```
 
-## `admin-node`安装`ceph-deploy`
+### 管理节点安装`ceph-deploy`
 
 ```shell
 yum install -y python-setuptools
 yum install -y ceph-deploy
 ```
 
-## 部署monitor节点
+### node节点部署monitor节点
 
 ### 创建相关文件存放目录
 
@@ -302,31 +304,31 @@ mkdir ceph-cluster
 cd ceph-cluster
 ```
 
-### node节点安装软件
+#### node节点安装软件
 
 ```shell
 yum install ceph ceph-mon ceph-mgr ceph-radosgw ceph-mds -y
 ```
 
-### 初始化集群
+#### 初始化集群
 
 ```shell
 ceph-deploy new --public-network=172.16.4.0/24 --cluster-network=172.16.4.0/24 ceph-node-1
 ```
 
-### 复制配置文件和秘钥
+#### 复制配置文件和秘钥
 
 ```shell
 ceph-deploy admin ceph-node-1 ceph-node-2 ceph-node-3
 ```
 
-### monitor初始化
+#### monitor初始化
 
 ```shell
 ceph-deploy mon create-initial
 ```
 
-### 到node节点上查看状态
+#### 到node节点上查看状态
 
 ```shell
 # ceph -s
@@ -346,7 +348,7 @@ ceph-deploy mon create-initial
     pgs:
 ```
 
-### 将node-1配置为mgr
+#### 将node-1配置为mgr
 
 ```shell
 ceph-deploy mgr create ceph-node-1
@@ -371,7 +373,7 @@ ceph-deploy mgr create ceph-node-1
     pgs:
 ```
 
-## 向节点中添加OSD
+### 向节点中添加OSD
 
 查看当前磁盘分布
 ```shell
@@ -419,9 +421,9 @@ ID CLASS WEIGHT  TYPE NAME       STATUS REWEIGHT PRI-AFF
  2   hdd 0.19530         osd.2       up  1.00000 1.00000
 ```
 
-## 扩展mon和mgr
+### 扩展mon和mgr
 
-### 扩展mon
+#### 扩展mon
 
 ```shell
 ceph-deploy mon add ceph-node-2
@@ -444,7 +446,7 @@ min_mon_release 14 (nautilus)
 1: [v2:172.16.4.62:3300/0,v1:172.16.4.62:6789/0] mon.ceph-node-2
 2: [v2:172.16.4.63:3300/0,v1:172.16.4.63:6789/0] mon.ceph-node-3
 ```
-### 扩展mgr
+#### 扩展mgr
 
 ```shell
 ceph-deploy mgr create ceph-node-2 ceph-node-3
@@ -468,9 +470,9 @@ ceph-deploy mgr create ceph-node-2 ceph-node-3
     pgs:
 ```
 ---
-# 第四章 RBD块存储
+## 第四章 RBD块存储
 
-## 创建资源池Pool
+### 创建资源池Pool
 
 查看当前资源池
 ```shell
@@ -490,9 +492,9 @@ pool 'ceph-demo' created
 ssh ceph-node-1 sudo ceph osd pool get ceph-demo -h
 ```
 
-##  RBD块存储创建和映射
+###  RBD块存储创建和映射
 
-### RBD块存储常见操作 
+#### RBD块存储常见操作 
 
 1. 查看RBD块清单
 
@@ -549,7 +551,7 @@ mkdir -p /mnt/rbd-demo
 mount /dev/rbd0 /mnt/rbd-demo
 ```
 
-## RBD块扩容
+### RBD块扩容
 
 底层块扩容
 ```shell
@@ -560,7 +562,7 @@ rbd resize ceph-demo/rbd-demo.img --size=20G
 resize2fs /dev/rbd0
 ```
 
-## RBD块数据写入流程
+### RBD块数据写入流程
 
 查看Object落盘位置
 ```shell
@@ -568,7 +570,7 @@ resize2fs /dev/rbd0
 osdmap e25 pool 'ceph-demo' (1) object 'rbd_data.114c3b7f402f.000000000000043d' -> pg 1.c64ce563 (1.63) -> up ([0,2,1], p0) acting ([0,2,1], p0)
 ```
 
-## Ceph告警处理
+### Ceph告警处理
 
 1. 查看健康详情
 
@@ -587,41 +589,56 @@ ceph crash archive-all
 ```
 
 ---
-# 第五章 RGW对象存储
+## 第五章 RGW对象存储
 
-## 部署RGW存储网关
+### 对象存储架构
 
+![](../../../_media/ceph-object.png)
+
+### 部署RGW存储网关
 
 ```shell
 # 安装软件包
 yum install ceph-radosgw -y
 # 创建存储网关
-ceph-deploy --overwrite-conf rgw create ceph-node-1
+ceph-deploy rgw create ceph-node-1
+```
+
+### 修改RGW默认端口
+
+修改配置文件`ceph.conf`，在`[global]`字段下，新增配置项
+```shell
+[client.rgw.ceph-node-1]
+rgw_frontends = "civetweb port=80"
+```
+重启服务
+```shell
+sudo systemctl restart ceph-radosgw.target
 ```
 
 
 ---
-# 第六章 CephFS文件存储
+## 第六章 CephFS文件存储
 ---
-# 第七章 OSD扩容和还盘
+## 第七章 OSD扩容和还盘
 ---
-# 第八章 Ceph集群运维
+## 第八章 Ceph集群运维
 ---
-# 第九章 定制Crush map规则
+## 第九章 定制Crush map规则
 ---
-# 第十章 RBD高级功能
+## 第十章 RBD高级功能
 ---
-# 第十一章 RGW高可用集群
+## 第十一章 RGW高可用集群
 ---
-# 第十二章 Ceph集群测试
+## 第十二章 Ceph集群测试
 ---
-# 第十三章 Ceph与Kubernetes集成
+## 第十三章 Ceph与Kubernetes集成
 ---
-# 第十四章 Ceph与KVM集成
+## 第十四章 Ceph与KVM集成
 ---
-# 第十五章 Ceph与OpenStack对接
+## 第十五章 Ceph与OpenStack对接
 ---
-# 第十六章 Ceph管理与监控
+## 第十六章 Ceph管理与监控
 ---
-# 第十七章 SDK开发与排障分析
+## 第十七章 SDK开发与排障分析
 ---
