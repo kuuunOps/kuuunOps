@@ -463,13 +463,14 @@ Github地址：https://github.com/prometheus/mysqld_exporter
 
 ### 授权
 
-```mysql
+```sql
 CREATE USER 'exporter'@'%' IDENTIFIED BY '123456' WITH MAX_USER_CONNECTIONS 3;
-GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO 'exporter'@'%';
+GRANT PROCESS,REPLICATION CLIENT, SELECT ON *.* TO 'exporter'@'%' IDENTIFIED BY '123456' WITH MAX_USER_CONNECTIONS 3;
 ```
 
 ### 部署
 
+仪表盘推荐ID：7362
 
 `docker-compose.yaml`示例
 ```shell
@@ -489,8 +490,14 @@ services:
 EOF
 ```
 `.my.cnf`配置示例
-```cnf
-[client] 
+```shell
+cat > .my.cnf << EOF
+[client]
+host=127.0.0.1
+port=3306
 user=exporter 
 password=123456
+EOF
 ```
+
+---
