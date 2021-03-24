@@ -358,8 +358,9 @@ EOF
 
 
 `docker-compose.yaml`示例：
-```yaml
-version: '3.8'
+```shell
+cat > docker-compose.yaml << EOF
+version: '3.3'
 
 services:
   node_exporter:
@@ -368,13 +369,14 @@ services:
     command:
       - '--path.rootfs=/host'
       - '--web.config=/web-config.yml'
-    network_mode: host
+      - '--web.listen-address=:9100'
     network_mode: host
     pid: host
     restart: unless-stopped
     volumes:
       - '/:/host:ro,rslave'
-      - './node-exporter/conf/web-config.yml:/web-config.yml:ro'
+      - './conf/web-config.yml:/web-config.yml:ro'
+EOF
 ```
 
 监听端口为：`9100`
@@ -501,3 +503,96 @@ EOF
 ```
 
 ---
+
+# 服务发现
+
+**常用的服务发现类型**
+
+- 基于文件的服务发现：
+- 基于Consul的服务发现
+- 基于Kubernetes的服务发现
+
+
+官方文献地址：https://prometheus.io/docs/prometheus/latest/configuration/configuration/#consul_sd_config
+官方文献地址：https://prometheus.io/docs/prometheus/latest/configuration/configuration/#kubernetes_sd_config
+
+## 基于文件的服务发现
+
+官方文献地址：https://prometheus.io/docs/prometheus/latest/configuration/configuration/#file_sd_config
+
+### 1. 修改`Prometheus`服务端配置文件
+
+```yaml
+... ...
+  - job_name: 'file_sd' 
+    file_sd_configs: 
+    - files: ['/etc/prometheus/file_sd/*.yml']
+      # 每隔5秒检查一次
+      refresh_interval: 5s 
+```
+
+### 2. 配置服务发现文件
+
+```shell
+cat > test.yml << EOF
+- targets: ['192.168.31.63:9100']
+EOF
+```
+
+---
+
+## 基于Consul的服务发现
+
+> Consul是一个分布式的服务发现和键/值存储系统。
+
+### 基于docker安装
+
+`Consul`默认访问端口为8500。
+
+```shell
+docker run --name consul -d -p 8500:8500 consul
+```
+
+建议使用高可用方案搭建。
+
+参考地址：https://gitee.com/kuuun/learn-consul-docker
+
+### 配置`Prometheus`，启用服务发现
+
+```yaml
+- job_name: 'consul' 
+  consul_sd_configs: 
+  - server: 172.16.4.245:8500
+    services: ['service']
+```
+
+### 服务注册
+
+```shell
+curl -X PUT -d '{
+  "id": "Linux-1",
+  "name": "Linux",
+  "address": "172.16.4.252",
+  "port": 9100,
+  "tags": ["Linux"],
+  "checks": [
+    {
+      "http":"http://172.16.4.252:9100",
+      "method":"GET",
+      "interval": "5s",
+      "timeout": "1s"
+    }]
+    }' http://172.16.4.245:8500/v1/agent/service/register
+```
+
+字段说明：
+
+- id：等同于`Promethesu`中`instance`，是一个具体实例
+- name：等同于`Promethesu`中`job`，分组的概念，一个组中可以多个实例
+- check：进行健康检查，支持shell脚本
+
+### 服务删除
+
+```shell
+curl -X PUT http://172.16.4.245:8500/v1/agent/service/deregister/<ID>
+```
