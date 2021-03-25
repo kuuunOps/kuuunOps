@@ -1,0 +1,49 @@
+version: "3.7"
+services:
+  redis1:
+    image: redis:5
+    container_name: redis2
+    restart: always
+    ports:
+      - "6379:6379"
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - "./redis1/conf/redis.conf:/usr/local/redis/redis.conf"
+      - "./redis1/data:/data"
+    command: ["redis-server", "/usr/local/redis/redis.conf"]
+    networks:
+      - redis-network
+
+  redis2:
+    image: redis:5
+    container_name: redis2
+    restart: always
+    ports:
+      - "6380:6379"
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - "./redis2/conf/redis.conf:/usr/local/redis/redis.conf"
+      - "./redis2/data:/data"
+    command: ["redis-server", "/usr/local/redis/redis.conf"]
+    networks:
+      - redis-network
+
+  redis3:
+    image: redis:5
+    container_name: redis3
+    restart: always
+    ports:
+      - "6381:6379"
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - "./redis3/conf/redis.conf:/usr/local/redis/redis.conf"
+      - "./redis3/data:/data"
+    command: ["redis-server", "/usr/local/redis/redis.conf"]
+    networks:
+      - redis-network
+
+networks:
+  redis-network:

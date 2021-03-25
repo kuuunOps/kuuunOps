@@ -23,6 +23,7 @@
     - [Cfssl](/zh-cn/cfssl/)
     - [Rsync](zh-cn/rsync/)
     - [RabbitMQ](zh-cn/rabbitmq/)
+    - [Redis](/zh-cn/redis/)
   - 版本库
     - [Git](zh-cn/git/)
     - [Subversion](zh-cn/subversion/)
