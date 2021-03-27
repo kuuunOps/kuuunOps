@@ -675,3 +675,241 @@ repl-backlog-ttl 3600
 # master没有slave一段时间会释放复制缓冲区的内存，repl-backlog-ttl用来设置该时间长度。单位为秒。
 ```
 ---
+
+## Redis哨兵模式
+
+哨兵的作用就是对Redis的系统的运行情况的监控，它是一个独立进程。它的功能有2个：
+
+1. 监控主数据库（master）和从数据库（slave）是否运行正常；
+2. 主数据出现故障后自动选举出多个slave(如果有超过一个slave的话)中的一个来作为新的master,其它的slave节点会将它所追随的master的地址自动改为被提升为新master的地址。
+
+Redis-Sentinel是Redis官方推荐的高可用性(HA)解决方案，当用Redis做Master-slave的高可用方案时，假如master宕机了，Redis本身(包括它的很多客户端)都没有实现自动进行主备切换，而Redis-sentinel本身也是一个独立运行的进程，它能监控多个master-slave集群，发现master宕机后能进行自动切换。
+
+## Redis哨兵模式原理
+
+sentinel架构的主要作用是解决主从模式下主节点的故障转移工作的。主节点因为故障下线，那么某个sentinel节点发送检测消息给主节点时，如果在指定时间内收不到回复，那么该sentinel就会主观的判断该主节点已经下线，就会发送消息给其余的sentinel节点，询问其是否“认为”该主节点已下线，其余的sentinel收到消息后也会发送检测消息给主节点，如果其认为该主节点已经下线，那么就会回复向其询问的sentinel节点，告知它也认为主节点已经下线，当该sentinel节点最先收到超过指定数目（配置文件中配置的数目和当前sentinel节点集合数的一半，这里两个数目的较大值）的sentinel节点回复说当前主节点已下线，那么其就会对主节点进行故障转移工作。
+
+
+## Redis哨兵模式配置
+
+>每个sentinel节点在本质上还是一个redis实例，只不过和redis数据节点不同的是，其主要作用是监控redis数据节点。在redis安装目录下有个默认的文件sentinel.conf，这就是sentinel的配置文件。
+
+哨兵配置要求：
+
+1. 至少3个哨兵实例
+2. 三个哨兵实例应放置在分别独立的计算机或虚拟机中
+3. 准备好Redis集群
+
+`sentinel.conf`参考配置：
+
+```shell
+daemonize yes
+port  6800
+logfile  /var/log/redis/sentinel.log
+pidfile  /var/run/sentinel.pid
+# “sentinel monitor redismaster 172.16.213.75 8000 2”中，redismaster为自己起的集群的名字，
+# 172.16.213.75是 master的ip   8000是master redis的端口号， 
+# 2 表示当有2个sentinel节点认为主节点出问题是，就可以发起failover，如果50%以上节点同意，就切换主节点成功。
+sentinel monitor redismaster 172.16.213.75 8000 2
+# down-after-milliseconds表示在一定的时间内，没有PING通master节点，这个节点就认为master已经down，将其标记为主观下线。
+sentinel down-after-milliseconds  redismaster 5000
+# 表示在该时间内未完成failover，则failover失败。
+sentinel failover-timeout redismaster 15000
+```
+启动哨兵模式
+
+```shell
+/usr/bin/redis-sentinel /etc/sentinel.conf
+```
+
+---
+
+## Redis哨兵模式的VIP高可用
+
+利用漂移VIP实现redis集群无缝切换，在进行redis故障转移时，将VIP漂移到新的主redis服务器上。
+
+可以使用redis sentinel的一个参数`client-reconfig-script`，这个参数配置执行脚本，sentinel在做failover的时候会执行这个脚本，并且传递6个参数`<master-name>`、 `<role>`、 `<state>`、 `<from-ip>`、 `<from-port>`、 `<to-ip>` 、`<to-port>`，其中`<to-ip>`是新主redis的IP地址，可以在这个脚本里做VIP漂移操作。
+
+配置示例：
+
+```shell
+sentinel client-reconfig-script redismaster /data/redis/notifyvip.sh
+```
+
+脚本参考：
+
+```shell
+#!/bin/bash
+# notifyvip.sh脚本内容
+
+#第六个参数是新主redis的ip地址
+MASTER_IP=$6
+#其他两个服务器上为172.16.213.77，172.16.213.78
+LOCAL_IP='172.16.213.75'
+VIP='172.16.213.229'
+NETMASK='24'
+INTERFACE='em2'
+if [[ "${MASTER_IP}" == "${LOCAL_IP}" ]];then
+  #将VIP绑定到该服务器上
+   /sbin/ip  addr  add ${VIP}/${NETMASK}  dev ${INTERFACE}
+   /sbin/arping -q -c 3 -A ${VIP} -I ${INTERFACE}
+   exit 0
+else
+   #将VIP从该服务器上删除
+  /sbin/ip  addr del  ${VIP}/${NETMASK}  dev ${INTERFACE}
+  exit 0
+fi
+#如果返回1，sentinel会一直执行这个脚本
+exit 1
+```
+
+现在当前主redis是172.16.213.75，仅第一次需要手动绑定VIP到该服务器上。
+
+```shell
+/sbin/ip  addr add 172.16.213.229/24  dev em2
+/sbin/arping -q   -c 3 -A 172.16.213.229  -I em2
+```
+
+然后，去另一个服务器上通过VIP地址连接redis-server和redis-sentinel进行验证。
+
+---
+
+## Redis集群特点
+
+1. Redis集群无中心
+2. Redis集群有个ping-pong机制
+3. Redis集群使用投票机制，集群数量必须是2n+1
+4. 为了保证数据的安全性，每个集群的节点，至少要跟着一个从节点。
+5. 针对节点负载，可以单独对集群中某一个压力节点搭建主从。
+6. 当Redis集群中，超过半数的节点宕机后，集群不可用。
+
+Redis集群中默认分配了16384个hash槽，在存储数据时，就会将key进行CRC16的算法，并且对16384取余根据最终的结果，将key-value存放到执行Redis节点中，而且每一个Redis集群都在维护着响应的hash槽。
+
+---
+
+## Redis集群搭建
+
+准备6个独立Redis主机。
+
+例如：`docker-compose.yaml`示例：
+
+```yaml
+version: '3.6'
+services:
+  redis1:
+    image: redis
+    container_name: redis1
+    envrionment:
+    - TZ=Asia/Shanghai
+    network_mode: "host"
+   #  ports:
+   #  - '7001:7001'
+   #  - '17001:17001'
+    volumes:
+    - ./conf/redis1.conf:/usr/local/redis/redis.conf
+    command: ['redis-server','/usr/local/redis/redis.conf']
+  redis2:
+    image: redis
+    container_name: redis2
+    envrionment:
+    - TZ=Asia/Shanghai
+    network_mode: "host"
+   #  ports:
+   #  - '7002:7002'
+   #  - '17002:17002'
+    volumes:
+    - ./conf/redis2.conf:/usr/local/redis/redis.conf
+    command: ['redis-server','/usr/local/redis/redis.conf']
+  redis3:
+    image: redis
+    container_name: redis3
+    envrionment:
+    - TZ=Asia/Shanghai
+    network_mode: "host"
+   #  ports:
+   #  - '7003:7003'
+   #  - '17003:17003'
+    volumes:
+    - ./conf/redis3.conf:/usr/local/redis/redis.conf
+    command: ['redis-server','/usr/local/redis/redis.conf']
+  redis4:
+    image: redis
+    container_name: redis4
+    envrionment:
+    - TZ=Asia/Shanghai
+    network_mode: "host"
+   #  ports:
+   #  - '7004:7004'
+   #  - '17004:17004'
+    volumes:
+    - ./conf/redis4.conf:/usr/local/redis/redis.conf
+    command: ['redis-server','/usr/local/redis/redis.conf']
+  redis5:
+    image: redis
+    container_name: redis5
+    envrionment:
+    - TZ=Asia/Shanghai
+    network_mode: "host"
+   #  ports:
+   #  - '7005:7005'
+   #  - '17005:17005'
+    volumes:
+    - ./conf/redis5.conf:/usr/local/redis/redis.conf
+    command: ['redis-server','/usr/local/redis/redis.conf']
+  redis6:
+    image: redis
+    container_name: redis6
+    envrionment:
+    - TZ=Asia/Shanghai
+    network_mode: "host"
+   #  ports:
+   #  - '7006:7006'
+   #  - '17006:17006'
+    volumes:
+    - ./conf/redis6.conf:/usr/local/redis/redis.conf
+    command: ['redis-server','/usr/local/redis/redis.conf']
+```
+
+参考配置`redis1`示例
+
+```shell
+port 7001
+protected-mode yes
+
+# 集群配置
+cluster-enabled yes
+cluster-config-file nodes-7001.conf
+cluster-node-timeout 5000
+
+# 持久化配合
+dir /data/
+appendonly yes
+appendfilename appendonly-7001.aof
+dbfilename dump-7001.rdb
+logfile 7001.log
+
+# 使用Docker需要配置
+cluster-announce-ip 172.16.4.71
+cluster-announce-port 7001
+cluster-announce-bus-port 17001
+```
+
+创建集群
+
+```shell
+# 启动Redis
+docker-compose up -d
+# 进入容器
+docker exec -it redis1 bash
+# 创建集群，指定从节点数量，这里的从节点作为备份节点，不参与请求
+redis-cli --cluster create 172.16.4.71:7001 172.16.4.71:7002 \
+   172.16.4.71:7003 172.16.4.71:7004 172.16.4.71:7005 172.16.4.71:7006 \
+   --cluster-replicas 1
+```
+
+集群验证
+
+```shell
+# 选择任意节点进行登录访问
+redis-cli -c -h 172.16.4.71 -p 7001
+```

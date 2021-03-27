@@ -12,18 +12,20 @@
     - [Ansible](/zh-cn/ansible/)
   - 存储
     - [Ceph](/zh-cn/ceph/)
+  - SQL
+    - [MySQL](/zh-cn/mysql/)
+    - [MariaDB](/zh-cn/mariadb/)
+  - NoSQL
+    - [Redis](/zh-cn/redis/)
   - 基础
     - [Linux](/zh-cn/linux/)
     - [Ubuntu](/zh-cn/ubuntu/)
     - [PHP](/zh-cn/php/)
-    - [MySQL](/zh-cn/mysql/)
-    - [MariaDB](/zh-cn/mariadb/)
     - [PostgresSQL](/zh-cn/postgressql/)
     - [Nginx](/zh-cn/nginx/)
     - [Cfssl](/zh-cn/cfssl/)
     - [Rsync](zh-cn/rsync/)
     - [RabbitMQ](zh-cn/rabbitmq/)
-    - [Redis](/zh-cn/redis/)
   - 版本库
     - [Git](zh-cn/git/)
     - [Subversion](zh-cn/subversion/)
