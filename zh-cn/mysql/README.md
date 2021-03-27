@@ -1,396 +1,240 @@
 # MySQL
 
-## 基础查询
-
-### 1. SQL简单查询
-
-**语法格式：**
-
-```sql
-SELECT [DISTINCT] *|列[别名],... FROM 表名
-```
-
-#### 查询表中的所有数据
-
-```sql
-SELECT * FROM emp;
-```
-
-#### 指定列（投影查询）
-
-```sql
-SELECT empno,enname,sal,job FROM emp;
-```
-
-#### 四则运算
-
-```sql
-SELECT empno,enname,sal*12 FROM emp;
-```
-
-#### 别名设置
-
-```sql
-SELECT empno,enname,sal*12 income FROM emp;
-
-//别名也可以使用中文，但不建议使用中文
-SELECT empno 雇员编号,enname 姓名,sal*12 年薪 FROM emp;
-```
-#### 数据连接操作
-
-- 使用'||'进行数据连接操作
-
-```sql
-SELECT empno||ename FROM emp;
-
-// SQL中数字直接写，字符串要使用单引号声明
-SELECT empno||1 FROM emp;
-SELECT empno||'hello' FROM emp;
-```
-
-- 使用数据连接格式化操作
-
-```sql
-SELECT '编号:'||empno||'姓名：'||ename FROM emp;
-```
-#### 消除重复内容
-
-DISTINCT
-
-```SQL
-SELECT DISTINCT job FROM emp;
-```
-
-**总结：SQL简单查询可以控制数据列，无法控制数据行**
-
-
-****
-
-### 2. SQL限定查询
-
-**语法：**
-
-```sql
-【③ 确定要显示的数据列 】SELECT [DISTINCT] *|列[别名],列[别名],列[别名],... 
-【① 确定数据来源 】FROM 表名 
-【② 针对数据进行筛选 】[WHERE 限定条件(s)]
-```
-
-**语句执行顺序**
-
-1. 执行数据来源`FROM`语句
-2. 执行数据条件`WHERE`语句
-3. 选出所需要的数据列`SELECT`语句
-
-**SQL条件运算**
-
-1. 关系运算：`<、=、>、>=、<=、!=(<>)`
-
-```sql
-SELECT *
-FROM emp
-WHERE sal < 1200;
-```
-
-```sql
-SELECT *
-FROM emp
-WHERE sal = 3000;
-```
-
-```sql
-SELECT *
-FROM emp
-WHERE ename='SMITH'; 
--- 注意区分大小写
-```
-
-```sql
-SELECT *
-FROM emp
-WHERE job<>'CLERK';
-```
-
-   
-
-2. 逻辑运算：`AND、OR、NOT`
-
-```sql
-SELECT *
-FROM emp
-WHERE job<>'CLERK' AND sal<3000;
-```
-
-```sql
-SELECT *
-FROM emp
-WHERE job<>'CLERK' AND job<>'SALESMAN';
-```
-
-```sql
-SELECT *
-FROM emp
-WHERE job='CLERK' OR sal<1200;
-```
-
-```sql
-SELECT *
-FROM emp
-WHERE NOT sal>2000;
-```
-
-
-
-3. 范围运算：`BETWEEN...AND`
-
-**语法样式**
-
-```sql
-WHERE 字段|数值 BETWEEN 最小值 AND 最大值；
-```
-
-```sql
-SELECT *
-FROM emp
-WHERE sal BETWEEN 1500 AND 3000；
-```
-
-```sql
-SELECT *
-FROM emp
-WHERE hiredate BETWEEN '01-1月-81' AND '31-12月-1981'；
-```
-
-```sql
-SELECT * FROM emp WHERE ename BETWEEN 'ALEEN' AND 'CLEAK'
-```
-
-   
-
-4. 空判断：`IS NULL、IS NOT NULL`
-
-```sql
-SELECT *
-FROM emp
-WHERE comm 	IS NOT NULL;
-```
-
-   
-
-5. IN判断：`IN、NOT IN、exists()（复杂查询）`
-
-注：`NOT IN`中不能包含null
-
-```sql
-SELECT *
-FROM emp
-WHERE empno IN (7369,7566,7788,9999);
-```
-
-   
-
-6. 模糊查询：`LIKE、NOT LIKE`
-
-* '_'：匹配任意的一位符号
-* '%'：匹配任意的符号
-
-```sql
-SELECT *
-FROM emp
-WHERE ename LIKE 'A%';
-```
-
-```sql
-SELECT *
-FROM emp
-WHERE ename LIKE '_A%';
-```
-
-```sql
-SELECT *
-FROM emp
-WHERE ename LIKE '%A%';
-```
-
-**注：**
-1. 如果LIKE匹配为空，则匹配所有数据
-2. LIKE支持所有的数据类型，但是我们主要用于字符串
-
-
-****
-
-### 3. SQL查询排序
-
-**语法格式：**
-
-排序可以在任意数据类型进行
-执行顺序如下：
-
-```sql
-【③ 确定要显示的数据列 】SELECT [DISTINCT] *|列[别名],列[别名],列[别名],... 
-【① 确定数据来源 】FROM 表名 
-【② 针对数据进行筛选 】[WHERE 限定条件(s)]
-【④ 对选定的数据的行与列进行排序 】 [ORDER BY 排序字段 [ASC|DESC],排序字段 [ASC|DESC],...]
-```
-
-* ASC：升序（默认）
-* DESC：降序
-
-```sql
-SELECT *
-FROM emp
-ORDER BY sal DESC;
-```
-
-```sql
-SELECT *
-FROM emp
-ORDER BY hiredate;
-```
-
-```sql
-SELECT *
-FROM emp
-ORDER BY sal DESC,hiredate;
-```
-
-```sql
-SELECT empno,job,sal*12 income
-FROM emp
-WHERE job='CLERK'
-ORDER BY income;
-```
-
 ---
----
+## MySQL发行版
 
-## 单行函数
+1. `Percona  Server`
+   
+   Percona Server由领先的MySQL咨询公司Percona发布。
+   Percona Server是一款独立的数据库产品，其可以完全与MySQL兼容，可以在不更改代码的情况了下将存储引擎更换成XtraDB。是最接近官方MySQL Enterprise发行版的版本。
+   
+   Percona提供了高性能XtraDB引擎，还提供PXC高可用解决方案，并且附带了percona-toolkit等DBA管理工具箱。
 
-### 1. 单行函数简介
-
-**单行函数简介**
-
-> ​在数据库里面为了方便用户的开发，会提供一系列函数支持，利用函数的特定功能，实现指定的效果
-
-#### 常见函数
-
-* 字符串函数
-* 数值函数
-* 日期函数
-* 转换函数
-* 通用函数
+2. `MariaDB`
+   
+   MariaDB由MySQL的创始人开发，MariaDB的目的是完全兼容MySQL，包括API和命令行，使之能轻松成为MySQL的代替品。
+   MariaDB提供了MySQL提供的标准存储引擎，即MyISAM和InnoDB，10.0.9版起使用XtraDB（名称代号为Aria）来代替MySQL的InnoDB。
 
 ---
 
-### 2. 字符串函数
+## MySQL三种存储引擎
 
-> ​	字符串函数可以对字符串数据进行处理。
+| 引擎名称 | 描述                                                                                                                                                                                                                        |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| MyISAM   | MySQL4和5使用默认的MyISAM存储引擎。表级锁、不支持事务和全文索引，适合一些CMS内容管理系统作为后台数据库使用，但是使用大并发、重负荷生产系统上，表锁结构的特性就显得力不从心；                                                |
+| InnoDB   | 行级锁、事务安全（ACID兼容）、支持外键、不支持FULLTEXT类型的索引(5.6.4以后版本开始支持FULLTEXT类型的索引)。InnoDB存储引擎提供了具有提交、回滚和崩溃恢复能力的事务安全存储引擎。InnoDB是为处理巨大量时拥有最大性能而设计的。 |
+| XtraDB   | XtraDB是InnoDB存储引擎的增强版本，被设计用来更好的使用更新计算机硬件系统的性能，同时还包含有一些在高性能环境下的新特性。                                                                                                    |
 
-**常见操作**
+---
 
-* 大写转换：UPPER()
-* 小写转换：LOWER()
-* 首字母大写：INITCAP()
-* 替换：REPLACE()
-* 长度计算：LENGTH()
-* 截取：SUBSTR()
+## MySQL5.6源码安装
 
-**大小写转换函数**
+安装依赖
+```shell
+yum install cmake
+```
+编译
+```shell
+cd mysql-5.6.17
+cmake \
+-DCMAKE_INSTALL_PREFIX=/usr/local/mysql \
+-DMYSQL_DATADIR=/usr/local/mysql/data \
+-DSYSCONFDIR=/etc \
+-DWITH_MYISAM_STORAGE_ENGINE=1 \
+-DWITH_INNOBASE_STORAGE_ENGINE=1 \
+-DWITH_MEMORY_STORAGE_ENGINE=1 \
+-DWITH_READLINE=1 \
+-DMYSQL_UNIX_ADDR=/var/lib/mysql/mysql.sock \
+-DMYSQL_TCP_PORT=3306 \
+-DENABLED_LOCAL_INFILE=1 \
+-DWITH_PARTITION_STORAGE_ENGINE=1 \
+-DDEFAULT_CHARSET=utf8 \
+-DDEFAULT_COLLATION=utf8_general_ci
+```
+创建MySQL用户
+```shell
+groupadd mysql
+useradd -g mysql mysql
+```
+授权
+```shell
+chown -R mysql.mysql /usr/local/mysql
+```
+数据库初始化，创建系统自带的数据库和表
+```shell
+cd /usr/local/mysql
+./scripts/mysql_install_db \
+--basedir=/usr/local/mysql \
+--datadir=/usr/local/mysql/data \
+--user=mysql
+```
+---
 
-* 语法结构
+## MySQL基本操作命令
 
-1. 大写转换
+1. 连接MySQL
+```shell
+# mysql -u 用户名 -h 主机IP -P 主机端口 -A 指定数据库 -p
+mysql -uroot -h localhost -p
+```
 
+2. 修改密码
+```shell
+# mysqladmin -u 用户名 -p 旧密码 password 新密码
+mysqladmin -uroot password 123456
+```
+
+3. 新增/授权用户
 ```sql
-字符串 UPPER(列|字符串)
+-- grant 权限 on 数据库.表 to 用户名@主机IP identified by '密码';
+grant select on test.* to test@'%' identified by 'test';
 ```
-
-2. 小写转换
-
+5. 查询所有数据库
 ```sql
-字符串 LOWER(列|字符串)
+show databases;
 ```
 
-* 验证函数功能表：dual
-
+6. 切换数据库
 ```sql
-SELECT LOWER(Hello) FROM dual;
+use mysql;
 ```
 
-* 用户交互
-
+7. 显示库中所有的表
 ```sql
-SELECT * FROM emp WHERE ename='&inputname';
+show tables;
 ```
 
-对输入数据进行处理,大写操作
-
+8. 查看表结构
 ```sql
-SELECT * FROM emp WHERE ename=UPPER('&inputname');
+desc user;
 ```
 
-#### 三、首字母大写
+9. 查了表数据
+```shell
+select * from user;
+```
 
+## MySQL简单增删改查
+
+1. 创建数据库
 ```sql
-SELECT INITCAP('helloWorld') FROM dual;
+create database test;
 ```
-
-
-
+2. 删除数据库
 ```sql
-SELECT INITCAP(ename) FROM emp;
+drop database test;
 ```
-
-**字符串长度**
-
+3. 删除表
 ```sql
-SELECT ename,LENGTH(ename) FROM emp;
+drop table test;
 ```
-
+4. 插入数据
 ```sql
-SELECT * FROM emp WHERE LENGTH(ename)=5;
+insert into test name,age values zhangsan,24;
 ```
-
-**字符串替换**
-
-​REPLACE()可以消除空格
-
-​语法格式：
+5. 查询数据
 ```sql
-字符串 REPLACE(列|数据，要查找内容，新的内容)
+select * from test;
 ```
-
-范例：
+6. 查询指定条数的数据
 ```sql
-SELECT REPLACE(ename,UPPER(''A),'_') FROM emp;
+select * from test limit 0,2;
 ```
-
-```SQL
-SELECT REPLACE('hello world ! nihao') FROM dual;
-```
-
-**字符串截取**
-
-* 语法结构
-1. 字符串 SUBSTR(列|数据，开始点)
-2. 字符串 SUBSTR(列|数据，开始点，长度)
-
-* 范例：
+7. 删除表中的数据
 ```sql
-SELECT SUBSTR('helloworldnihao',11) FROM dual;
-SELECT SUBSTR('helloworldnihao',6,5) FROM dual;
+delete from test where name='zhangsan';
 ```
-
-**注：SQL中的下标从1开始，非0**
-* 负值截取
-```SQL
-SELECT ename,SUBSTR(ename,LENGTH(ename)-2) FROM emp;
-```
-
-* 仅限ORACLE数据库
+8. 修改表中数据
 ```sql
-SELECT ename,SUBSTR(ename,-3) FROM emp;
+update test  set age=30 where name='zhangsan'; 
+```
+7. 增加字段
+```sql
+alter table test add address var_char(255) default '';
+```
+8. 修改表名
+```sql
+rename table test to test2;
+```
+---
+
+## MySQL备份数据库
+
+1. 全库导出
+```shell
+mysqldump -u test -p123456 database_name > test.sql
+```
+2. 数据恢复
+```sql
+create database linux;
+use linux;
+source test.sql;
+```
+3. 导出表结构
+```shell
+mysqldump -u user_name -p -d –add-drop-table database_name > outfile_name.sql
+```
+4. 导出指定的表
+```shell
+mysqldump -u user_name -p database_name table_name > outfile_name.sql
+```
+5. 指定编码导出
+```shell
+mysqldump -uroot -p –default-character-set=utf8 –set-charset=utf8 –skip-opt database_name > outfile_name.sql
 ```
 
 ---
+
+## MySQL调优
+
+1. BIOS设置
+
+- 选择`Performance Per Watt Optimized(DAPC)`模式，发挥CPU最大性能。
+- `Memory Frequency（内存频率）`选择`Maximum Performance`（最佳性能）
+- 内存设置菜单中，启用`Node Interleaving`，避免NUMA问题
+
+2. 磁盘设置
+
+- 优先使用SSD
+- 如果是磁盘阵列存储，建议阵列卡同时配备CACHE及BBU模块，可明显提升IOPS。
+- raid级别尽量选择raid10，而不是raid5.
+
+3. 文件系统优化
+
+- 使用deadline/noop这两种I/O调度器，千万别用cfq
+- 使用xfs文件系统，千万别用ext3；ext4勉强可用，但业务量很大的话，则一定要用xfs；
+- 文件系统mount参数中增加：`noatime`, `nodiratime`, `nobarrier`几个选项（`nobarrier`是xfs文件系统特有的）；
+
+4. 内核优化
+
+- 修改`vm.swappiness`参数，降低swap使用率。RHEL7/centos7以上则慎重设置为0，可能发生OOM
+- 调整`vm.dirty_background_ratio`、`vm.dirty_ratio`内核参数，以确保能持续将脏数据刷新到磁盘，避免瞬间I/O写。产生等待。
+- 调整`net.ipv4.tcp_tw_recycle`、`net.ipv4.tcp_tw_reuse`都设置为1，减少TIME_WAIT，提高TCP效率。
+
+5. MySQL调优
+
+| 参数                                                                                                         | 说明                                                                           |
+| ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| default-storage-engine                                                                                       | 设置为InnoDB，强烈建议不要再使用MyISAM引擎                                     |
+| innodb_buffer_pool_size                                                                                      | 如果是单实例且绝大多数是InnoDB引擎表的话，可考虑设置为物理内存的50% -70%左右。 |
+| innodb_file_per_tabl                                                                                         | 设置为 1 ，使用独立表空间。                                                    |
+| innodb_data_file_path = ibdata1:1G:autoextend                                                                | 不要用默认的10M,在高并发场景下，性能会有很大提升。                             |
+| innodb_log_file_size=256M，innodb_log_files_in_group=2                                                       | 基本可以满足大多数应用场景。                                                   |
+| open_files_limit、innodb_open_files、table_open_cache、table_definition_cache                                | 设置大约为max_connection的10倍左右大小。                                       |
+| key_buffer_size                                                                                              | 32M左右即可                                                                    |
+| query cache                                                                                                  | 建议关闭                                                                       |
+| mp_table_size,max_heap_table_size,sort_buffer_size、join_buffer_size、read_buffer_size、read_rnd_buffer_size | 设置不要过大                                                                   |
+
+
+
+
+
+
+
+
+
+
+
+
+
 
