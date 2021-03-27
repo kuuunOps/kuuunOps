@@ -27,23 +27,10 @@ Ingress Controller有很多实现，我们这里采用官方维护的Nginx控制
 ## 部署`Ingress`组件：
 ```shell
 curl -o nginx-ingress.yaml https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.44.0/deploy/static/provider/baremetal/deploy.yaml
-kubectl apply -f nginx-ingress.yaml
 ```
+镜像地址修改成国内的：` bitnami/nginx-ingress-controller:0.44.0 ` 
 
-查看状态
-```shell
-kubectl get pod -n ingress-nginx
-NAME                                        READY   STATUS      RESTARTS   AGE
-ingress-nginx-admission-create-nqhx5        0/1     Completed   0          21m
-ingress-nginx-admission-patch-hcfpx         0/1     Completed   1          21m
-ingress-nginx-controller-79b54d448c-l7c69   1/1     Running     0          21m
-```
-
-
-**注意事项：** 
-
-- 镜像地址修改成国内的：` bitnami/nginx-ingress-controller:0.44.0 ` 
-- 将Ingress Controller暴露，一般使用宿主机网络（hostNetwork: true）或者使用NodePort
+将Ingress Controller暴露，一般使用宿主机网络（hostNetwork: true）或者使用NodePort
   ```yaml
   ...
       spec:
@@ -57,6 +44,20 @@ ingress-nginx-controller-79b54d448c-l7c69   1/1     Running     0          21m
             preStop:
   ...
   ```
+
+部署
+```shell
+kubectl apply -f nginx-ingress.yaml
+```
+
+查看状态
+```shell
+kubectl get pod -n ingress-nginx
+NAME                                        READY   STATUS      RESTARTS   AGE
+ingress-nginx-admission-create-nqhx5        0/1     Completed   0          21m
+ingress-nginx-admission-patch-hcfpx         0/1     Completed   1          21m
+ingress-nginx-controller-79b54d448c-l7c69   1/1     Running     0          21m
+```
 
 其他控制器：https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/
 
