@@ -86,7 +86,6 @@ mysqladmin -uroot password 123456
 
 3. 新增/授权用户
 ```sql
--- grant 权限 on 数据库.表 to 用户名@主机IP identified by '密码';
 grant select on test.* to test@'%' identified by 'test';
 ```
 5. 查询所有数据库
@@ -207,34 +206,237 @@ mysqldump -uroot -p –default-character-set=utf8 –set-charset=utf8 –skip-op
 
 4. 内核优化
 
-- 修改`vm.swappiness`参数，降低swap使用率。RHEL7/centos7以上则慎重设置为0，可能发生OOM
+- 修改`vm.swappiness`参数，降低swap使用率。RHEL7/centos7以上则慎重设置为0，可能发生OOM,推荐设置为10。
 - 调整`vm.dirty_background_ratio`、`vm.dirty_ratio`内核参数，以确保能持续将脏数据刷新到磁盘，避免瞬间I/O写。产生等待。
 - 调整`net.ipv4.tcp_tw_recycle`、`net.ipv4.tcp_tw_reuse`都设置为1，减少TIME_WAIT，提高TCP效率。
 
-5. MySQL调优
+---
+## MySQL配置参数调优
 
-| 参数                                                                                                         | 说明                                                                           |
-| ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
-| default-storage-engine                                                                                       | 设置为InnoDB，强烈建议不要再使用MyISAM引擎                                     |
-| innodb_buffer_pool_size                                                                                      | 如果是单实例且绝大多数是InnoDB引擎表的话，可考虑设置为物理内存的50% -70%左右。 |
-| innodb_file_per_tabl                                                                                         | 设置为 1 ，使用独立表空间。                                                    |
-| innodb_data_file_path = ibdata1:1G:autoextend                                                                | 不要用默认的10M,在高并发场景下，性能会有很大提升。                             |
-| innodb_log_file_size=256M，innodb_log_files_in_group=2                                                       | 基本可以满足大多数应用场景。                                                   |
-| open_files_limit、innodb_open_files、table_open_cache、table_definition_cache                                | 设置大约为max_connection的10倍左右大小。                                       |
-| key_buffer_size                                                                                              | 32M左右即可                                                                    |
-| query cache                                                                                                  | 建议关闭                                                                       |
-| mp_table_size,max_heap_table_size,sort_buffer_size、join_buffer_size、read_buffer_size、read_rnd_buffer_size | 设置不要过大                                                                   |
+- **default-storage-engine**
+  设置存储引擎。推荐设置为InnoDB，强烈建议不要再使用MyISAM引擎
+
+- **innodb_buffer_pool_size**
+  设置缓冲池大小。这是你安装完InnoDB后第一个应该设置的选项。缓冲池是数据和索引缓存的地方：这个值越大越好，这能保证你在大多数的读取操作时使用的是内存而不是硬盘。典型的值是5-6GB(8GB内存)，20-25GB(32GB内存)，100-120GB(128GB内存)。
+
+- **innodb_file_per_table**
+  设置单表独立文件存放。这项设置告知InnoDB是否需要将所有表的数据和索引存放在共享表空间里（innodb_file_per_table = OFF），或者为每张表的数据单独放在一个.ibd文件（innodb_file_per_table = ON）。
+  每张表一个文件可以保证在drop、truncate或者rebuild表时回收磁盘空间。这对于一些高级特性也是有必要的，比如数据压缩。但是不适合每张表一个文件的主要场景是：有非常多的表（比如10k+）。
+  MySQL 5.6中，这个属性默认值是ON，对于之前的版本，必需在加载数据之前将这个属性设置为ON，因为它只对新创建的表有影响。
+
+- **innodb_data_file_path**
+  设置数据文件相关信息，文件名称，大小，特性。`innodb_data_file_path = ibdata1:1G:autoextend`不要用默认的10M,在高并发场景下，性能会有很大提升。
+
+- **innodb_log_file_size**
+  设置回滚日志文件大小。这是redo日志的大小。redo日志被用于确保写操作快速而可靠并且在崩溃时恢复，MySQL 5.5之前，redo日志的总尺寸被限定在4GB(默认可以有2个log文件)。这在MySQL 5.6里被提高。
+  建议一开始就把innodb_log_file_size设置成512M(这样有1GB的redo日志)，这样会有充裕的写操作空间。如果应用程序需要频繁的写入数据，并且使用的时MySQL 5.6，可以一开始就把它这是成4G。
+
+- **innodb_log_files_in_group**
+  设置日志文件分组数量。推荐设置`innodb_log_files_in_group=2`基本可以满足大多数应用场景。
+
+- **open_files_limit**
+  设置打开文件数量限制。推荐设置为max_connection的10倍左右大小。
+
+- **innodb_open_files**
+  设置innodb引擎打开的文件数量。推荐设置为max_connection的10倍左右大小。
+
+- **table_open_cache**
+  设置表打开缓冲文件的数量。推荐设置为max_connection的10倍左右大小。
+
+- **table_definition_cache**
+  设置定义缓冲文件的数量。设置大约为max_connection的10倍左右大小。 
+
+- **key_buffer_size**
+  设置索引缓冲区大小。32M左右即可
+
+- **query_cache_size** 
+  设置查询缓冲。`InnoDB`建议关闭 
+
+- **tmp_table_size**
+  设置临时表的内存缓存大小。
+
+- **max_heap_table_size**
+  设置MEMORY内存引擎的表大小。
+  
+- **sort_buffer_size**
+  设置排序缓冲大小。设置256K~2M即可
+
+- **join_buffer_size**
+  设置连接缓冲区大小。设置不宜过大
+
+- **read_buffer_size**
+  设置不宜过大
+
+- **read_rnd_buffer_size**
+  设置不宜过大
+
+- **max_connections**
+  如果经常看到‘Too many connections'错误，是因为max_connections的值太低了。这非常常见，因为应用程序没有正确的关闭数据库连接。max_connection值被设高了(例如1000或更高)之后一个主要缺陷是当服务器运行1000个或更高的活动事务时会变的没有响应。在应用程序里使用连接池或者在MySQL里使用进程池有助于解决这一问题。
+
+- **innodb_flush_log_at_trx_commit**
+  配置`redo log`日志写入方式。
+  默认值为1，表示每一次事务提交或事务外的指令都需要把日志写入（flush）硬盘，这个过程是很费时的。当主要关注点是数据安全的时候这个值是最合适的，比如在一个主节点上。但是对于磁盘（读写）速度较慢的系统，会带来很巨大的开销，因为每次将改变flush到redo日志都需要额外的fsyncs。
+  设置为2，它的意思是不写入硬盘而是写入系统缓存。日志仍然会每秒flush到硬盘，这对于一些场景是可以接受的，比如对于主节点的备份节点这个值是可以接受的。
+  设置为0，速度就更快了，但在系统崩溃时可能丢失一些数据：只适用于备份节点。
+
+- **innodb_flush_method**
+  这项配置决定了数据和日志写入硬盘的方式。
+  这个参数控制着innodb数据文件及redo log的打开、刷写模式。
+  一般来说，如果你有硬件RAID控制器，并且其独立缓存采用write-back机制，并有着电池断电保护，那么应该设置配置为`O_DIRECT`；否则，大多数情况下应将其设为`fdatasync`（默认值）。
+  三个可选值：`fdatasync`，`O_DIRECT`，`O_DSYNC`。
 
 
+- **innodb_log_buffer_size**
+  这项配置决定了为尚未执行的事务分配的缓存。
+  其默认值（1MB）一般来说已经够用了，但是如果你的事务中包含有二进制大对象或者大文本字段的话，这点缓存很快就会被填满并触发额外的I/O操作。
+  看看Innodb_log_waits状态变量，如果它不是0，增加innodb_log_buffer_size。
+
+- **log_bin**
+  如果想让数据库服务器充当主节点的备份节点，那么开启二进制日志是必须的。
+  如果这么做了之后，还别忘了设置server_id为一个唯一的值。就算只有一个服务器，如果你想做基于时间点的数据恢复，这（开启二进制日志）也是很有用的。从你最近的备份中恢复（全量备份），并应用二进制日志中的修改（增量备份）。二进制日志一旦创建就将永久保存。所以如果你不想让磁盘空间耗尽，你可以用` PURGE BINARY LOGS `来清除旧文件，或者设置 `expire_logs_days `来指定过多少天日志将被自动清除。
+
+- **skip_name_resolve**
+  当客户端连接数据库服务器时，服务器会进行主机名解析，并且当DNS很慢时，建立连接也会很慢。
+  因此建议在启动服务器时关闭skip_name_resolve选项而不进行DNS查找。唯一的局限是之后GRANT语句中只能使用IP地址了
+
+---
+
+## MySQL主从复制配置
+
+#### 1、修改配置文件
+master节点配置参考
+```shell
+# 节点标识，主、从节点不能相同，必须全局唯一
+server-id = 1
+# 表示开启MySQL 的 binlog 日志功能。
+# mysql-bin表示日志文件的命名格式，会生成文件名为mysql-bin.000001、mysql-bin.000002 等的日志文件。
+log-bin=mysql-bin
+```
+slave节点配置参考
+```shell
+server-id = 2
+log-bin=mysql-bin
+# 定义 relay-log 日志文件的命名格式。
+relay-log = mysql-relay-bin
+# 是个复制过滤选项，可以过滤掉不需要复制的数据库或表，
+# 例如:"mysql.%"表示不复制mysql库下的所有对象，其他依此类推。
+# 与此对应的是replicate_wild_do_table 选项，用来指定需要复制的数据库或表。
+replicate-wild-ignore-table=mysql.%
+replicate-wild-ignore-table=test.%
+replicate-wild-ignore-table=information_schema.%
+# 不要在主库上使用 binlog-do-db 或 binlog-ignore-db 选项，也不要在从库上使用 replicate-do-db 或 replicate-ignore-db 选项，因为这样可能产生跨库更新失败的问题。
+# 推荐在从库上使用 replicate_wild_do_table 和 replicate-wild-ignore-table 两个选项来解决复制过滤问题。
+```
+#### 2、同步数据（可选）
+如果主节点是已经存在数据的，需要先导出数据。
+```sql
+-- 开启只读锁，并再打开一个终端开始导出数据。
+-- 注意：本终端不能关闭
+flush tables with read lock;
+```
+同步完数据，重启主从节点数据库
+
+#### 3、创建同步用户
+在主库上创建同步用户并授权
+```sql
+grant replication slave on *.* to 'repl-user'@'172.16.4.51' identified by 'repl_password';
+-- 查看主库状态，记录文件名称File，文件位置Position
+show master status;
+```
+#### 4、配置从库
+在从库手动指定主库信息
+```sql
+change master to \
+  master_host='172.16.4.41',\
+  master_user='repl_user',\
+  master_password='repl_password',\
+  master_log_file='mysql-bin.000001',\
+  master_log_pos=108;
+```
+启动从库复制功能
+```sql
+start slave
+```
+在从库上查看slave状态
+```sql
+-- 确保IO线程和SQL线程正常。并且没有Error错误信息
+show slave status;
+```
+---
+
+## MySQL双主配置
+
+- 1. 配置主从模式
+- 2. 在从节点开启bin_log等其他相关参数，重启从库。
+- 3. 开始正常配置主从。
+
+---
+
+## MySQL实现双主高可用
+
+```shell
+yum install keepalived
+```
+
+配置keepalived
+```sql
+global_defs { 
+  notification_email {
+    acassen@firewall.loc
+    failover@firewall.loc sysadmin@firewall.loc
+  }
+  notification_email_from Alexandre.Cassen@firewall.loc 
+    smtp_server 192.168.200.1
+    smtp_connect_timeout 30
+    router_id MySQLHA_DEVEL
+  }
+
+  vrrp_script check_mysqld {
+    script "/etc/keepalived/mysqlcheck/check_slave.sh " #检测 mysql 复制状态的脚本
+    interval 2
+  }
+
+vrrp_instance HA_1 {
+  #如果是不抢占模式，需要在 DB1 和 DB2 上均配置为 BACKUP interface eth0
+  state MASTER
+  virtual_router_id 80
+
+  priority 100
+
+  advert_int 2
+  # nopreempt  #配置不抢占模式，只在优先级高的机器上设置即可，优先级低的机器不设置
+
+  authentication {
+    auth_type PASS
+    auth_pass qweasdzxc
+  }
+
+  track_script {
+    check_mysqld
+  }
 
 
+  virtual_ipaddress {
+    172.16.4.60/24 dev eth0 #mysql 的对外服务 IP，即 VIP
+  }
+}
+```
 
+mysql状态检查脚本。
+```shell
+#!/bin/sh
 
+slave_is=($(/usr/local/mysql/bin/mysql  -e "show slave status\G"|grep "Slave_.*_Running" |awk '{print $2}'))
 
+if [ "${slave_is[0]}" = "Yes" -a "${slave_is[1]}" = "Yes" ]
+then
+  exit 0
+else
+  exit 1
+fi
+```
 
-
-
-
+---
 
 
 
