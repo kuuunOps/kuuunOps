@@ -60,6 +60,8 @@ useradd -g mysql mysql
 ```shell
 chown -R mysql.mysql /usr/local/mysql
 ```
+准备配置文件`my.cnf`，数据库初始化会使用配置文件进行初始操作。
+
 数据库初始化，创建系统自带的数据库和表
 ```shell
 cd /usr/local/mysql
@@ -70,6 +72,63 @@ cd /usr/local/mysql
 ```
 ---
 
+## MySQL二进制安装
+
+1. 准备二进制包
+```shell
+tar xf  mysql-5.6.51-linux-glibc2.12-x86_64.tar.gz
+mv mysql-5.6.51-linux-glibc2.12-x86_64 /usr/local/mysql
+```
+2. 创建mysql用户
+```shell
+groupadd mysql
+useradd -g mysql -s /sbin/nologin mysql
+# mysql目录授权
+chown -R mysql.mysql /usr/local/mysql
+```
+3. 准备配置文件，因为初始化会使用配置文件初始化
+```shell
+[mysql]
+socket = /usr/local/mysql/data/mysql.sock
+[mysqld]
+default-storage-engine = innodb
+innodb_buffer_pool_size = 6GB
+innodb_file_per_table = 1
+innodb_data_file_path = ibdata1:1G:autoextend
+innodb_log_files_in_group = 2
+innodb_log_file_size = 256MB
+max_connections = 800
+open_files_limit = 8000
+innodb_open_files = 8000
+expire_logs_days = 7
+log_bin = mysql-bin
+basedir = /usr/local/mysql
+datadir = /usr/local/mysql/data
+port = 3306
+server_id = 10000471
+socket = /usr/local/mysql/data/mysql.sock
+sql_mode=NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES
+[mysqladmin]
+socket = /usr/local/mysql/data/mysql.sock
+[mysqldump]
+socket = /usr/local/mysql/data/mysql.sock
+```
+
+4. 初始化数据库
+```shell
+cd /usr/local/mysql
+# 确保安装Linux异步插件libaio，否则会初始化失败。例如：yum install libaio-devel
+./scripts/mysql_install_db --user=mysql --basedir=/usr/local/mysql --datadir=/usr/local/mysql/data
+```
+
+5. 启动服务
+```shell
+# 拷贝启动服务文件
+cp ./support-files/mysql.server /etc/init.d/mysqld
+/etc/init.d/mysqld start
+```
+
+---
 ## MySQL基本操作命令
 
 1. 连接MySQL
@@ -301,6 +360,14 @@ mysqldump -uroot -p –default-character-set=utf8 –set-charset=utf8 –skip-op
 
 ---
 
+## MySQL主从复制原理
+
+1. 用户端提交变更事件，master的转储线程（Binlog_dump_thread）将变更事件写入到bin_log中。
+2. master通过网络将最新的bin_log事件传输给slave端。
+3. slave接收到IO线程的bin_log事件，写入到中继日志`relay log`中。
+4. slave中SQL线程读取中继日志中内容，转换为具体SQL语句内容进行执行。
+
+---
 ## MySQL主从复制配置
 
 #### 1、修改配置文件
@@ -339,26 +406,25 @@ flush tables with read lock;
 #### 3、创建同步用户
 在主库上创建同步用户并授权
 ```sql
-grant replication slave on *.* to 'repl-user'@'172.16.4.51' identified by 'repl_password';
+grant replication slave on *.* to 'repl_user'@'172.16.4.72' identified by '123456';
 -- 查看主库状态，记录文件名称File，文件位置Position
 show master status;
++------------------+----------+--------------+------------------+-------------------+
+| File             | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
++------------------+----------+--------------+------------------+-------------------+
+| mysql-bin.000005 |      333 |              |                  |                   |
++------------------+----------+--------------+------------------+-------------------+
+1 row in set (0.00 sec)
 ```
 #### 4、配置从库
 在从库手动指定主库信息
 ```sql
-change master to \
-  master_host='172.16.4.41',\
-  master_user='repl_user',\
-  master_password='repl_password',\
-  master_log_file='mysql-bin.000001',\
-  master_log_pos=108;
+change master to master_host='172.16.4.71',master_user='repl_user',master_password='123456',master_log_file='mysql-bin.000005',master_log_pos=333;
 ```
 启动从库复制功能
 ```sql
-start slave
-```
-在从库上查看slave状态
-```sql
+start slave;
+-- 在从库上查看slave状态
 -- 确保IO线程和SQL线程正常。并且没有Error错误信息
 show slave status;
 ```
@@ -389,12 +455,12 @@ global_defs {
     smtp_server 192.168.200.1
     smtp_connect_timeout 30
     router_id MySQLHA_DEVEL
-  }
+}
 
-  vrrp_script check_mysqld {
-    script "/etc/keepalived/mysqlcheck/check_slave.sh " #检测 mysql 复制状态的脚本
-    interval 2
-  }
+vrrp_script check_mysqld {
+  script "/etc/keepalived/mysqlcheck/check_slave.sh"
+  interval 2
+}
 
 vrrp_instance HA_1 {
   #如果是不抢占模式，需要在 DB1 和 DB2 上均配置为 BACKUP interface eth0
@@ -404,7 +470,8 @@ vrrp_instance HA_1 {
   priority 100
 
   advert_int 2
-  # nopreempt  #配置不抢占模式，只在优先级高的机器上设置即可，优先级低的机器不设置
+  # 配置不抢占模式，只在优先级高的机器上设置即可，优先级低的机器不设置
+  # nopreempt 
 
   authentication {
     auth_type PASS
@@ -415,9 +482,9 @@ vrrp_instance HA_1 {
     check_mysqld
   }
 
-
   virtual_ipaddress {
-    172.16.4.60/24 dev eth0 #mysql 的对外服务 IP，即 VIP
+    #mysql 的对外服务 IP，即 VIP
+    172.16.4.60/24 dev eth0
   }
 }
 ```
@@ -438,5 +505,87 @@ fi
 
 ---
 
+## Xtrabackup安装
+
+>官网地址：https://www.percona.com/downloads
+
+---
+
+## Xtrabackup全量备份
+
+```shell
+# 备份语句示例
+innobackupex --defaults-file=/etc/my.cnf --host=172.16.4.71 --port=3306 --user=root --password=123456  /data/
+```
+取消默认时间戳备份
+```shell
+innobackupex --defaults-file=/etc/my.cnf --host=172.16.4.72 --port=3306 --user=root --password=123456 --no-timestamp /data/full-backup
+```
+输出内容转储日志
+```shell
+innobackupex --defaults-file=/etc/my.cnf --host=172.16.4.72 --port=3306 --user=root --password=123456 --no-timestamp /data/full-backup 2>>/data/full-backup.log
+```
+
+---
+## Xtrabackup全量恢复
+
+1. 备份数据填充准备
+```shell
+innobackupex --defaults-file=/etc/my.cnf --apply-log /data/2021-03-29_14-22-23/
+```
+
+2. 进行数据恢复
+```shell
+innobackupex --defaults-file=/etc/my.cnf --copy-back /data/2021-03-29_14-22-23/
+```
+
+3. 启动数据库
+```shell
+# 修改数据目录权限
+chown -R mysql.mysql /usr/local/mysql/data
+# 启动
+/etc/init.d/mysqld start
+```
+
+---
+
+## xtrabackup备份压缩
+
+```shell
+innobackupex --defaults-file=/etc/my.cnf --host=172.16.4.71 --port=3306 --user=root --password=123456 --stream=tar /data/|gzip >full-backup.tar.gz
+```
 
 
+---
+
+## Xtrabackup增量备份
+
+```shell
+innobackupex --defaults-file=/etc/my.cnf --incremental --host=172.16.4.72 --port=3306 --user=root --password=123456  --incremental-basedir=/data/full-backup /data/
+```
+
+---
+
+## Xtrbackup增量还原
+
+1. 还原基础全备的redo数据
+```shell
+innobackupex --apply-log --redo-only /data/full-backup/
+```
+
+2. 还原第一次redo数据
+```shell
+innobackupex --apply-log --redo-only /data/full-backup/ --incremental-dir=/data/2021-03-29_16-57-06/
+```
+
+3. 还原第二次redo数据
+```shell
+innobackupex --apply-log --redo-only /data/full-backup/ --incremental-dir=/data/2021-03-29_17-16-51
+```
+
+4. 对所有redo数据还原
+```shell
+innobackupex --defaults-file=/etc/my.cnf --copy-back /data/full-backup/
+```
+
+---
