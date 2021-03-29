@@ -18,17 +18,19 @@
   - 开发
     - [Python](/zh-cn/python/)
     - [Golang](/zh-cn/go/)
-  - Devops
+  - CICD
     - [Jenkins](zh-cn/jenkins/)
     - [Ansible](zh-cn/ansible/)
   - 存储
     - [Ceph](/zh-cn/ceph/)
+  - SQL
+    - [MySQL](/zh-cn/mysql/)
+  - NoSQL
+    - [Redis](/zh-cn/redis/)
   - 基础
     - [Linux](zh-cn/linux/)
     - [Ubuntu](zh-cn/ubuntu/)
     - [PHP](zh-cn/php/)
-    - [MySQL](/zh-cn/mysql/)
-    - [MariaDB](/zh-cn/mariadb/)
     - [PostgresSQL](/zh-cn/postgressql/)
     - [Nginx](/zh-cn/nginx/)
     - [Cfssl](zh/../zh-cn/cfssl/)
