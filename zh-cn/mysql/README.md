@@ -102,6 +102,7 @@ open_files_limit = 8000
 innodb_open_files = 8000
 expire_logs_days = 7
 log_bin = mysql-bin
+binlog_format = row
 basedir = /usr/local/mysql
 datadir = /usr/local/mysql/data
 port = 3306
@@ -299,6 +300,9 @@ mysqldump -uroot -p –default-character-set=utf8 –set-charset=utf8 –skip-op
 - **innodb_open_files**
   设置innodb引擎打开的文件数量。推荐设置为max_connection的10倍左右大小。
 
+- **binlog_format**
+  设置二进制日志文件格式，推荐设置为ROW，默认为Statement。日志格式一共有三种：Statement,ROW,Mixed
+
 - **table_open_cache**
   设置表打开缓冲文件的数量。推荐设置为max_connection的10倍左右大小。
 
@@ -358,8 +362,28 @@ mysqldump -uroot -p –default-character-set=utf8 –set-charset=utf8 –skip-op
   当客户端连接数据库服务器时，服务器会进行主机名解析，并且当DNS很慢时，建立连接也会很慢。
   因此建议在启动服务器时关闭skip_name_resolve选项而不进行DNS查找。唯一的局限是之后GRANT语句中只能使用IP地址了
 
+- **slow_query_log**
+  开启数据库慢查询日志。
+
+- **slow_query_log_file**
+  配置慢查询日志文件存放文件
+
+- **long_query_time**
+  设置慢查询日志记录的时间阈值。默认值为10秒
 ---
 
+## MySQL慢查询语句分析
+
+按查询语句次数排序
+```shell
+mysqldumpslow -s c -t 10 ./data/mysql-slow.log
+```
+按查询语句执行时间排序
+```shell
+mysqldumpslow -s t -t 10 ./data/mysql-slow.log
+```
+
+---
 ## MySQL主从复制原理
 
 1. 用户端提交变更事件，master的转储线程（Binlog_dump_thread）将变更事件写入到bin_log中。
