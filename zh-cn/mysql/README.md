@@ -454,6 +454,14 @@ show slave status;
 ```
 ---
 
+## MySQL常见备份策略
+
+- 全量备份
+- 差异备份
+- 增量备份
+
+---
+
 ## MySQL双主配置
 
 - 1. 配置主从模式
@@ -462,7 +470,7 @@ show slave status;
 
 ---
 
-## MySQL实现双主高可用
+## MySQL+Keepalived实现双主高可用
 
 ```shell
 yum install keepalived
@@ -613,3 +621,307 @@ innobackupex --defaults-file=/etc/my.cnf --copy-back /data/full-backup/
 ```
 
 ---
+
+## MySQL复制模式
+
+-  **异步复制（Asynchronous replication）**
+
+>MySQL默认的复制即是异步的，主库在执行完客户端提交的事务后会立即将结果返给给客户端，并不关心从库是否已经接收并处理，这样就会有一个问题，主如果crash掉了，此时主上已经提交的事务可能并没有传到从上，如果此 时，强行将从提升为主，可能导致新主上的数据不完整。
+
+-  **全同步复制（Fully synchronous replication）**
+
+>当主库执行完一个事务，所有的从库都执行了该事务才返回给客户端。因为需要等待所有从库执行完该事务才能返回，所以全同步复制的性能必然会收到严重的影响。
+
+-  **半同步复制（Semisynchronous replication）**
+
+>介于异步复制和全同步复制之间，主库在执行完客户端提交的事务后不是立刻返回给客户端，而是等待至少一个从库接收 到并写到`relay log`中才返回给客户端。相对于异步复制，半同步复制提高了数据的安全性，同时它也造成了一定程度的延迟，这个延迟最少是一个TCP/IP往返的时间。所以，半同步复制最好在低延时的网络中使用。
+
+**总结**
+
+默认情况下MySQL的复制是异步的，Master上所有的更新操作写入Binlog之后 并不确保所有的更新都被复制到Slave之上。异步操作虽然效率高，但是在Master/Slave出现问题的时 候，存在很高数据不同步的风险，甚至可能丢失数据。 MySQL5.5引入半同步复制功能的目的是为了保 证在master出问题的时候，至少有一台Slave的数据是完整的。在超时的情况下也可以临时转入异步复制，保障业务的正常使用，直到一台salve追赶上之后，继续切换到半同步模式。
+
+---
+
+## MHA工作原理
+
+- 从宕机崩溃的master保存二进制日志事件(binlogevents)。 
+- 识别含有最新更新的slave。 
+- 应用差异的中继日志(relay log)到其它slave。 
+- 应用从master保存的二进制日志事件(binlogevents)。 
+- 提升一个slave为新master。 
+- 使其它的slave连接新的master进行复制。
+
+MHA主要支持一主多从的架构，要搭建MHA,要求一个复制集群中必须最少有三台数据库服务器，一主二从，即一台充当master，一台充当备用master，另外一台充当从库，因为至少需要三台服务器。
+
+---
+
+## MHA角色
+
+- `MHA Manager`
+  
+  可以单独部署 在一台独立的机器上管理多个master-slave集群，也可以部署在一台slave节点上。
+
+- `MHA Node`
+  
+  运行在每台 MySQL服务器上，`MHA Manager`会定时探测集群中的master节点，当master出现故障时，它可以自动将最新数据的slave提升为新的master，然后将所有其他的slave重新指向新的master。
+
+---
+## MySQL配置半同步复制
+
+>MySQL半同步插件是由谷歌提供，默认安装在`/usr/local/mysql/lib/plugin/`，分别是：`semisync_master.so`与`semisync_slave.so`。
+
+1. 检测数据库是否支持动态加载插件
+
+```sql
+mysql> show variables like '%have_dynamic%';
++----------------------+-------+
+| Variable_name        | Value |
++----------------------+-------+
+| have_dynamic_loading | YES   |
++----------------------+-------+
+1 row in set (0.00 sec)
+
+```
+
+2. 安装插件（所有数据库节点）
+
+```sql
+mysql> INSTALL PLUGIN rpl_semi_sync_master SONAME 'semisync_master.so';
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> INSTALL PLUGIN rpl_semi_sync_slave SONAME 'semisync_slave.so';
+Query OK, 0 rows affected (0.00 sec)
+
+-- 查看插件是否安装
+mysql> show plugins ;
+
+```
+
+3. 配置`my.cnf`
+
+```shell
+# 1表示启用，0表示关闭，slave同样
+rpl_semi_sync_master_enabled = 1
+# 毫秒单位，主服务器等待确认消息10秒后，不在等待，变为异步方式
+rpl_semi_sync_master_timeout = 1000 
+rpl_semi_sync_slave_enabled = 1
+# 0表示禁止 SQL 线程在执行完一个 relay log 后自动将其删除，对于MHA场景下，对于某些滞后从库的恢复依赖于其他从库的relay log，因此采取禁用自动删除功能
+relay_log_purge = 0
+```
+重启服务
+
+4. 查看状态
+
+```sql
+mysql> show variables like '%sem%';
++------------------------------------+-------+
+| Variable_name                      | Value |
++------------------------------------+-------+
+| rpl_semi_sync_master_enabled       | ON    |
+| rpl_semi_sync_master_timeout       | 1000  |
+| rpl_semi_sync_master_trace_level   | 32    |
+| rpl_semi_sync_master_wait_no_slave | ON    |
+| rpl_semi_sync_slave_enabled        | ON    |
+| rpl_semi_sync_slave_trace_level    | 32    |
++------------------------------------+-------+
+6 rows in set (0.00 sec)
+
+```
+
+---
+
+## MHA配置
+
+服务器规划
+
+| 服务器IP    | 服务器角色        | 服务器组件                       |
+| ----------- | ----------------- | -------------------------------- |
+| 172.16.4.71 | master            | mysql<br>mha-node                |
+| 172.16.4.72 | candidate master  | mysql<br>mha-node                |
+| 172.16.4.73 | slave+mha-manager | mysql<br>mha-manager<br>mha-node |
+
+#### 1. 配置所有节点SSH互免密登录
+
+方便操作，配置hosts
+```shell
+cat >> /etc/hosts << EOF
+172.16.4.71 master
+172.16.4.72 slave1
+172.16.4.73 slave2
+EOF
+```
+在所有节点上操作
+```
+ssh-keygen
+for host in master slave1 slave2 ;do ssh-copy-id -i ~/.ssh/id_rsa.pub root@$host ;done
+```
+
+
+#### 2. 配置主从数据库
+
+1. 配置主从
+   
+`master`参考配置
+
+```shell
+[mysqld]
+server-id = 100001
+default-storage-engine = innodb
+log-bin = mysql-bin
+basedir = /usr/local/mysql
+datadir = /usr/local/mysql/data
+binlog_format = row
+log-bin-index = mysql-bin.index
+relay_log_purge = 0
+relay-log = relay-bin
+relay-log-index = relay-bin.index
+
+[mysqld_safe]
+log-error=/usr/local/mysql/data/error.log
+pid-file=/usr/local/mysql/data/mysql.pid
+
+```
+
+`candidate master`参考配置
+
+```shell
+[mysqld]
+server-id = 100002
+default-storage-engine = innodb
+log-bin = mysql-bin
+basedir = /usr/local/mysql
+datadir = /usr/local/mysql/data
+binlog_format = row
+log-bin-index = mysql-bin.index
+relay_log_purge = 0
+relay-log = relay-bin
+relay-log-index = relay-bin.index
+
+[mysqld_safe]
+log-error=/usr/local/mysql/data/error.log
+pid-file=/usr/local/mysql/data/mysql.pid
+```
+
+`slave`参考配置
+
+```shell
+[mysqld]
+server-id = 100003
+basedir = /usr/local/mysql
+datadir = /usr/local/mysql/data
+default-storage-engine = innodb
+log-bin = mysql-bin
+binlog_format = row
+relay-log = relay-bin
+read_only = 1
+relay_log_purge = 0
+relay-log-index = relay-bin.index
+
+[mysqld_safe]
+log-error=/usr/local/mysql/data/error.log
+pid-file=/usr/local/mysql/data/mysql.pid
+```
+创建用户
+
+```sql
+-- 创建同步用户和远程管理用户
+-- 只在master节点上创建
+grant replication slave on *.* to 'repl_user'@'172.16.4.%' identified by '123456';
+-- 在所有数据库节点上创建
+grant all privileges on *.* to 'manager'@'172.16.4.%' identified by '123456';
+```
+
+主从配置具体操作，请参考主从配置章节说明
+
+2. 开启半同步
+
+`master`参考配置
+
+```shell
+rpl_semi_sync_master_enabled = 1
+rpl_semi_sync_master_timeout = 1000
+rpl_semi_sync_slave_enabled = 1
+```
+
+`candidate master`参考配置
+
+```shell
+rpl_semi_sync_master_enabled = 1
+rpl_semi_sync_master_timeout = 1000
+rpl_semi_sync_slave_enabled = 1
+```
+
+`slave`参考配置
+
+```shell
+rpl_semi_sync_slave_enabled = 1
+```
+
+#### 3. 安装MHA
+
+1. 安装依赖包
+
+```shell
+yum -y install perl-DBD-MySQL perl-Config-Tiny perl-Log-Dispatch perl-Parallel-ForkManager perl-Config-IniFiles ncftp perl-Params-Validate perl-CPAN perl-Test-Mock-LWP.noarch perl-LWP-Authen-Negotiate.noarch perl-devel perl-ExtUtils-CBuilder perl-ExtUtils-MakeMaker
+```
+
+2. 准备MHA软件包
+
+下载地址：
+
+- https://github.com/yoshinorim/mha4mysql-manager/releases/
+  
+- https://github.com/yoshinorim/mha4mysql-node/releases
+
+```shell
+tar xf mha4mysql-manager-0.58.tar.gz
+mkdir -p /etc/masterha/{scripts,app1}
+cd mha4mysql-manager-0.58
+cp samples/conf/* /etc/masterha/app1/
+cp samples/scripts/* /etc/masterha/scripts/
+```
+配置全局配置文件
+```shell
+[server default]
+user=manager
+password=123456
+ssh_user=root
+master_binlog_dir= /usr/local/mysql/data
+remote_workdir=/var/log/masterha/app1
+secondary_check_script= masterha_secondary_check -s master -s slave1 -slave2 --user=root --master_host=master
+ping_interval=3
+
+repl_user=repl_user
+repl_password=123456
+
+master_ip_failover_script= /etc/masterha/scripts/master_ip_failover
+shutdown_script= /etc/masterha/scripts/power_manager
+report_script= /etc/masterha/scripts/send_report
+master_ip_online_change_script= /etc/masterha/scripts/master_ip_online_change
+```
+配置主配置文件
+```shell
+[server default]
+manager_workdir=/var/log/masterha/app1
+manager_log=/var/log/masterha/app1/manager.log
+
+[server1]
+hostname=master
+candidate_master=1
+
+[server2]
+hostname=slave1
+candidate_master=1
+
+[server3]
+hostname=slave2
+no_master=1
+
+```
+
+启动MHA
+```shell
+nohup masterha_manager --conf=/etc/mha/app1.cnf  \
+  --remove_dead_master_conf  --ignore_last_failover < /dev/null >  \
+  /var/log/masterha/app1/manager.log 2>&1 &
+```
