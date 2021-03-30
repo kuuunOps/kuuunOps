@@ -732,6 +732,14 @@ mysql> show variables like '%sem%';
 
 ## MHA配置
 
+>MHA版本说明：
+>
+>MySQL版本5.6.x以下的需要使用，MHA版本为0.56
+>
+>MySQL版本5.7.x以上的需要使用，MHA版本为0.58
+>
+>安装说明：https://gitee.com/kuuun/mha4mysql-manager/wikis/pages
+
 服务器规划
 
 | 服务器IP    | 服务器角色        | 服务器组件                       |
