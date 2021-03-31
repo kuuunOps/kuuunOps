@@ -1207,11 +1207,9 @@ Master_SSL_Verify_Server_Cert: No
 >
 >MySQL版本5.6.x以下的需要使用，MHA版本为0.56
 >
->[mha4mysql-manager-0.56-0.el6.noarch.rpm](/mysql/mha/mha4mysql-manager-0.56-0.el6.noarch.rpm)
->
->[mha4mysql-node-0.56-0.el6.noarch.rpm](/mysql/mha/mha4mysql-node-0.56-0.el6.noarch.rpm)
->
 >MySQL版本5.7.x以上的需要使用，MHA版本为0.58
+>
+>作者网站：http://www.mysql.gr.jp/
 >
 >安装说明：https://gitee.com/kuuun/mha4mysql-manager/wikis/pages
 
@@ -1251,59 +1249,331 @@ Updating / installing...
 >
 >安装`mha4mysql-manager-0.56-0.el6.noarch.rpm`
 
-
-
-
-
-
-
-
-
-
-
-
-配置全局配置文件
 ```shell
+[root@centos-vm-4-73 ~]# rpm -ivh mha4mysql-node-0.56-0.el6.noarch.rpm
+Preparing...                          ################################# [100%]
+Updating / installing...
+   1:mha4mysql-node-0.56-0.el6        ################################# [100%]
+[root@centos-vm-4-73 ~]# rpm -ivh mha4mysql-manager-0.56-0.el6.noarch.rpm
+Preparing...                          ################################# [100%]
+Updating / installing...
+   1:mha4mysql-manager-0.56-0.el6     ################################# [100%]
+```
+
+#### 3. 配置MHA
+
+>在slave节点上进行操作，因为`mha-manager`安装在此节点
+
+1. 创建相关目录
+
+```shell
+[root@centos-vm-4-73 mha4mysql-manager]# mkdir -p /usr/local/masterha/{scripts,app1}
+[root@centos-vm-4-73 ~]# git clone https://gitee.com/kuuun/mha4mysql-manager.git
+Cloning into 'mha4mysql-manager'...
+remote: Enumerating objects: 1460, done.
+remote: Counting objects: 100% (1460/1460), done.
+remote: Compressing objects: 100% (424/424), done.
+remote: Total 1460 (delta 893), reused 1460 (delta 893), pack-reused 0
+Receiving objects: 100% (1460/1460), 382.51 KiB | 0 bytes/s, done.
+Resolving deltas: 100% (893/893), done.
+[root@centos-vm-4-73 ~]# cd mha4mysql-manager
+[root@centos-vm-4-73 mha4mysql-manager]# cp samples/scripts/* /usr/local/masterha/scripts/
+[root@centos-vm-4-73 mha4mysql-manager]# cp samples/conf/masterha_default.cnf /etc/
+[root@centos-vm-4-73 mha4mysql-manager]# cp samples/conf/app1.cnf /etc/
+```
+
+2. 全局配置
+
+```shell
+[root@centos-vm-4-73 ~]# cat /etc/masterha_default.cnf
 [server default]
 user=manager
 password=123456
 ssh_user=root
 master_binlog_dir= /usr/local/mysql/data
 remote_workdir=/var/log/masterha/app1
-secondary_check_script= masterha_secondary_check -s master -s slave1 -slave2 --user=root --master_host=master
+secondary_check_script= masterha_secondary_check -s master
 ping_interval=3
 
 repl_user=repl_user
 repl_password=123456
 
-master_ip_failover_script= /etc/masterha/scripts/master_ip_failover
-shutdown_script= /etc/masterha/scripts/power_manager
-report_script= /etc/masterha/scripts/send_report
-master_ip_online_change_script= /etc/masterha/scripts/master_ip_online_change
+master_ip_failover_script= /usr/local/masterha/scripts/master_ip_failover
+# shutdown_script= /usr/local/masterha/scripts/power_manager
+report_script= /usr/local/masterha/scripts/send_report
+master_ip_online_change_script= /usr/local/masterha/scripts/master_ip_online_change
 ```
-配置主配置文件
+
+3. 应用配置文件
+
 ```shell
+[root@centos-vm-4-73 ~]# cat /etc/app1.cnf
 [server default]
-manager_workdir=/var/log/masterha/app1
-manager_log=/var/log/masterha/app1/manager.log
+manager_workdir=/usr/local/masterha/app1
+manager_log=/usr/local/masterha/app1/manager.log
 
 [server1]
 hostname=master
 candidate_master=1
 
 [server2]
-hostname=slave1
+hostname=candidate_master
 candidate_master=1
 
 [server3]
-hostname=slave2
+hostname=slave
 no_master=1
-
 ```
 
-启动MHA
+4. 配置VIP
+
+>/usr/local/masterha/scripts/master_ip_failover
+
+```perl
+#!/usr/bin/env perl
+
+#  Copyright (C) 2011 DeNA Co.,Ltd.
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#  Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+## Note: This is a sample script and is not complete. Modify the script based on your environment.
+
+use strict;
+use warnings FATAL => 'all';
+
+use Getopt::Long;
+use MHA::DBHelper;
+
+my (
+  $command,        $ssh_user,         $orig_master_host,
+  $orig_master_ip, $orig_master_port, $new_master_host,
+  $new_master_ip,  $new_master_port,  $new_master_user,
+  $new_master_password
+);
+
+my $vip='172.16.4.70/24';
+my $if='eth0';
+my $ssh_add_vip="/usr/sbin/ip address add $vip dev $if";
+my $ssh_del_vip="/usr/sbin/ip address del $vip dev $if";
+
+GetOptions(
+  'command=s'             => \$command,
+  'ssh_user=s'            => \$ssh_user,
+  'orig_master_host=s'    => \$orig_master_host,
+  'orig_master_ip=s'      => \$orig_master_ip,
+  'orig_master_port=i'    => \$orig_master_port,
+  'new_master_host=s'     => \$new_master_host,
+  'new_master_ip=s'       => \$new_master_ip,
+  'new_master_port=i'     => \$new_master_port,
+  'new_master_user=s'     => \$new_master_user,
+  'new_master_password=s' => \$new_master_password,
+);
+
+exit &main();
+
+
+sub add_vip {
+  `ssh $ssh_user\@$new_master_host "$ssh_add_vip"`;
+}
+sub del_vip {
+  `ssh $ssh_user\@$orig_master_host "$ssh_del_vip"`;
+}
+
+sub main {
+  if ( $command eq "stop" || $command eq "stopssh" ) {
+
+    # $orig_master_host, $orig_master_ip, $orig_master_port are passed.
+    # If you manage master ip address at global catalog database,
+    # invalidate orig_master_ip here.
+    my $exit_code = 1;
+    eval {
+      print "Disabling the VIP on old master: $orig_master_host \n";
+      &del_vip();
+      # updating global catalog, etc
+      $exit_code = 0;
+    };
+    if ($@) {
+      warn "Got Error: $@\n";
+      exit $exit_code;
+    }
+    exit $exit_code;
+  }
+  elsif ( $command eq "start" ) {
+
+    # all arguments are passed.
+    # If you manage master ip address at global catalog database,
+    # activate new_master_ip here.
+    # You can also grant write access (create user, set read_only=0, etc) here.
+    my $exit_code = 10;
+    eval {
+      print "Enabling the VIP - $vip on the new master - $new_master_host \n";
+      &add_vip();
+      $exit_code = 0;
+    };
+    if ($@) {
+      warn $@;
+
+      # If you want to continue failover, exit 10.
+      exit $exit_code;
+    }
+    exit $exit_code;
+  }
+  elsif ( $command eq "status" ) {
+
+    # do nothing
+    exit 0;
+  }
+  else {
+    &usage();
+    exit 1;
+  }
+}
+
+sub usage {
+  print
+"Usage: master_ip_failover --command=start|stop|stopssh|status --orig_master_host=host --orig_master_ip=ip --orig_master_port=port --new_master_host=host --new_master_ip=ip --new_master_port=port\n";
+}
+```
+
+
+5. 测试配置
+
 ```shell
-nohup masterha_manager --conf=/etc/mha/app1.cnf  \
+[root@centos-vm-4-73 ~]# masterha_check_ssh --conf=/etc/app1.cnf
+Wed Mar 31 10:26:38 2021 - [info] Reading default configuration from /etc/masterha_default.cnf..
+Wed Mar 31 10:26:38 2021 - [info] Reading application default configuration from /etc/app1.cnf..
+Wed Mar 31 10:26:38 2021 - [info] Reading server configuration from /etc/app1.cnf..
+Wed Mar 31 10:26:38 2021 - [info] Starting SSH connection tests..
+Wed Mar 31 10:26:39 2021 - [debug]
+Wed Mar 31 10:26:38 2021 - [debug]  Connecting via SSH from root@master(172.16.4.71:22) to root@candidate_master(172.16.4.72:22)..
+Wed Mar 31 10:26:38 2021 - [debug]   ok.
+Wed Mar 31 10:26:38 2021 - [debug]  Connecting via SSH from root@master(172.16.4.71:22) to root@slave(172.16.4.73:22)..
+Wed Mar 31 10:26:38 2021 - [debug]   ok.
+Wed Mar 31 10:26:39 2021 - [debug]
+Wed Mar 31 10:26:38 2021 - [debug]  Connecting via SSH from root@candidate_master(172.16.4.72:22) to root@master(172.16.4.71:22)..
+Wed Mar 31 10:26:39 2021 - [debug]   ok.
+Wed Mar 31 10:26:39 2021 - [debug]  Connecting via SSH from root@candidate_master(172.16.4.72:22) to root@slave(172.16.4.73:22)..
+Wed Mar 31 10:26:39 2021 - [debug]   ok.
+Wed Mar 31 10:26:40 2021 - [debug]
+Wed Mar 31 10:26:39 2021 - [debug]  Connecting via SSH from root@slave(172.16.4.73:22) to root@master(172.16.4.71:22)..
+Wed Mar 31 10:26:39 2021 - [debug]   ok.
+Wed Mar 31 10:26:39 2021 - [debug]  Connecting via SSH from root@slave(172.16.4.73:22) to root@candidate_master(172.16.4.72:22)..
+Wed Mar 31 10:26:39 2021 - [debug]   ok.
+Wed Mar 31 10:26:40 2021 - [info] All SSH connection tests passed successfully.
+[root@centos-vm-4-73 ~]# masterha_check_repl --global-conf=/etc/masterha_default.cnf --conf=/etc/app1.cnf
+Wed Mar 31 10:58:43 2021 - [info] Reading default configuration from /etc/masterha_default.cnf..
+Wed Mar 31 10:58:43 2021 - [info] Reading application default configuration from /etc/app1.cnf..
+Wed Mar 31 10:58:43 2021 - [info] Reading server configuration from /etc/app1.cnf..
+Wed Mar 31 10:58:43 2021 - [info] MHA::MasterMonitor version 0.56.
+Wed Mar 31 10:58:44 2021 - [info] GTID failover mode = 0
+Wed Mar 31 10:58:44 2021 - [info] Dead Servers:
+Wed Mar 31 10:58:44 2021 - [info] Alive Servers:
+Wed Mar 31 10:58:44 2021 - [info]   master(172.16.4.71:3306)
+Wed Mar 31 10:58:44 2021 - [info]   candidate_master(172.16.4.72:3306)
+Wed Mar 31 10:58:44 2021 - [info]   slave(172.16.4.73:3306)
+Wed Mar 31 10:58:44 2021 - [info] Alive Slaves:
+Wed Mar 31 10:58:44 2021 - [info]   candidate_master(172.16.4.72:3306)  Version=5.6.51-log (oldest major version between slaves) log-bin:enabled
+Wed Mar 31 10:58:44 2021 - [info]     Replicating from 172.16.4.71(172.16.4.71:3306)
+Wed Mar 31 10:58:44 2021 - [info]     Primary candidate for the new Master (candidate_master is set)
+Wed Mar 31 10:58:44 2021 - [info]   slave(172.16.4.73:3306)  Version=5.6.51-log (oldest major version between slaves) log-bin:enabled
+Wed Mar 31 10:58:44 2021 - [info]     Replicating from 172.16.4.71(172.16.4.71:3306)
+Wed Mar 31 10:58:44 2021 - [info]     Not candidate for the new Master (no_master is set)
+Wed Mar 31 10:58:44 2021 - [info] Current Alive Master: master(172.16.4.71:3306)
+Wed Mar 31 10:58:44 2021 - [info] Checking slave configurations..
+Wed Mar 31 10:58:44 2021 - [info]  read_only=1 is not set on slave candidate_master(172.16.4.72:3306).
+Wed Mar 31 10:58:44 2021 - [info] Checking replication filtering settings..
+Wed Mar 31 10:58:44 2021 - [info]  binlog_do_db= , binlog_ignore_db=
+Wed Mar 31 10:58:44 2021 - [info]  Replication filtering check ok.
+Wed Mar 31 10:58:44 2021 - [info] GTID (with auto-pos) is not supported
+Wed Mar 31 10:58:44 2021 - [info] Starting SSH connection tests..
+Wed Mar 31 10:58:47 2021 - [info] All SSH connection tests passed successfully.
+Wed Mar 31 10:58:47 2021 - [info] Checking MHA Node version..
+Wed Mar 31 10:58:48 2021 - [info]  Version check ok.
+Wed Mar 31 10:58:48 2021 - [info] Checking SSH publickey authentication settings on the current master..
+Wed Mar 31 10:58:48 2021 - [info] HealthCheck: SSH to master is reachable.
+Wed Mar 31 10:58:48 2021 - [info] Master MHA Node version is 0.56.
+Wed Mar 31 10:58:48 2021 - [info] Checking recovery script configurations on master(172.16.4.71:3306)..
+Wed Mar 31 10:58:48 2021 - [info]   Executing command: save_binary_logs --command=test --start_pos=4 --binlog_dir=/usr/local/mysql/data --output_file=/var/log/masterha/app1/save_binary_logs_test --manager_version=0.56 --start_file=mysql-bin.000004
+Wed Mar 31 10:58:48 2021 - [info]   Connecting to root@172.16.4.71(master:22)..
+  Creating /var/log/masterha/app1 if not exists..    ok.
+  Checking output directory is accessible or not..
+   ok.
+  Binlog found at /usr/local/mysql/data, up to mysql-bin.000004
+Wed Mar 31 10:58:49 2021 - [info] Binlog setting check done.
+Wed Mar 31 10:58:49 2021 - [info] Checking SSH publickey authentication and checking recovery script configurations on all alive slave servers..
+Wed Mar 31 10:58:49 2021 - [info]   Executing command : apply_diff_relay_logs --command=test --slave_user='manager' --slave_host=candidate_master --slave_ip=172.16.4.72 --slave_port=3306 --workdir=/var/log/masterha/app1 --target_version=5.6.51-log --manager_version=0.56 --relay_log_info=/usr/local/mysql/data/relay-log.info  --relay_dir=/usr/local/mysql/data/  --slave_pass=xxx
+Wed Mar 31 10:58:49 2021 - [info]   Connecting to root@172.16.4.72(candidate_master:22)..
+  Checking slave recovery environment settings..
+    Opening /usr/local/mysql/data/relay-log.info ... ok.
+    Relay log found at /usr/local/mysql/data, up to relay-bin.000006
+    Temporary relay log file is /usr/local/mysql/data/relay-bin.000006
+    Testing mysql connection and privileges..Warning: Using a password on the command line interface can be insecure.
+ done.
+    Testing mysqlbinlog output.. done.
+    Cleaning up test file(s).. done.
+Wed Mar 31 10:58:49 2021 - [info]   Executing command : apply_diff_relay_logs --command=test --slave_user='manager' --slave_host=slave --slave_ip=172.16.4.73 --slave_port=3306 --workdir=/var/log/masterha/app1 --target_version=5.6.51-log --manager_version=0.56 --relay_log_info=/usr/local/mysql/data/relay-log.info  --relay_dir=/usr/local/mysql/data/  --slave_pass=xxx
+Wed Mar 31 10:58:49 2021 - [info]   Connecting to root@172.16.4.73(slave:22)..
+  Checking slave recovery environment settings..
+    Opening /usr/local/mysql/data/relay-log.info ... ok.
+    Relay log found at /usr/local/mysql/data, up to relay-bin.000005
+    Temporary relay log file is /usr/local/mysql/data/relay-bin.000005
+    Testing mysql connection and privileges..Warning: Using a password on the command line interface can be insecure.
+ done.
+    Testing mysqlbinlog output.. done.
+    Cleaning up test file(s).. done.
+Wed Mar 31 10:58:49 2021 - [info] Slaves settings check done.
+Wed Mar 31 10:58:49 2021 - [info]
+master(172.16.4.71:3306) (current master)
+ +--candidate_master(172.16.4.72:3306)
+ +--slave(172.16.4.73:3306)
+
+Wed Mar 31 10:58:49 2021 - [info] Checking replication health on candidate_master..
+Wed Mar 31 10:58:49 2021 - [info]  ok.
+Wed Mar 31 10:58:49 2021 - [info] Checking replication health on slave..
+Wed Mar 31 10:58:49 2021 - [info]  ok.
+Wed Mar 31 10:58:49 2021 - [info] Checking master_ip_failover_script status:
+Wed Mar 31 10:58:49 2021 - [info]   /usr/local/masterha/scripts/master_ip_failover --command=status --ssh_user=root --orig_master_host=master --orig_master_ip=172.16.4.71 --orig_master_port=3306
+Wed Mar 31 10:58:49 2021 - [info]  OK.
+Wed Mar 31 10:58:49 2021 - [warning] shutdown_script is not defined.
+Wed Mar 31 10:58:49 2021 - [info] Got exit code 0 (Not master dead).
+
+MySQL Replication Health is OK.
+```
+
+6. 启动MHA
+
+master节点增加VIP
+
+```shell
+ip addr add 172.16.4.70/24 dev eth0
+```
+slave节点启动
+
+```
+nohup masterha_manager --conf=/etc/app1.cnf  \
   --remove_dead_master_conf  --ignore_last_failover < /dev/null >  \
   /var/log/masterha/app1/manager.log 2>&1 &
 ```
+---
+#### 4. 故障测试
+
+现在`master`节点故障，`mha-manager`自动检测不到原`master`节点，触发故障转移，现在将`candidate master`节点提升`CHANGE MASTER`,并将其他`SLAVE`节点指向该节点，并在目录`/usr/local/masterha/app1`生成文件`app1.failover.complete`，同时将`maser`节点的字段从`app1.conf`配置移除。
+
+#### 5. 故障恢复
+
+1. 修复`172.16.4.71`节点，启动数据库。
+2. 将`172.16.4.71`节点提升为`slave`节点。
+3. 将`172.16.4.71`配置加回`app1.conf`中。
