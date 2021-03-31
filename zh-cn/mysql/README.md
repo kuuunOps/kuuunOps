@@ -1207,9 +1207,9 @@ Master_SSL_Verify_Server_Cert: No
 >
 >MySQL版本5.6.x以下的需要使用，MHA版本为0.56
 >
->[mha4mysql-manager-0.56-0.el6.noarch.rpm](/zh-cn/mysql/mha/mha4mysql-manager-0.56-0.el6.noarch.rpm)
+>[mha4mysql-manager-0.56-0.el6.noarch.rpm](/mysql/mha/mha4mysql-manager-0.56-0.el6.noarch.rpm)
 >
->[mha4mysql-node-0.56-0.el6.noarch.rpm](/zh-cn/mysql/mha/mha4mysql-node-0.56-0.el6.noarch.rpm)
+>[mha4mysql-node-0.56-0.el6.noarch.rpm](/mysql/mha/mha4mysql-node-0.56-0.el6.noarch.rpm)
 >
 >MySQL版本5.7.x以上的需要使用，MHA版本为0.58
 >
