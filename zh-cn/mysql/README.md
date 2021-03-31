@@ -732,13 +732,7 @@ mysql> show variables like '%sem%';
 
 ## MHA配置
 
->MHA版本说明：
->
->MySQL版本5.6.x以下的需要使用，MHA版本为0.56
->
->MySQL版本5.7.x以上的需要使用，MHA版本为0.58
->
->安装说明：https://gitee.com/kuuun/mha4mysql-manager/wikis/pages
+
 
 服务器规划
 
@@ -748,30 +742,49 @@ mysql> show variables like '%sem%';
 | 172.16.4.72 | candidate master  | mysql<br>mha-node                |
 | 172.16.4.73 | slave+mha-manager | mysql<br>mha-manager<br>mha-node |
 
-#### 1. 配置所有节点SSH互免密登录
+### 1. 配置所有节点SSH互免密登录
 
-方便操作，配置hosts
+为所有节点配置hosts
 ```shell
 cat >> /etc/hosts << EOF
 172.16.4.71 master
-172.16.4.72 slave1
-172.16.4.73 slave2
+172.16.4.72 candidate_master
+172.16.4.73 slave
 EOF
 ```
 在所有节点上操作
-```
+
+- 生成秘钥
+```shell
 ssh-keygen
-for host in master slave1 slave2 ;do ssh-copy-id -i ~/.ssh/id_rsa.pub root@$host ;done
+```
+
+- 推送秘钥
+```
+for host in master candidate_master slave ;do ssh-copy-id -i ~/.ssh/id_rsa.pub root@$host ;done
 ```
 
 
-#### 2. 配置主从数据库
+### 2. 配置主从数据库
 
-1. 配置主从
-   
-`master`参考配置
+>准备mysql数据包，安装mysql，但是环境使用MySQL版本为：mysql-5.6.51-linux-glibc2.12-x86_64.tar.gz
+
+#### 1. 配置主从
+
+1. 所有节点安装依赖包
+```shell
+[root@centos-vm-4-71 mysql]# yum install -y libaio-devel
+```
+
+2. 节点操作
+
+- `master`
 
 ```shell
+[root@centos-vm-4-71 ~]# tar xf mysql-5.6.51-linux-glibc2.12-x86_64.tar.gz
+[root@centos-vm-4-71 ~]# mv mysql-5.6.51-linux-glibc2.12-x86_64 /usr/local/mysql
+[root@centos-vm-4-71 ~]# vi /etc/my.cnf
+[root@centos-vm-4-71 ~]# cat /etc/my.cnf
 [mysqld]
 server-id = 100001
 default-storage-engine = innodb
@@ -783,16 +796,104 @@ log-bin-index = mysql-bin.index
 relay_log_purge = 0
 relay-log = relay-bin
 relay-log-index = relay-bin.index
-
+ 
 [mysqld_safe]
 log-error=/usr/local/mysql/data/error.log
 pid-file=/usr/local/mysql/data/mysql.pid
-
+ 
+[root@centos-vm-4-71 ~]# groupadd mysql
+[root@centos-vm-4-71 ~]# useradd -g mysql -s /sbin/nologin mysql
+[root@centos-vm-4-71 ~]# chown -R mysql.mysql /usr/local/mysql
+[root@centos-vm-4-71 ~]# cd /usr/local/mysql/
+[root@centos-vm-4-71 mysql]# ./scripts/mysql_install_db --user=mysql --basedir=/usr/local/mysql --datadir=/usr/local/mysql/data
+[root@centos-vm-4-71 mysql]# ln -sf /usr/local/mysql/bin/* /usr/bin/
+[root@centos-vm-4-71 mysql]# cp support-files/mysql.server /etc/init.d/mysqld
+[root@centos-vm-4-71 mysql]# systemctl enable mysqld
+mysqld.service is not a native service, redirecting to /sbin/chkconfig.
+Executing /sbin/chkconfig mysqld on
+[root@centos-vm-4-71 mysql]# systemctl start mysqld
+[root@centos-vm-4-71 mysql]# mysqladmin -uroot -p password
+Enter password:
+New password:
+Confirm new password:
+[root@centos-vm-4-71 mysql]# mysql -uroot -p
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 2
+Server version: 5.6.51-log MySQL Community Server (GPL)
+ 
+Copyright (c) 2000, 2021, Oracle and/or its affiliates. All rights reserved.
+ 
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+ 
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+ 
+mysql> grant replication slave on *.* to 'repl_user'@'172.16.4.%' identified by '123456';
+Query OK, 0 rows affected (0.01 sec)
+ 
+mysql> grant all privileges on *.* to 'manager'@'172.16.4.%' identified by '123456';
+Query OK, 0 rows affected (0.00 sec)
+ 
+mysql> show master status;
++------------------+----------+--------------+------------------+-------------------+
+| File             | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
++------------------+----------+--------------+------------------+-------------------+
+| mysql-bin.000003 |      681 |              |                  |                   |
++------------------+----------+--------------+------------------+-------------------+
+1 row in set (0.00 sec)
+ 
+mysql> INSTALL PLUGIN rpl_semi_sync_master SONAME 'semisync_master.so';
+Query OK, 0 rows affected (0.00 sec)
+ 
+mysql> INSTALL PLUGIN rpl_semi_sync_slave SONAME 'semisync_slave.so';
+Query OK, 0 rows affected (0.01 sec)
+ 
+mysql> ^DBye
+[root@centos-vm-4-71 mysql]# vi /etc/my.cnf
+# 增加半同步配置
+rpl_semi_sync_master_enabled = 1
+rpl_semi_sync_master_timeout = 1000
+rpl_semi_sync_slave_enabled = 1
+[root@centos-vm-4-71 mysql]# systemctl restart mysqld
+[root@centos-vm-4-71 mysql]# mysql -uroot -p
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 1
+Server version: 5.6.51-log MySQL Community Server (GPL)
+ 
+Copyright (c) 2000, 2021, Oracle and/or its affiliates. All rights reserved.
+ 
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+ 
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+ 
+mysql> show variables like '%sem%';
++------------------------------------+-------+
+| Variable_name                      | Value |
++------------------------------------+-------+
+| rpl_semi_sync_master_enabled       | ON    |
+| rpl_semi_sync_master_timeout       | 1000  |
+| rpl_semi_sync_master_trace_level   | 32    |
+| rpl_semi_sync_master_wait_no_slave | ON    |
+| rpl_semi_sync_slave_enabled        | ON    |
+| rpl_semi_sync_slave_trace_level    | 32    |
++------------------------------------+-------+
+6 rows in set (0.00 sec)
 ```
 
-`candidate master`参考配置
+--- 
+
+- `candidate master`
 
 ```shell
+[root@centos-vm-4-72 ~]# tar xf mysql-5.6.51-linux-glibc2.12-x86_64.tar.gz
+[root@centos-vm-4-72 ~]# mv mysql-5.6.51-linux-glibc2.12-x86_64 /usr/local/mysql
+[root@centos-vm-4-72 ~]# vi /etc/my.cnf
+[root@centos-vm-4-72 ~]# cat /etc/my.cnf
 [mysqld]
 server-id = 100002
 default-storage-engine = innodb
@@ -804,15 +905,159 @@ log-bin-index = mysql-bin.index
 relay_log_purge = 0
 relay-log = relay-bin
 relay-log-index = relay-bin.index
-
+ 
 [mysqld_safe]
 log-error=/usr/local/mysql/data/error.log
 pid-file=/usr/local/mysql/data/mysql.pid
+[root@centos-vm-4-72 ~]# groupadd mysql
+[root@centos-vm-4-72 ~]# useradd -g mysql mysql
+[root@centos-vm-4-72 ~]# chown -R mysql.mysql /usr/local/mysql
+[root@centos-vm-4-72 ~]# cd /usr/local/mysql/
+[root@centos-vm-4-72 mysql]# ./scripts/mysql_install_db --user=mysql --basedir=/usr/local/mysql --datadir=/usr/local/mysql/data
+[root@centos-vm-4-72 mysql]# ln -sf /usr/local/mysql/bin/* /usr/bin/
+[root@centos-vm-4-72 mysql]# cp support-files/mysql.server /etc/init.d/mysqld
+[root@centos-vm-4-72 mysql]# systemctl enable mysqld
+mysqld.service is not a native service, redirecting to /sbin/chkconfig.
+Executing /sbin/chkconfig mysqld on
+[root@centos-vm-4-72 mysql]# systemctl start mysqld
+[root@centos-vm-4-72 mysql]# mysqladmin -uroot -p password
+Enter password:
+New password:
+Confirm new password:
+[root@centos-vm-4-72 mysql]# mysql -uroot -p
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 2
+Server version: 5.6.51-log MySQL Community Server (GPL)
+ 
+Copyright (c) 2000, 2021, Oracle and/or its affiliates. All rights reserved.
+ 
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+ 
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+ 
+mysql> grant replication slave on *.* to 'repl_user'@'172.16.4.%' identified by '123456';
+Query OK, 0 rows affected (0.00 sec)
+ 
+mysql> grant all privileges on *.* to 'manager'@'172.16.4.%' identified by '123456';
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> INSTALL PLUGIN rpl_semi_sync_master SONAME 'semisync_master.so';
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> INSTALL PLUGIN rpl_semi_sync_slave SONAME 'semisync_slave.so';
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> ^DBye
+[root@centos-vm-4-72 mysql]# vim /etc/my.cnf
+# 增加半同步配置
+rpl_semi_sync_master_enabled = 1
+rpl_semi_sync_master_timeout = 1000
+rpl_semi_sync_slave_enabled = 1
+[root@centos-vm-4-72 mysql]# systemctl restart mysqld
+[root@centos-vm-4-72 mysql]# mysql -uroot -p
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 3
+Server version: 5.6.51-log MySQL Community Server (GPL)
+
+Copyright (c) 2000, 2021, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> show variables like '%sem%';
++------------------------------------+-------+
+| Variable_name                      | Value |
++------------------------------------+-------+
+| rpl_semi_sync_master_enabled       | ON    |
+| rpl_semi_sync_master_timeout       | 1000  |
+| rpl_semi_sync_master_trace_level   | 32    |
+| rpl_semi_sync_master_wait_no_slave | ON    |
+| rpl_semi_sync_slave_enabled        | ON    |
+| rpl_semi_sync_slave_trace_level    | 32    |
++------------------------------------+-------+
+6 rows in set (0.00 sec)
+
+mysql> change master to master_host='172.16.4.71',master_user='repl_user',master_password='123456',master_log_file='mysql-bin.000003',master_log_pos=681;
+Query OK, 0 rows affected, 2 warnings (0.02 sec)
+ 
+mysql> start slave;
+Query OK, 0 rows affected (0.00 sec)
+ 
+mysql> show slave status\G
+*************************** 1. row ***************************
+               Slave_IO_State: Waiting for master to send event
+                  Master_Host: 172.16.4.71
+                  Master_User: repl_user
+                  Master_Port: 3306
+                Connect_Retry: 60
+              Master_Log_File: mysql-bin.000003
+          Read_Master_Log_Pos: 681
+               Relay_Log_File: relay-bin.000002
+                Relay_Log_Pos: 283
+        Relay_Master_Log_File: mysql-bin.000003
+             Slave_IO_Running: Yes
+            Slave_SQL_Running: Yes
+              Replicate_Do_DB:
+          Replicate_Ignore_DB:
+           Replicate_Do_Table:
+       Replicate_Ignore_Table:
+      Replicate_Wild_Do_Table:
+  Replicate_Wild_Ignore_Table:
+                   Last_Errno: 0
+                   Last_Error:
+                 Skip_Counter: 0
+          Exec_Master_Log_Pos: 681
+              Relay_Log_Space: 450
+              Until_Condition: None
+               Until_Log_File:
+                Until_Log_Pos: 0
+           Master_SSL_Allowed: No
+           Master_SSL_CA_File:
+           Master_SSL_CA_Path:
+              Master_SSL_Cert:
+            Master_SSL_Cipher:
+               Master_SSL_Key:
+        Seconds_Behind_Master: 0
+Master_SSL_Verify_Server_Cert: No
+                Last_IO_Errno: 0
+                Last_IO_Error:
+               Last_SQL_Errno: 0
+               Last_SQL_Error:
+  Replicate_Ignore_Server_Ids:
+             Master_Server_Id: 100001
+                  Master_UUID: cfbbad2b-91bb-11eb-a3d3-0050568d753b
+             Master_Info_File: /usr/local/mysql/data/master.info
+                    SQL_Delay: 0
+          SQL_Remaining_Delay: NULL
+      Slave_SQL_Running_State: Slave has read all relay log; waiting for the slave I/O thread to update it
+           Master_Retry_Count: 86400
+                  Master_Bind:
+      Last_IO_Error_Timestamp:
+     Last_SQL_Error_Timestamp:
+               Master_SSL_Crl:
+           Master_SSL_Crlpath:
+           Retrieved_Gtid_Set:
+            Executed_Gtid_Set:
+                Auto_Position: 0
+1 row in set (0.00 sec)
 ```
 
-`slave`参考配置
+---
+
+- `slave`
 
 ```shell
+[root@centos-vm-4-73 ~]# tar xf mysql-5.6.51-linux-glibc2.12-x86_64.tar.gz
+[root@centos-vm-4-73 ~]# mv mysql-5.6.51-linux-glibc2.12-x86_64 /usr/local/mysql
+[root@centos-vm-4-73 ~]# vi /etc/my.cnf
+[root@centos-vm-4-73 ~]# cat /etc/my.cnf
 [mysqld]
 server-id = 100003
 basedir = /usr/local/mysql
@@ -828,66 +1073,195 @@ relay-log-index = relay-bin.index
 [mysqld_safe]
 log-error=/usr/local/mysql/data/error.log
 pid-file=/usr/local/mysql/data/mysql.pid
-```
-创建用户
+[root@centos-vm-4-73 ~]# groupadd mysql
+[root@centos-vm-4-73 ~]# useradd -g mysql -s /sbin/nologin mysql
+[root@centos-vm-4-73 ~]# chown -R mysql.mysql /usr/local/mysql/
+[root@centos-vm-4-73 ~]# cd /usr/local/mysql/
+[root@centos-vm-4-73 mysql]# ./scripts/mysql_install_db --user=mysql --basedir=/usr/local/mysql --datadir=/usr/local/mysql/data
+[root@centos-vm-4-73 mysql]# ln -sf /usr/local/mysql/bin/* /usr/bin/
+[root@centos-vm-4-73 mysql]# cp support-files/mysql.server /etc/init.d/mysqld
+[root@centos-vm-4-73 mysql]# systemctl enable mysqld
+mysqld.service is not a native service, redirecting to /sbin/chkconfig.
+Executing /sbin/chkconfig mysqld on
+[root@centos-vm-4-73 mysql]# systemctl start mysqld
+[root@centos-vm-4-73 mysql]# mysqladmin -uroot -p password
+Enter password:
+New password:
+Confirm new password:
+[root@centos-vm-4-73 mysql]# mysql -uroot -p
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 2
+Server version: 5.6.51-log MySQL Community Server (GPL)
 
-```sql
--- 创建同步用户和远程管理用户
--- 只在master节点上创建
-grant replication slave on *.* to 'repl_user'@'172.16.4.%' identified by '123456';
--- 在所有数据库节点上创建
-grant all privileges on *.* to 'manager'@'172.16.4.%' identified by '123456';
-```
+Copyright (c) 2000, 2021, Oracle and/or its affiliates. All rights reserved.
 
-主从配置具体操作，请参考主从配置章节说明
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
 
-2. 开启半同步
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
 
-`master`参考配置
+mysql> grant all privileges on *.* to 'manager'@'172.16.4.%' identified by '123456';
+Query OK, 0 rows affected (0.00 sec)
 
-```shell
-rpl_semi_sync_master_enabled = 1
-rpl_semi_sync_master_timeout = 1000
+mysql> INSTALL PLUGIN rpl_semi_sync_slave SONAME 'semisync_slave.so';
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> ^DBye
+[root@centos-vm-4-73 mysql]# vim /etc/my.cnf
+# 增加配置
 rpl_semi_sync_slave_enabled = 1
+[root@centos-vm-4-73 mysql]# systemctl restart mysqld
+[root@centos-vm-4-73 mysql]# mysql -uroot -p
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 1
+Server version: 5.6.51-log MySQL Community Server (GPL)
+
+Copyright (c) 2000, 2021, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> show variables like '%sem%';
++---------------------------------+-------+
+| Variable_name                   | Value |
++---------------------------------+-------+
+| rpl_semi_sync_slave_enabled     | ON    |
+| rpl_semi_sync_slave_trace_level | 32    |
++---------------------------------+-------+
+2 rows in set (0.00 sec)
+
+mysql> change master to master_host='172.16.4.71',master_user='repl_user',master_password='123456',master_log_file='mysql-bin.000003',master_log_pos=681;
+Query OK, 0 rows affected, 2 warnings (0.01 sec)
+
+mysql> start slave;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> show slave status\G
+*************************** 1. row ***************************
+               Slave_IO_State: Waiting for master to send event
+                  Master_Host: 172.16.4.71
+                  Master_User: repl_user
+                  Master_Port: 3306
+                Connect_Retry: 60
+              Master_Log_File: mysql-bin.000004
+          Read_Master_Log_Pos: 120
+               Relay_Log_File: relay-bin.000003
+                Relay_Log_Pos: 283
+        Relay_Master_Log_File: mysql-bin.000004
+             Slave_IO_Running: Yes
+            Slave_SQL_Running: Yes
+              Replicate_Do_DB:
+          Replicate_Ignore_DB:
+           Replicate_Do_Table:
+       Replicate_Ignore_Table:
+      Replicate_Wild_Do_Table:
+  Replicate_Wild_Ignore_Table:
+                   Last_Errno: 0
+                   Last_Error:
+                 Skip_Counter: 0
+          Exec_Master_Log_Pos: 120
+              Relay_Log_Space: 780
+              Until_Condition: None
+               Until_Log_File:
+                Until_Log_Pos: 0
+           Master_SSL_Allowed: No
+           Master_SSL_CA_File:
+           Master_SSL_CA_Path:
+              Master_SSL_Cert:
+            Master_SSL_Cipher:
+               Master_SSL_Key:
+        Seconds_Behind_Master: 0
+Master_SSL_Verify_Server_Cert: No
+                Last_IO_Errno: 0
+                Last_IO_Error:
+               Last_SQL_Errno: 0
+               Last_SQL_Error:
+  Replicate_Ignore_Server_Ids:
+             Master_Server_Id: 100001
+                  Master_UUID: cfbbad2b-91bb-11eb-a3d3-0050568d753b
+             Master_Info_File: /usr/local/mysql/data/master.info
+                    SQL_Delay: 0
+          SQL_Remaining_Delay: NULL
+      Slave_SQL_Running_State: Slave has read all relay log; waiting for the slave I/O thread to update it
+           Master_Retry_Count: 86400
+                  Master_Bind:
+      Last_IO_Error_Timestamp:
+     Last_SQL_Error_Timestamp:
+               Master_SSL_Crl:
+           Master_SSL_Crlpath:
+           Retrieved_Gtid_Set:
+            Executed_Gtid_Set:
+                Auto_Position: 0
+1 row in set (0.00 sec)
 ```
 
-`candidate master`参考配置
+### 3. 安装MHA
 
-```shell
-rpl_semi_sync_master_enabled = 1
-rpl_semi_sync_master_timeout = 1000
-rpl_semi_sync_slave_enabled = 1
-```
+>MHA版本说明：
+>
+>MySQL版本5.6.x以下的需要使用，MHA版本为0.56
+>
+>[mha4mysql-manager-0.56-0.el6.noarch.rpm](./mha/mha4mysql-manager-0.56-0.el6.noarch.rpm)
+>
+>[mha4mysql-node-0.56-0.el6.noarch.rpm](./mha/mha4mysql-node-0.56-0.el6.noarch.rpm)
+>
+>MySQL版本5.7.x以上的需要使用，MHA版本为0.58
+>
+>安装说明：https://gitee.com/kuuun/mha4mysql-manager/wikis/pages
 
-`slave`参考配置
-
-```shell
-rpl_semi_sync_slave_enabled = 1
-```
-
-#### 3. 安装MHA
-
-1. 安装依赖包
+#### 1. 安装依赖包
 
 ```shell
 yum -y install perl-DBD-MySQL perl-Config-Tiny perl-Log-Dispatch perl-Parallel-ForkManager perl-Config-IniFiles ncftp perl-Params-Validate perl-CPAN perl-Test-Mock-LWP.noarch perl-LWP-Authen-Negotiate.noarch perl-devel perl-ExtUtils-CBuilder perl-ExtUtils-MakeMaker
 ```
 
-2. 准备MHA软件包
+#### 2. 安装MHA
 
-下载地址：
+1. `master`
 
-- https://github.com/yoshinorim/mha4mysql-manager/releases/
-  
-- https://github.com/yoshinorim/mha4mysql-node/releases
+>安装`mha4mysql-node-0.56-0.el6.noarch.rpm`
 
 ```shell
-tar xf mha4mysql-manager-0.58.tar.gz
-mkdir -p /etc/masterha/{scripts,app1}
-cd mha4mysql-manager-0.58
-cp samples/conf/* /etc/masterha/app1/
-cp samples/scripts/* /etc/masterha/scripts/
+[root@centos-vm-4-71 ~]# rpm -ivh mha4mysql-node-0.56-0.el6.noarch.rpm
+Preparing...                          ################################# [100%]
+Updating / installing...
+   1:mha4mysql-node-0.56-0.el6        ################################# [100%]
 ```
+
+2. `candidate master`
+
+>安装`mha4mysql-node-0.56-0.el6.noarch.rpm`
+
+```shell
+[root@centos-vm-4-72 ~]# rpm -ivh mha4mysql-node-0.56-0.el6.noarch.rpm
+Preparing...                          ################################# [100%]
+Updating / installing...
+   1:mha4mysql-node-0.56-0.el6        ################################# [100%]
+```
+
+3. `slave`
+
+>安装`mha4mysql-node-0.56-0.el6.noarch.rpm`
+>
+>安装`mha4mysql-manager-0.56-0.el6.noarch.rpm`
+
+
+
+
+
+
+
+
+
+
+
+
 配置全局配置文件
 ```shell
 [server default]
