@@ -421,3 +421,314 @@ name = test
 172.16.4.72 | FAILED | rc=2 >>
 ls: cannot access /etc/yum.repos.d/test.repo: No such file or directorynon-zero return code
 ```
+
+---
+
+## Ansible模块-yum
+
+- `name`: 安装的软件包名称，多个名称使用逗号（，）分隔
+- `state`：对软件处理方式。
+  - `present`：已安装，但不升级
+  - `installed`：确认安装
+  - `latest`：确认安装，且升级到最新
+  - `absent/removed`：移除
+
+### 安装
+
+```shell
+# 安装单一软件
+ansible web_server -i hosts -m yum -a "name=nginx state=present"
+# 安装软件包组
+ansible web_server -i hosts -m yum -a "name='@Development tools' state=present"
+```
+
+---
+### 移除
+
+```shell
+ansible web_server -i hosts -m yum -a "name=nginx state=absent"
+```
+
+----
+
+## Ansible模块-systemd
+
+- `daemon_reload`：重载systemd
+- `enabled`：是否开机启动，`yes/no`
+- `nmame`：必选项，服务名称
+- `state`：对服务操作状态
+  - `started`
+  - `stopped`
+  - `restarted`
+  - `reloaded`
+
+```shell
+ansible web_server -i hosts -m systemd -a "daemon_reload=yes"
+ansible web_server -i hosts -m systemd -a "name=nginx state=started"
+ansible web_server -i hosts -m systemd -a "name=nginx state=stopped"
+```
+
+---
+
+## Ansible模块-group
+
+- `name`：组名称
+- `system`：是否为系统组，`yes/no`
+- `state`：处理状态
+  - `present`：添加
+  - `absent`：删除
+
+```shell
+
+```
+---
+
+## Ansible模块-user
+
+- `name`:用户名，必须参数
+- `password`：设置用户密码
+- `update_password`：更新密码
+- `home`：指定用户的家目录
+- `shell`：指定用户的shell
+- `comment`：用户的描述信息
+- `create_home`：是否创建家目录
+- `group`：设置用户的组
+- `groups`：设置用户的组组
+- `append`：添加组
+- `system`：是否为系统用户
+- `expires`:设置过期
+- `generate_ssh_key`：设置为yes，生成用户秘钥
+- `ssh_key_type`：指定秘钥类型，默认rsa
+- `state`：用户状态处理
+  - `present`：添加
+  - `absent`：删除
+- `remove`：是否级联删除邮箱等。
+
+- 创建用户
+
+```shell
+[root@centos-vm-4-71 ~]# ansible web_server -i hosts -m user -a "name=foo password=$(echo "12345678"|openssl passwd -1 -stdin)"
+172.16.4.72 | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": true,
+    "comment": "",
+    "create_home": true,
+    "group": 1001,
+    "home": "/home/foo",
+    "name": "foo",
+    "password": "NOT_LOGGING_PASSWORD",
+    "shell": "/bin/bash",
+    "state": "present",
+    "system": false,
+    "uid": 1001
+}
+```
+
+- 创建秘钥
+
+```shell
+[root@centos-vm-4-71 ~]# ansible web_server -i hosts -m user -a "name=foo generate_ssh_key=yes"
+172.16.4.72 | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "append": false,
+    "changed": true,
+    "comment": "",
+    "group": 1001,
+    "home": "/home/foo",
+    "move_home": false,
+    "name": "foo",
+    "shell": "/bin/bash",
+    "ssh_fingerprint": "2048 SHA256:IkNnZJX6JU49i5IV9KJhmVck1pRBYfyVRfbQpKzHHaM ansible-generated on centos-vm-4-72 (RSA)",
+    "ssh_key_file": "/home/foo/.ssh/id_rsa",
+    "ssh_public_key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCbn2lyCksgp2Uv7yAjQY5b5rM100JIDMdzvX20bvk5YQQPrfYUXEapRM5EIy00JrGJXDrmtFNjIcGTlM0Kr6cpQX3fq34ycth78eofw47tOAx/qzaQ+ICT7Ch5PIvoYv3KoguUpn2K3idHUQ1rdTQ088Pp9jg+B9jvyEA/WvUlm+D+FYWdoF/2ZjNzR+3eddQL48+fH+1+66+biKrkU8XABELeoMTm+ggE5vEw/yD8PE597Sx1eKmeIiEc+3ZtJErj4UOMhbXDaxY0XzEK+9GAkm12tSmyP45dnwhpupQzFtYyvg+Kn3HDUSAHLnfjx4JZOMMKGlihKnEmwZVr0gNb ansible-generated on centos-vm-4-72",
+    "state": "present",
+    "uid": 1001
+}
+```
+
+**date**
+
+```shell
+[root@centos-vm-4-71 ~]# date +%s -d 20200515
+1589472000
+```
+
+---
+
+## Ansible模块-file
+
+- `owner`：文件/目录所属主
+- `group`：文件/目录所属组
+- `mode`：文件/目录权限
+- `path`：文件/目录的路径，必须参数
+- `recurse`：递归设置
+- `src`：当state=link时，链接文件的源文件路径
+- `dest`：当state=link时，链接文件的目标文件路径
+- `state`：文件/目录状态
+  - `direcory`：如果目录不存在，则创建
+  - `file`：如果文件不存在，则创建
+  - `link`：软链接
+  - `hard`：硬链接
+  - `touch`：不存在文件，则创建文件，存在，则更新文件最后修改时间
+  - `absent`：删除文件/目录/链接
+
+
+```shell
+ansible web_server -i hosts -m file -a "path=/tmp/foo.conf state=touch"
+172.16.4.72 | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": true,
+    "dest": "/tmp/foo.conf",
+    "gid": 0,
+    "group": "root",
+    "mode": "0644",
+    "owner": "root",
+    "size": 0,
+    "state": "file",
+    "uid": 0
+}
+[root@centos-vm-4-71 ~]# ansible web_server -i hosts -m file -a "src=/tmp/foo.conf dest=/tmp/2.conf state=link"
+172.16.4.72 | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": true,
+    "dest": "/tmp/2.conf",
+    "gid": 0,
+    "group": "root",
+    "mode": "0777",
+    "owner": "root",
+    "size": 13,
+    "src": "/tmp/foo.conf",
+    "state": "link",
+    "uid": 0
+}
+[root@centos-vm-4-71 ~]# ansible web_server -i hosts -m file -a "path=/tmp/testdir state=directory"
+172.16.4.72 | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": true,
+    "gid": 0,
+    "group": "root",
+    "mode": "0755",
+    "owner": "root",
+    "path": "/tmp/testdir",
+    "size": 6,
+    "state": "directory",
+    "uid": 0
+}
+```
+
+---
+
+## Ansible模块-cron
+
+- `name`：cron的名字
+- `minute`: 分钟
+- `hour`：时
+- `day`：天
+- `month`：月
+- `weekday`：星期
+- `job`：要指向的内容，也可以是脚本
+- `state`：job状态处理
+  - `present`：新增
+  - `absent`：删除
+
+```shell
+[root@centos-vm-4-71 ~]# ansible web_server -i hosts -m cron -a "name=test minute='*/2' job='echo "hello"'"
+172.16.4.72 | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": true,
+    "envs": [],
+    "jobs": [
+        "test"
+    ]
+}
+[root@centos-vm-4-71 ~]# ansible web_server -i hosts -m cron -a "name=test state=absent"
+172.16.4.72 | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": true,
+    "envs": [],
+    "jobs": []
+}
+```
+
+---
+
+## Ansible模块-debug
+
+- `var`：变量值
+- `msg`：格式化字符串
+
+```shell
+[root@centos-vm-4-71 ~]# ansible web_server -i hosts -m debug -a "var=role" -e "role=web"
+172.16.4.72 | SUCCESS => {
+    "role": "web"
+}
+[root@centos-vm-4-71 ~]# ansible web_server -i hosts -m debug -a "msg='role is {{role}}'" -e "role=web"
+172.16.4.72 | SUCCESS => {
+    "msg": "role is web"
+}
+```
+
+---
+
+## Ansible模块-template
+
+- `src`：源文件路径
+- `dest`：目标文件路径
+- `owner`：文件所属主
+- `group`：文件所属组
+- `mode`：文件权限
+- `backup`：备份文件
+
+```shell
+[root@centos-vm-4-71 ~]# cat helloworld.j2
+hello {{var}}!
+[root@centos-vm-4-71 ~]# ansible web_server -i hosts -m template -a "src=./helloworld.j2 dest=/tmp/helloworld" -e "var=world"
+172.16.4.72 | CHANGED => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": true,
+    "checksum": "f951b101989b2c3b7471710b4e78fc4dbdfa0ca6",
+    "dest": "/tmp/helloworld",
+    "gid": 0,
+    "group": "root",
+    "md5sum": "c897d1410af8f2c74fba11b1db511e9e",
+    "mode": "0644",
+    "owner": "root",
+    "size": 13,
+    "src": "/root/.ansible/tmp/ansible-tmp-1617182975.64-41247-31379629026147/source",
+    "state": "file",
+    "uid": 0
+}
+[root@centos-vm-4-71 ~]# ansible web_server -i hosts -m shell -a "cat /tmp/helloworld"
+172.16.4.72 | CHANGED | rc=0 >>
+hello world!
+```
+---
+
+## Ansible模块-lineinfile
+
+- `path`：目标文件路径
+- `state`：文件状态
+  - `present`：替换
+  - `absent`：删除
+- `regexp`：正则表达式
+- `line`：文件要插入/替换的行
+- `create`：文件不存在，是否要创建
+
+---
+

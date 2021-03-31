@@ -125,3 +125,156 @@ k8s-node1    <none>
 k8s-node2    <none>
 
 ```
+
+---
+
+#### 创建一个secret，并创建2个pod，pod1挂载该secret，路径为/secret，pod2使用环境变量引用该secret，该变量的环境变量名为ABC
+
+- secret名称：my-secret
+- pod1名称：pod-volume-secret
+- pod2名称：pod-env-secret
+
+>考察点：Secret，数据卷的使用
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-secret
+data:
+  password: MTIzNDU2Cg==
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: pod-volume-secret
+  name: pod-volume-secret
+spec:
+  containers:
+  - image: nginx
+    name: pod-volume-secret
+    volumeMounts:
+    - name: my-secret
+      mountPath: "/secret"
+  volumes:
+    - name: my-secret
+      secret:
+        secretName: my-secret
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: pod-env-secret
+  name: pod-env-secret
+spec:
+  containers:
+  - image: nginx
+    name: pod-env-secret
+    env:
+      - name: ABC
+        valueFrom:
+          secretKeyRef:
+            name: my-secret
+            key: password
+  volumes:
+    - name: my-secret
+      secret:
+        secretName: my-secret
+```
+
+kubectl exec -it pod-env-secret -- env|grep ABC
+kubectl exec -it pod-volume-secret -- cat /secret/password
+
+---
+
+#### 创建一个pv，再创建一个pod使用该pv
+
+- 容量：5Gi
+- 访问模式：ReadWriteOnce
+
+>考察点：pv，pvc的使用
+
+```yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv0001
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  nfs:
+    path: /data/project/nfs/k8s/tmp
+    server: 172.16.4.199
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: myclaim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: pod-persistent-volume
+  name: pod-persistent-volume
+spec:
+  containers:
+  - image: nginx
+    name: pod-persistent-volume
+    volumeMounts:
+    - name: mypd
+      mountPath: "/usr/share/nginx/html"
+  volumes:
+    - name: mypd
+      persistentVolumeClaim:
+        claimName: myclaim
+```
+
+---
+
+#### 创建一个pod并挂载数据卷，不可以用持久卷
+
+- 卷来源：emptyDir、hostPath任意
+- 挂载路径：/data
+
+> 考察点：数据卷的使用
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: pod-volume
+  name: pod-volume
+spec:
+  containers:
+  - image: nginx
+    name: pod-volume
+    volumeMounts:
+    - name: mypd
+      mountPath: "/data"
+  volumes:
+    - name: mypd
+      emptyDir: {}
+```
+
+---
+
+#### 将pv按照名称、容量排序，并保存到/opt/pv文件
+
+```shell
+kubectl get pv --sort-by='{.metadata.name}' --sort-by='{.spec.capacity.storage}' >/opt/pv
+```

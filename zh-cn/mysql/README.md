@@ -1568,12 +1568,32 @@ nohup masterha_manager --conf=/etc/app1.cnf  \
   /var/log/masterha/app1/manager.log 2>&1 &
 ```
 ---
-#### 4. 故障测试
+### 4. 故障测试
 
 现在`master`节点故障，`mha-manager`自动检测不到原`master`节点，触发故障转移，现在将`candidate master`节点提升`CHANGE MASTER`,并将其他`SLAVE`节点指向该节点，并在目录`/usr/local/masterha/app1`生成文件`app1.failover.complete`，同时将`maser`节点的字段从`app1.conf`配置移除。
 
-#### 5. 故障恢复
+---
+### 5. 故障恢复
 
 1. 修复`172.16.4.71`节点，启动数据库。
 2. 将`172.16.4.71`节点提升为`slave`节点。
 3. 将`172.16.4.71`配置加回`app1.conf`中。
+
+---
+### 6. 手动故障
+
+```shell
+masterha_master_switch --master_state=dead --conf=/etc/app1.cnf \
+--dead_master_host=172.16.4.71 --dead_master_port=3306  \
+--new_master_host=172.16.4.72 --new_master_port=3306 --ignore_last_failover
+```
+---
+
+### 7. 在线切换
+
+```shell
+masterha_master_switch --conf=/etc/app1.cnf \
+--master_state=alive --new_master_host=172.16.4.72 \
+--orig_master_is_new_slave \
+--running_updates_limit=10000 --interactive=0
+```
