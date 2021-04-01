@@ -732,3 +732,156 @@ hello world!
 
 ---
 
+## Ansible-playbook语法校验
+
+```shell
+ansible-playbook myplaybook.yml --syntax-check
+```
+
+---
+
+## 单步调试playboook
+
+```shell
+ansible-playbook myplaybook.yml --step
+```
+
+---
+
+## 模拟演练playbook
+
+```shell
+ansible-playbook -i hosts myplaybook.yml -C
+```
+---
+
+## 变量分类
+
+- 全局变量
+- 剧本变量
+- 资产变量
+
+---
+
+## 全局变量
+
+> 通过`-e`传递参数
+
+---
+
+## 剧本变量
+
+- `vars`
+
+```yaml
+---
+- name: test vars
+  hosts: all
+  vars:
+    user: lilei
+    host: /home/lilei
+...
+```
+
+- `vars_files`
+
+```yaml
+---
+- name: test vars file
+  hosts: all
+  vars_files:
+    - vars/users.yml
+...
+```
+---
+
+## 资产变量
+
+- 主机变量
+
+```shell
+[webservers]
+172.16.4.23 user=lilei port=3333
+```
+
+- 主机组变量
+
+```shell
+[webservers]
+172.16.4.23 port=2222
+172.16.4.24
+
+[webservers:vars]
+port=3333
+```
+
+>注：主机变量优先级大于主机组优先级
+
+---
+
+## 主机组变量继承
+
+```shell
+[web_servers]
+172.16.4.23
+
+[db_servers]
+172.16.4.24
+
+[all_servers]
+[all_servers:children]
+web_servers
+db_servers
+
+[all_servers:vars]
+port=3333
+```
+
+---
+
+## Inventory内置变量
+
+- `ansible_ssh_host`
+
+- `ansible_ssh_port`
+
+- `ansible_ssh_user`
+
+- `ansible_ssh_pass`
+
+- `ansible_sudo_pass`
+
+- `ansible_sudo_exe`
+
+- `ansible_ssh_private_key_file`
+
+- `ansible_python_interpreter`
+
+---
+
+## Facts变量
+
+使用模块`setup`获取
+
+参数`filter=""`可以进行过滤
+
+---
+
+## 关闭facts变量
+
+```yaml
+---
+- name: test
+  hosts: webservers
+  gather_facts: no
+...
+```
+
+---
+
+## 变量优先级
+
+全局变量-->剧本变量-->主机变量-->主机组变量
+
+---
+

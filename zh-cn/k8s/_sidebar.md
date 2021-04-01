@@ -22,7 +22,7 @@
   - [Ansible](zh-cn/ansible/)
   - [Ceph](/zh-cn/ceph/)
   - [MySQL](/zh-cn/mysql/)
-- [Redis](/zh-cn/redis/)
+  - [Redis](/zh-cn/redis/)
   - [Kafka](/zh-cn/kafka/)
   - [Consul](/zh-cn/consul/)
   - [Linux](zh-cn/linux/)
