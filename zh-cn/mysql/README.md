@@ -732,8 +732,6 @@ mysql> show variables like '%sem%';
 
 ## MHA配置
 
-
-
 服务器规划
 
 | 服务器IP    | 服务器角色        | 服务器组件                       |
@@ -763,7 +761,6 @@ ssh-keygen
 ```
 for host in master candidate_master slave ;do ssh-copy-id -i ~/.ssh/id_rsa.pub root@$host ;done
 ```
-
 
 ### 2. 配置主从数据库
 
