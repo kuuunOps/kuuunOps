@@ -121,3 +121,50 @@ $> bin/kafka-server-start.sh config/server.properties
 - 文件系统类型：优先XFS
 - Swappiness：设置一个接近0，但是不为0的值。
 - 提交时间：
+
+---
+
+## 生产者分区机制原理
+
+- Kafka的消息方式是三级结构：主体-分区-消息。主题下的每条消息只会保存在某一个分区中，而不会再多个分区中保存多分。
+- 分区是实现负载均衡以及高吞吐量的关键。
+- 分区策略：是决定生产者将消息发送到哪个分区的算法。Kafka提供了默认分区，也支持自定义分区。
+- 常见分区策略：轮询策略、随机策略和按消息键保存顺序策略，还有一种基于地理位置的分区策略。
+
+---
+
+## 生产者压缩算法
+
+- 在Kafka中，压缩发生在两个地方：生产端和Broker端。
+- 让Broker重新压缩消息的2中例外情况：Broker端指定了和Producer不同的压缩算法：Broker端发生了消息格式转换。
+- Producer端压缩、Broker端保持、Consumer端解压缩。
+- 4种压缩算法性能：
+  - 吞吐量：LZ4-->Snapp-->zstd和GZIP
+  - 压缩比：zstd-->LZ4-->GZIP-->Snapp
+
+---
+
+## 无消息丢失配置
+
+- 使用`producer.send(msg,callbacl)`
+- 设置`acks=all`
+- 设置`retries`为一个较大的值
+- 设置`unclean.leader.election.enable=false`
+- 设置`replcation.factor>=3`
+- 设置`replcation.factor>min.insync.replicas`
+- 确保消息消费完成再提交
+
+- 不要使用 producer.send(msg)，而要使用 producer.send(msg, callback)。记住，一定要使用带有回调通知的 send 方法。
+- 设置 acks = all。acks 是 Producer 的一个参数，代表了你对“已提交”消息的定义。如果设置成 all，则表明所有副本 Broker 都要接收到消息，该消息才算是“已提交”。这是最高等级的“已提交”定义。
+- 设置 retries 为一个较大的值。这里的 retries 同样是 Producer 的参数，对应前面提到的 Producer 自动重试。当出现网络的瞬时抖动时，消息发送可能会失败，此时配置了 retries > 0 的 Producer 能够自动重试消息发送，避免消息丢失。
+- 设置 unclean.leader.election.enable = false。这是 Broker 端的参数，它控制的是哪些 Broker 有资格竞选分区的 Leader。如果一个 Broker 落后原先的 Leader 太多，那么它一旦成为新的 Leader，必然会造成消息的丢失。故一般都要将该参数设置成 false，即不允许这种情况的发生。
+- 设置 replication.factor >= 3。这也是 Broker 端的参数。其实这里想表述的是，最好将消息多保存几份，毕竟目前防止消息丢失的主要机制就是冗余。
+- 设置 min.insync.replicas > 1。这依然是 Broker 端参数，控制的是消息至少要被写入到多少个副本才算是“已提交”。设置成大于 1 可以提升消息持久性。在实际环境中千万不要使用默认值 1。
+- 确保 replication.factor > min.insync.replicas。如果两者相等，那么只要有一个副本挂机，整个分区就无法正常工作了。我们不仅要改善消息的持久性，防止数据丢失，还要在不降低可用性的基础上完成。推荐设置成 replication.factor = min.insync.replicas + 1。
+- 确保消息消费完成再提交。Consumer 端有个参数 enable.auto.commit，最好把它设置成 false，并采用手动提交位移的方式。就像前面说的，这对于单 Consumer 多线程处理的场景而言是至关重要的。
+
+---
+
+## Kafka高级功能
+
+
