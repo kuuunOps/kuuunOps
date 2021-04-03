@@ -606,21 +606,668 @@ ceph-deploy rgw create ceph-node-1
 
 ### 修改RGW默认端口
 
-修改配置文件`ceph.conf`，在`[global]`字段下，新增配置项
+修改配置文件`/etc/ceph/ceph.conf`，在`[global]`字段下，新增配置项
 ```shell
 [client.rgw.ceph-node-1]
 rgw_frontends = "civetweb port=80"
 ```
+
+推送配置文件，强制覆盖
+
+```shell
+[root@admin-node ceph-cluster]# ceph-deploy --overwrite-conf config push ceph-node-1 ceph-node-2 ceph-node-3
+```
+
 重启服务
+
 ```shell
 sudo systemctl restart ceph-radosgw.target
 ```
 
+验证
+
+```shell
+[root@admin-node ceph-cluster]# curl http://ceph-node-1
+<?xml version="1.0" encoding="UTF-8"?><ListAllMyBucketsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Owner><ID>anonymous</ID><DisplayName></DisplayName></Owner><Buckets></Buckets></ListAllMyBucketsResult>
+```
+---
+
+### S3接口使用
+
+#### S3风格
+
+1. 创建用户
+
+```shell
+[root@ceph-node-1 ~]# radosgw-admin user create --uid ceph-s3-user --display-name "Ceph S3 User Demo"
+{
+    "user_id": "ceph-s3-user",
+    "display_name": "Ceph S3 User Demo",
+    "email": "",
+    "suspended": 0,
+    "max_buckets": 1000,
+    "subusers": [],
+    "keys": [
+        {
+            "user": "ceph-s3-user",
+            "access_key": "ZTHAMQXC3YBPXS35C7O2",
+            "secret_key": "1Cfb4mXvmqM17cOYqPi4NnyA11ccF5csGORCbSV3"
+        }
+    ],
+    "swift_keys": [],
+    "caps": [],
+    "op_mask": "read, write, delete",
+    "default_placement": "",
+    "default_storage_class": "",
+    "placement_tags": [],
+    "bucket_quota": {
+        "enabled": false,
+        "check_on_raw": false,
+        "max_size": -1,
+        "max_size_kb": 0,
+        "max_objects": -1
+    },
+    "user_quota": {
+        "enabled": false,
+        "check_on_raw": false,
+        "max_size": -1,
+        "max_size_kb": 0,
+        "max_objects": -1
+    },
+    "temp_url_keys": [],
+    "type": "rgw",
+    "mfa_ids": []
+}
+```
+查看用户信息
+
+```shell
+[root@ceph-node-1 ~]# radosgw-admin user list
+[
+    "ceph-s3-user"
+]
+[root@ceph-node-1 ~]# radosgw-admin user info --uid "ceph-s3-user"
+```
+
+2. 使用python进行连接测试
+
+安装软件包
+
+```shell
+yum install python-boto -y
+```
+
+创建测试脚本文件`s3test.py`
+
+```python
+import boto.s3.connection
+
+access_key = 'I0PJDPCIYZ665MW88W9R'
+secret_key = 'dxaXZ8U90SXydYzyS5ivamEP20hkLSUViiaR+ZDA'
+conn = boto.connect_s3(
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_key,
+        host='{hostname}', port={port},
+        is_secure=False, calling_format=boto.s3.connection.OrdinaryCallingFormat(),
+       )
+
+bucket = conn.create_bucket('my-new-bucket')
+for bucket in conn.get_all_buckets():
+    print "{name} {created}".format(
+        name=bucket.name,
+        created=bucket.creation_date,
+    )
+```
+
+测试
+
+```shell
+[root@admin-node ceph-cluster]# python s3test.py
+ceph-s3-bucket 2021-04-03T07:58:34.021Z
+```
+
+3. 使用命令行工具
+
+安装软件包
+
+```shell
+yum install s3cmd -y
+```
+
+配置认证信息
+
+```shell
+[root@admin-node ~]# s3cmd --configure
+
+Enter new values or accept defaults in brackets with Enter.
+Refer to user manual for detailed description of all options.
+
+Access key and Secret key are your identifiers for Amazon S3. Leave them empty for using the env variables.
+Access Key: ZTHAMQXC3YBPXS35C7O2
+Secret Key: 1Cfb4mXvmqM17cOYqPi4NnyA11ccF5csGORCbSV3
+Default Region [US]:
+
+Use "s3.amazonaws.com" for S3 Endpoint and not modify it to the target Amazon S3.
+S3 Endpoint [s3.amazonaws.com]: 172.16.4.61:80
+
+Use "%(bucket)s.s3.amazonaws.com" to the target Amazon S3. "%(bucket)s" and "%(location)s" vars can be used
+if the target S3 system supports dns based buckets.
+DNS-style bucket+hostname:port template for accessing a bucket [%(bucket)s.s3.amazonaws.com]: 172.16.4.61:80/%(bucket)s
+
+Encryption password is used to protect your files from reading
+by unauthorized persons while in transfer to S3
+Encryption password:
+Path to GPG program [/usr/bin/gpg]:
+
+When using secure HTTPS protocol all communication with Amazon S3
+servers is protected from 3rd party eavesdropping. This method is
+slower than plain HTTP, and can only be proxied with Python 2.7 or newer
+Use HTTPS protocol [Yes]: no
+
+On some networks all internet access must go through a HTTP proxy.
+Try setting it here if you can't connect to S3 directly
+HTTP Proxy server name:
+
+New settings:
+  Access Key: ZTHAMQXC3YBPXS35C7O2
+  Secret Key: 1Cfb4mXvmqM17cOYqPi4NnyA11ccF5csGORCbSV3
+  Default Region: US
+  S3 Endpoint: 172.16.4.61:80
+  DNS-style bucket+hostname:port template for accessing a bucket: 172.16.4.61:80/%(bucket)s
+  Encryption password:
+  Path to GPG program: /usr/bin/gpg
+  Use HTTPS protocol: False
+  HTTP Proxy server name:
+  HTTP Proxy server port: 0
+
+Test access with supplied credentials? [Y/n] y
+Please wait, attempting to list all buckets...
+Success. Your access key and secret key worked fine :-)
+
+Now verifying that encryption works...
+Not configured. Never mind.
+
+Save settings? [y/N] y
+Configuration saved to '/root/.s3cfg'
+```
+编辑配置文件`vi /root/.s3cfg`,启用v2版本
+
+```shell
+signature_v2 = True
+```
+查看bucket
+
+```shell
+[root@admin-node ~]# s3cmd ls
+2021-04-03 07:58  s3://ceph-s3-bucket
+```
+创建bucket
+
+```shell
+[root@admin-node ~]# s3cmd mb s3://s3cmd-demo
+Bucket 's3://s3cmd-demo/' created
+[root@admin-node ~]# s3cmd ls
+2021-04-03 07:58  s3://ceph-s3-bucket
+2021-04-03 08:16  s3://s3cmd-demo
+```
+上传文件
+
+```shell
+[root@admin-node ~]# s3cmd put /etc/fstab s3://s3cmd-demo/fstab-demo
+upload: '/etc/fstab' -> 's3://s3cmd-demo/fstab-demo'  [1 of 1]
+ 407 of 407   100% in    2s   163.07 B/s  done
+[root@admin-node ~]# s3cmd ls s3://s3cmd-demo/
+2021-04-03 08:17          407  s3://s3cmd-demo/fstab-demo
+```
+上传目录
+
+```shell
+[root@admin-node ~]# s3cmd put  --recursive /etc/ s3://s3cmd-demo/etc/
+[root@admin-node ~]# s3cmd ls s3://s3cmd-demo/etc/
+```
+下载文件
+
+```shell
+[root@admin-node ~]# s3cmd get s3://s3cmd-demo/etc/yum.conf yum.conf.demo
+download: 's3://s3cmd-demo/etc/yum.conf' -> 'yum.conf.demo'  [1 of 1]
+ 970 of 970   100% in    0s    38.53 KB/s  done
+```
+删除文件
+
+```shell
+[root@admin-node ~]# s3cmd rm s3://s3cmd-demo/fstab-demo
+delete: 's3://s3cmd-demo/fstab-demo'
+[root@admin-node ~]# s3cmd rm --recursive s3://s3cmd-demo/etc/
+```
+---
+
+#### swift风格
+
+1. 创建用户
+
+```shell
+[root@ceph-node-1 ~]# radosgw-admin subuser create --uid=ceph-s3-user  --subuser=ceph-s3-user:swift --access=full
+{
+    "user_id": "ceph-s3-user",
+    "display_name": "Ceph S3 User Demo",
+    "email": "",
+    "suspended": 0,
+    "max_buckets": 1000,
+    "subusers": [
+        {
+            "id": "ceph-s3-user:swift",
+            "permissions": "full-control"
+        }
+    ],
+    "keys": [
+        {
+            "user": "ceph-s3-user",
+            "access_key": "ZTHAMQXC3YBPXS35C7O2",
+            "secret_key": "1Cfb4mXvmqM17cOYqPi4NnyA11ccF5csGORCbSV3"
+        }
+    ],
+    "swift_keys": [
+        {
+            "user": "ceph-s3-user:swift",
+            "secret_key": "Sb6RBB4389zmJK2AIwtfT18VasrxXHkBUs2Q57Uq"
+        }
+    ],
+    "caps": [],
+    "op_mask": "read, write, delete",
+    "default_placement": "",
+    "default_storage_class": "",
+    "placement_tags": [],
+    "bucket_quota": {
+        "enabled": false,
+        "check_on_raw": false,
+        "max_size": -1,
+        "max_size_kb": 0,
+        "max_objects": -1
+    },
+    "user_quota": {
+        "enabled": false,
+        "check_on_raw": false,
+        "max_size": -1,
+        "max_size_kb": 0,
+        "max_objects": -1
+    },
+    "temp_url_keys": [],
+    "type": "rgw",
+    "mfa_ids": []
+}
+```
+生成secret_key
+
+```shell
+[root@ceph-node-1 ~]# radosgw-admin key create --subuser=ceph-s3-user:swift --key-type=swift --gen-secret
+{
+    "user_id": "ceph-s3-user",
+    "display_name": "Ceph S3 User Demo",
+    "email": "",
+    "suspended": 0,
+    "max_buckets": 1000,
+    "subusers": [
+        {
+            "id": "ceph-s3-user:swift",
+            "permissions": "full-control"
+        }
+    ],
+    "keys": [
+        {
+            "user": "ceph-s3-user",
+            "access_key": "ZTHAMQXC3YBPXS35C7O2",
+            "secret_key": "1Cfb4mXvmqM17cOYqPi4NnyA11ccF5csGORCbSV3"
+        }
+    ],
+    "swift_keys": [
+        {
+            "user": "ceph-s3-user:swift",
+            "secret_key": "8pPr0XPwDPKQm9TSBJS05CwtytyCvL6uBorQAmri"
+        }
+    ],
+    "caps": [],
+    "op_mask": "read, write, delete",
+    "default_placement": "",
+    "default_storage_class": "",
+    "placement_tags": [],
+    "bucket_quota": {
+        "enabled": false,
+        "check_on_raw": false,
+        "max_size": -1,
+        "max_size_kb": 0,
+        "max_objects": -1
+    },
+    "user_quota": {
+        "enabled": false,
+        "check_on_raw": false,
+        "max_size": -1,
+        "max_size_kb": 0,
+        "max_objects": -1
+    },
+    "temp_url_keys": [],
+    "type": "rgw",
+    "mfa_ids": []
+}
+```
+
+2. 使用python连接测试
+
+安装软件包
+```shell
+yum install python-setuptools
+easy_install pip
+pip install --upgrade setuptools
+pip install --upgrade python-swiftclient
+```
+连接测试
+
+```shell
+swift -V 1 -A http://{IP ADDRESS}:{port}/auth -U testuser:swift -K '{swift_secret_key}' list
+
+```
 
 ---
 ## 第六章 CephFS文件存储
 ---
+
+### 安装部署MDS集群
+
+```shell
+ceph-deploy --overwrite-conf mds create ceph-node-1
+ceph-deploy --overwrite-conf mds create ceph-node-2
+ceph-deploy --overwrite-conf mds create ceph-node-3
+```
+
+### 创建CephFS文件系统
+
+```shell
+[root@ceph-node-1 ~]# ceph osd pool create cephfs_data 32
+pool 'cephfs_data' created
+[root@ceph-node-1 ~]# ceph osd pool create cephfs_metadata 32
+pool 'cephfs_metadata' created
+[root@ceph-node-1 ~]# ceph fs new cephfs cephfs_metadata cephfs_data
+new fs with metadata pool 9 and data pool 8
+[root@ceph-node-1 ~]# ceph fs ls
+name: cephfs, metadata pool: cephfs_metadata, data pools: [cephfs_data ]
+[root@ceph-node-1 ~]# ceph mds stat
+cephfs:1 {0=ceph-node-1=up:active} 2 up:standby
+```
+
+### 使用
+
+#### 内核挂载
+
+安装软件包
+
+```shell
+yum install ceph-common -y
+```
+挂载
+
+```shell
+[root@admin-node ceph-cluster]# mkdir /mnt/mycephfs
+[root@admin-node ceph-cluster]# cat ceph.client.admin.keyring
+[client.admin]
+        key = AQCwJFhgRTscMhAA6PgCWduT4Wf0XNfG5RuQsw==
+        caps mds = "allow *"
+        caps mgr = "allow *"
+        caps mon = "allow *"
+        caps osd = "allow *"
+[root@admin-node ceph-cluster]# mount -t ceph 172.16.4.61:6789:/ /mnt/mycephfs -o name=admin,secret=AQCwJFhgRTscMhAA6PgCWduT4Wf0XNfG5RuQsw==
+[root@admin-node ceph-cluster]# df -h
+Filesystem          Size  Used Avail Use% Mounted on
+devtmpfs            2.0G     0  2.0G   0% /dev
+tmpfs               2.0G     0  2.0G   0% /dev/shm
+tmpfs               2.0G   20M  2.0G   1% /run
+tmpfs               2.0G     0  2.0G   0% /sys/fs/cgroup
+/dev/sda2            46G  2.3G   43G   6% /
+/dev/sda1          1014M  154M  861M  16% /boot
+tmpfs               394M     0  394M   0% /run/user/0
+172.16.4.61:6789:/   94G     0   94G   0% /mnt/mycephfs
+[root@admin-node ceph-cluster]# cd /mnt/mycephfs/
+[root@admin-node mycephfs]# touch test
+[root@admin-node mycephfs]# ll
+total 0
+-rw-r--r-- 1 root root 0 Apr  3 21:53 test
+```
+---
+#### 用户态使用
+
+```shell
+[root@admin-node ceph-cluster]# ceph-fuse -n client.admin -m 172.16.4.61:6789,172.16.4.62:6789,172.16.4.63:6789 /mnt/ceph-fuse/
+ceph-fuse[22094]: starting ceph client2021-04-03 22:02:36.539 7fbac479ef80 -1 init, newargv = 0x561bd1a1cc50 newargc=9
+
+ceph-fuse[22094]: starting fuse
+[root@admin-node ~]# df -T
+Filesystem         Type           1K-blocks    Used Available Use% Mounted on
+devtmpfs           devtmpfs         2002576       0   2002576   0% /dev
+tmpfs              tmpfs            2013084       0   2013084   0% /dev/shm
+tmpfs              tmpfs            2013084   19932   1993152   1% /run
+tmpfs              tmpfs            2013084       0   2013084   0% /sys/fs/cgroup
+/dev/sda2          xfs             47291844 2462888  44828956   6% /
+/dev/sda1          xfs              1038336  157384    880952  16% /boot
+tmpfs              tmpfs             402620       0    402620   0% /run/user/0
+172.16.4.61:6789:/ ceph            98234368       0  98234368   0% /mnt/mycephfs
+ceph-fuse          fuse.ceph-fuse  98234368       0  98234368   0% /mnt/ceph-fuse
+```
+---
 ## 第七章 OSD扩容和还盘
+
+### 纵向扩容
+
+查看节点磁盘状况
+
+```shell
+[root@admin-node ceph-cluster]# ceph-deploy disk list ceph-node-1
+[ceph_deploy.conf][DEBUG ] found configuration file at: /root/.cephdeploy.conf
+[ceph_deploy.cli][INFO  ] Invoked (2.0.1): /usr/bin/ceph-deploy disk list ceph-node-1
+[ceph_deploy.cli][INFO  ] ceph-deploy options:
+[ceph_deploy.cli][INFO  ]  username                      : None
+[ceph_deploy.cli][INFO  ]  verbose                       : False
+[ceph_deploy.cli][INFO  ]  debug                         : False
+[ceph_deploy.cli][INFO  ]  overwrite_conf                : False
+[ceph_deploy.cli][INFO  ]  subcommand                    : list
+[ceph_deploy.cli][INFO  ]  quiet                         : False
+[ceph_deploy.cli][INFO  ]  cd_conf                       : <ceph_deploy.conf.cephdeploy.Conf instance at 0x7fb79c16f518>
+[ceph_deploy.cli][INFO  ]  cluster                       : ceph
+[ceph_deploy.cli][INFO  ]  host                          : ['ceph-node-1']
+[ceph_deploy.cli][INFO  ]  func                          : <function disk at 0x7fb79c3bc938>
+[ceph_deploy.cli][INFO  ]  ceph_conf                     : None
+[ceph_deploy.cli][INFO  ]  default_release               : False
+[ceph-node-1][DEBUG ] connected to host: ceph-node-1
+[ceph-node-1][DEBUG ] detect platform information from remote host
+[ceph-node-1][DEBUG ] detect machine type
+[ceph-node-1][DEBUG ] find the location of an executable
+[ceph-node-1][INFO  ] Running command: fdisk -l
+[ceph-node-1][INFO  ] Disk /dev/sdb: 107.4 GB, 107374182400 bytes, 209715200 sectors
+[ceph-node-1][INFO  ] Disk /dev/sda: 53.7 GB, 53687091200 bytes, 104857600 sectors
+[ceph-node-1][INFO  ] Disk /dev/sdc: 107.4 GB, 107374182400 bytes, 209715200 sectors
+[ceph-node-1][INFO  ] Disk /dev/mapper/ceph--b164734d--393b--4a48--a5b0--b078a45a7ce4-osd--block--db70ce3b--bd01--47a8--8c13--ba775a042cf7: 107.4 GB, 107369988096 bytes, 209707008 sectors
+[ceph-node-1][INFO  ] Disk /dev/rbd0: 21.5 GB, 21474836480 bytes, 41943040 sectors
+```
+清理节点即将挂载的磁盘的数据
+
+```shell
+[root@admin-node ceph-cluster]# ceph-deploy disk zap ceph-node-1 /dev/sdc
+[ceph_deploy.conf][DEBUG ] found configuration file at: /root/.cephdeploy.conf
+[ceph_deploy.cli][INFO  ] Invoked (2.0.1): /usr/bin/ceph-deploy disk zap ceph-node-1 /dev/sdc
+[ceph_deploy.cli][INFO  ] ceph-deploy options:
+[ceph_deploy.cli][INFO  ]  username                      : None
+[ceph_deploy.cli][INFO  ]  verbose                       : False
+[ceph_deploy.cli][INFO  ]  debug                         : False
+[ceph_deploy.cli][INFO  ]  overwrite_conf                : False
+[ceph_deploy.cli][INFO  ]  subcommand                    : zap
+[ceph_deploy.cli][INFO  ]  quiet                         : False
+[ceph_deploy.cli][INFO  ]  cd_conf                       : <ceph_deploy.conf.cephdeploy.Conf instance at 0x7fc361daa518>
+[ceph_deploy.cli][INFO  ]  cluster                       : ceph
+[ceph_deploy.cli][INFO  ]  host                          : ceph-node-1
+[ceph_deploy.cli][INFO  ]  func                          : <function disk at 0x7fc361ff7938>
+[ceph_deploy.cli][INFO  ]  ceph_conf                     : None
+[ceph_deploy.cli][INFO  ]  default_release               : False
+[ceph_deploy.cli][INFO  ]  disk                          : ['/dev/sdc']
+[ceph_deploy.osd][DEBUG ] zapping /dev/sdc on ceph-node-1
+[ceph-node-1][DEBUG ] connected to host: ceph-node-1
+[ceph-node-1][DEBUG ] detect platform information from remote host
+[ceph-node-1][DEBUG ] detect machine type
+[ceph-node-1][DEBUG ] find the location of an executable
+[ceph_deploy.osd][INFO  ] Distro info: CentOS Linux 7.8.2003 Core
+[ceph-node-1][DEBUG ] zeroing last few blocks of device
+[ceph-node-1][DEBUG ] find the location of an executable
+[ceph-node-1][INFO  ] Running command: /usr/sbin/ceph-volume lvm zap /dev/sdc
+[ceph-node-1][WARNIN] --> Zapping: /dev/sdc
+[ceph-node-1][WARNIN] --> --destroy was not specified, but zapping a whole device will remove the partition table
+[ceph-node-1][WARNIN] Running command: /bin/dd if=/dev/zero of=/dev/sdc bs=1M count=10 conv=fsync
+[ceph-node-1][WARNIN]  stderr: 10+0 records in
+[ceph-node-1][WARNIN] 10+0 records out
+[ceph-node-1][WARNIN]  stderr: 10485760 bytes (10 MB) copied, 0.110085 s, 95.3 MB/s
+[ceph-node-1][WARNIN] --> Zapping successful for: <Raw Device: /dev/sdc>
+```
+
+添加节点磁盘，开始扩容
+
+```shell
+[root@admin-node ceph-cluster]# ceph-deploy osd create --data /dev/sdc ceph-node-1
+[ceph_deploy.conf][DEBUG ] found configuration file at: /root/.cephdeploy.conf
+[ceph_deploy.cli][INFO  ] Invoked (2.0.1): /usr/bin/ceph-deploy osd create --data /dev/sdc ceph-node-1
+[ceph_deploy.cli][INFO  ] ceph-deploy options:
+[ceph_deploy.cli][INFO  ]  verbose                       : False
+[ceph_deploy.cli][INFO  ]  bluestore                     : None
+[ceph_deploy.cli][INFO  ]  cd_conf                       : <ceph_deploy.conf.cephdeploy.Conf instance at 0x7f3556990638>
+[ceph_deploy.cli][INFO  ]  cluster                       : ceph
+[ceph_deploy.cli][INFO  ]  fs_type                       : xfs
+[ceph_deploy.cli][INFO  ]  block_wal                     : None
+[ceph_deploy.cli][INFO  ]  default_release               : False
+[ceph_deploy.cli][INFO  ]  username                      : None
+[ceph_deploy.cli][INFO  ]  journal                       : None
+[ceph_deploy.cli][INFO  ]  subcommand                    : create
+[ceph_deploy.cli][INFO  ]  host                          : ceph-node-1
+[ceph_deploy.cli][INFO  ]  filestore                     : None
+[ceph_deploy.cli][INFO  ]  func                          : <function osd at 0x7f3556bd88c0>
+[ceph_deploy.cli][INFO  ]  ceph_conf                     : None
+[ceph_deploy.cli][INFO  ]  zap_disk                      : False
+[ceph_deploy.cli][INFO  ]  data                          : /dev/sdc
+[ceph_deploy.cli][INFO  ]  block_db                      : None
+[ceph_deploy.cli][INFO  ]  dmcrypt                       : False
+[ceph_deploy.cli][INFO  ]  overwrite_conf                : False
+[ceph_deploy.cli][INFO  ]  dmcrypt_key_dir               : /etc/ceph/dmcrypt-keys
+[ceph_deploy.cli][INFO  ]  quiet                         : False
+[ceph_deploy.cli][INFO  ]  debug                         : False
+[ceph_deploy.osd][DEBUG ] Creating OSD on cluster ceph with data device /dev/sdc
+[ceph-node-1][DEBUG ] connected to host: ceph-node-1
+[ceph-node-1][DEBUG ] detect platform information from remote host
+[ceph-node-1][DEBUG ] detect machine type
+[ceph-node-1][DEBUG ] find the location of an executable
+[ceph_deploy.osd][INFO  ] Distro info: CentOS Linux 7.8.2003 Core
+[ceph_deploy.osd][DEBUG ] Deploying osd to ceph-node-1
+[ceph-node-1][DEBUG ] write cluster configuration to /etc/ceph/{cluster}.conf
+[ceph-node-1][DEBUG ] find the location of an executable
+[ceph-node-1][INFO  ] Running command: /usr/sbin/ceph-volume --cluster ceph lvm create --bluestore --data /dev/sdc
+[ceph-node-1][WARNIN] Running command: /bin/ceph-authtool --gen-print-key
+[ceph-node-1][WARNIN] Running command: /bin/ceph --cluster ceph --name client.bootstrap-osd --keyring /var/lib/ceph/bootstrap-osd/ceph.keyring -i - osd new 688dfd38-ed54-4080-8bea-88fdad7ee9b8
+[ceph-node-1][WARNIN] Running command: /usr/sbin/vgcreate --force --yes ceph-601f9592-1391-4414-89ae-7c52b9094153 /dev/sdc
+[ceph-node-1][WARNIN]  stdout: Physical volume "/dev/sdc" successfully created.
+[ceph-node-1][WARNIN]  stdout: Volume group "ceph-601f9592-1391-4414-89ae-7c52b9094153" successfully created
+[ceph-node-1][WARNIN] Running command: /usr/sbin/lvcreate --yes -l 25599 -n osd-block-688dfd38-ed54-4080-8bea-88fdad7ee9b8 ceph-601f9592-1391-4414-89ae-7c52b9094153
+[ceph-node-1][WARNIN]  stdout: Logical volume "osd-block-688dfd38-ed54-4080-8bea-88fdad7ee9b8" created.
+[ceph-node-1][WARNIN] Running command: /bin/ceph-authtool --gen-print-key
+[ceph-node-1][WARNIN] Running command: /bin/mount -t tmpfs tmpfs /var/lib/ceph/osd/ceph-3
+[ceph-node-1][WARNIN] Running command: /bin/chown -h ceph:ceph /dev/ceph-601f9592-1391-4414-89ae-7c52b9094153/osd-block-688dfd38-ed54-4080-8bea-88fdad7ee9b8
+[ceph-node-1][WARNIN] Running command: /bin/chown -R ceph:ceph /dev/dm-1
+[ceph-node-1][WARNIN] Running command: /bin/ln -s /dev/ceph-601f9592-1391-4414-89ae-7c52b9094153/osd-block-688dfd38-ed54-4080-8bea-88fdad7ee9b8 /var/lib/ceph/osd/ceph-3/block
+[ceph-node-1][WARNIN] Running command: /bin/ceph --cluster ceph --name client.bootstrap-osd --keyring /var/lib/ceph/bootstrap-osd/ceph.keyring mon getmap -o /var/lib/ceph/osd/ceph-3/activate.monmap
+[ceph-node-1][WARNIN]  stderr: 2021-04-03 22:21:35.488 7f053bb61700 -1 auth: unable to find a keyring on /etc/ceph/ceph.client.bootstrap-osd.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin,: (2) No such file or directory
+[ceph-node-1][WARNIN] 2021-04-03 22:21:35.488 7f053bb61700 -1 AuthRegistry(0x7f0534065fe8) no keyring found at /etc/ceph/ceph.client.bootstrap-osd.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin,, disabling cephx
+[ceph-node-1][WARNIN]  stderr: got monmap epoch 3
+[ceph-node-1][WARNIN] Running command: /bin/ceph-authtool /var/lib/ceph/osd/ceph-3/keyring --create-keyring --name osd.3 --add-key AQDreWhgCh8YLhAASGa6yevhJYDcszGkcCv5gA==
+[ceph-node-1][WARNIN]  stdout: creating /var/lib/ceph/osd/ceph-3/keyring
+[ceph-node-1][WARNIN] added entity osd.3 auth(key=AQDreWhgCh8YLhAASGa6yevhJYDcszGkcCv5gA==)
+[ceph-node-1][WARNIN] Running command: /bin/chown -R ceph:ceph /var/lib/ceph/osd/ceph-3/keyring
+[ceph-node-1][WARNIN] Running command: /bin/chown -R ceph:ceph /var/lib/ceph/osd/ceph-3/
+[ceph-node-1][WARNIN] Running command: /bin/ceph-osd --cluster ceph --osd-objectstore bluestore --mkfs -i 3 --monmap /var/lib/ceph/osd/ceph-3/activate.monmap --keyfile - --osd-data /var/lib/ceph/osd/ceph-3/ --osd-uuid 688dfd38-ed54-4080-8bea-88fdad7ee9b8 --setuser ceph --setgroup ceph
+[ceph-node-1][WARNIN]  stderr: 2021-04-03 22:21:36.883 7ff59732fa80 -1 bluestore(/var/lib/ceph/osd/ceph-3/) _read_fsid unparsable uuid
+[ceph-node-1][WARNIN] --> ceph-volume lvm prepare successful for: /dev/sdc
+[ceph-node-1][WARNIN] Running command: /bin/chown -R ceph:ceph /var/lib/ceph/osd/ceph-3
+[ceph-node-1][WARNIN] Running command: /bin/ceph-bluestore-tool --cluster=ceph prime-osd-dir --dev /dev/ceph-601f9592-1391-4414-89ae-7c52b9094153/osd-block-688dfd38-ed54-4080-8bea-88fdad7ee9b8 --path /var/lib/ceph/osd/ceph-3 --no-mon-config
+[ceph-node-1][WARNIN] Running command: /bin/ln -snf /dev/ceph-601f9592-1391-4414-89ae-7c52b9094153/osd-block-688dfd38-ed54-4080-8bea-88fdad7ee9b8 /var/lib/ceph/osd/ceph-3/block
+[ceph-node-1][WARNIN] Running command: /bin/chown -h ceph:ceph /var/lib/ceph/osd/ceph-3/block
+[ceph-node-1][WARNIN] Running command: /bin/chown -R ceph:ceph /dev/dm-1
+[ceph-node-1][WARNIN] Running command: /bin/chown -R ceph:ceph /var/lib/ceph/osd/ceph-3
+[ceph-node-1][WARNIN] Running command: /bin/systemctl enable ceph-volume@lvm-3-688dfd38-ed54-4080-8bea-88fdad7ee9b8
+[ceph-node-1][WARNIN]  stderr: Created symlink from /etc/systemd/system/multi-user.target.wants/ceph-volume@lvm-3-688dfd38-ed54-4080-8bea-88fdad7ee9b8.service to /usr/lib/systemd/system/ceph-volume@.service.
+[ceph-node-1][WARNIN] Running command: /bin/systemctl enable --runtime ceph-osd@3
+[ceph-node-1][WARNIN]  stderr: Created symlink from /run/systemd/system/ceph-osd.target.wants/ceph-osd@3.service to /usr/lib/systemd/system/ceph-osd@.service.
+[ceph-node-1][WARNIN] Running command: /bin/systemctl start ceph-osd@3
+[ceph-node-1][WARNIN] --> ceph-volume lvm activate successful for osd ID: 3
+[ceph-node-1][WARNIN] --> ceph-volume lvm create successful for: /dev/sdc
+[ceph-node-1][INFO  ] checking OSD status...
+[ceph-node-1][DEBUG ] find the location of an executable
+[ceph-node-1][INFO  ] Running command: /bin/ceph --cluster=ceph osd stat --format=json
+[ceph_deploy.osd][DEBUG ] Host ceph-node-1 is now ready for osd use.
+```
+
+故障：OSD创建失败
+
+```shell
+[ceph4][ERROR ] RuntimeError: command returned non-zero exit status: 1
+[ceph_deploy.osd][ERROR ] Failed to execute command: /usr/sbin/ceph-volume --cluster ceph lvm create --bluestore --data /dev/nvme0n1p1
+[ceph_deploy][ERROR ] GenericError: Failed to create 1 OSDs
+```
+原因分析
+OSD所依赖的lvm创建失败，lvs查看逻辑卷信息时未找到Ceph的逻辑卷，但lsblk可以发现Ceph逻辑卷，可见Ceph逻辑卷的DM映射未清除。
+
+处理步骤
+清除逻辑卷的DM映射，操作如下：
+
+```shel
+dmsetup info -C
+dmsetup remove [dm_map_name]
+```
+---
+### 临时关闭rebalance
+
+```shell
+ceph osd set norebalance
+ceph osd set nobackfill
+```
+
+---
+
+### 移除OSD
+
+OSD延迟查看
+
+```shell
+[root@ceph-node-1 ~]# ceph osd perf
+osd commit_latency(ms) apply_latency(ms)
+  5                  0                 0
+  4                  0                 0
+  0                  0                 0
+  1                  0                 0
+  2                  0                 0
+  3                  0                 0
+```
+移除操作
+
+```shell
+ceph osd out osd.5
+ceph osd crush osd.5
+ceph auth del osd.5
+ceph osd rm osd.5
+```
+---
+
+## 数据一致性检查
+
+手动检查
+
+```shell
+[root@ceph-node-1 ~]# ceph pg scrub 1.7a
+instructing pg 1.7a on osd.1 to scrub
+[root@ceph-node-1 ~]# ceph pg deep-scrub 1.7a
+instructing pg 1.7a on osd.1 to deep-scrub
+```
+
+
 ---
 ## 第八章 Ceph集群运维
 ---
