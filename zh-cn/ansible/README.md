@@ -885,3 +885,306 @@ port=3333
 
 ---
 
+## 变量注册
+
+>将执行命令的结果，注册为变量
+
+```yaml
+- name: check nginx syntax
+  shell: /usr/sbin/nginx -t
+  register: nginxsyntax
+- name: print nginx syntax
+  ebug: var=nginxsyntax
+```
+---
+## Ansible条件判断
+
+>根据执行语句结果，判断下一步动作
+
+```yaml
+---
+- name: manager Web server
+  hosts: web_servers
+  gather_facts: no
+  tasks:
+    - name: install nginx package
+      yum:
+        name=nginx
+        state=present
+
+    - name: copy nginx conf to remote server
+      copy:
+        src=nginx.conf
+        dest=/etc/nginx/nginx.conf
+
+    - name: check nginx syntax
+      shell: /usr/sbin/nginx -t
+      register: nginxsyntax
+
+    - name: print nginx syntax
+      debug: var=nginxsyntax
+
+    - name: start nginx server
+      service:
+        name: nginx
+        enabled: true
+        state: restarted
+      when:
+        nginxsyntax.rc == 0
+...
+```
+---
+
+## Ansible循环控制
+
+>使用`with_items`进行循环迭代，并使用固定变量名`item`进行变量引用。
+
+```yaml
+---
+- name: manager Web server
+  hosts: web_servers
+  gather_facts: no
+  vars:
+    users:
+      - tomcat
+      - www
+      - mysql
+  tasks:
+    - name: Print loop var
+      debug: msg="{{ item }}"
+      with_items: "{{ users }}"
+...
+```
+或者
+
+```yaml
+---
+- name: manager Web server
+  hosts: web_servers
+  gather_facts: no
+  vars:
+    users:
+      - tomcat
+      - www
+      - mysql
+  tasks:
+    - name: Print loop var
+      debug: msg="{{ item }}"
+      loop: "{{ users }}"
+...
+```
+执行结果
+
+```shell
+[root@centos-vm-4-71 ~]# ansible-playbook -i hosts loop-site.yml
+
+PLAY [manager Web server] **************************************************************************************************************
+
+TASK [Print loop var] ******************************************************************************************************************
+ok: [172.16.4.72] => (item=tomcat) => {
+    "msg": "tomcat"
+}
+ok: [172.16.4.72] => (item=www) => {
+    "msg": "www"
+}
+ok: [172.16.4.72] => (item=mysql) => {
+    "msg": "mysql"
+}
+
+PLAY RECAP *****************************************************************************************************************************
+172.16.4.72                : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+
+```
+---
+
+## Ansible的TAGS属性
+
+>为某个任务定义tags，在执行的时候可以指定tags进行运行，可用于阶段性执行任务
+
+```yaml
+---
+- name: manager Web server
+  hosts: web_servers
+  gather_facts: no
+  tasks:
+    - name: tags 1
+      debug:
+        msg: tags 1
+      tags: first
+
+    - name: tags 2
+      debug:
+        msg: tags 2
+      tags: second
+...
+```
+执行结果
+
+```shell
+[root@centos-vm-4-71 ~]# ansible-playbook -i hosts tags-site.yml
+
+PLAY [manager Web server] **************************************************************************************************************
+
+TASK [tags 1] **************************************************************************************************************************
+ok: [172.16.4.72] => {
+    "msg": "tags 1"
+}
+
+TASK [tags 2] **************************************************************************************************************************
+ok: [172.16.4.72] => {
+    "msg": "tags 2"
+}
+
+PLAY RECAP *****************************************************************************************************************************
+172.16.4.72                : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+
+[root@centos-vm-4-71 ~]# ansible-playbook -i hosts tags-site.yml -t first
+
+PLAY [manager Web server] **************************************************************************************************************
+
+TASK [tags 1] **************************************************************************************************************************
+ok: [172.16.4.72] => {
+    "msg": "tags 1"
+}
+
+PLAY RECAP *****************************************************************************************************************************
+172.16.4.72                : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+```
+---
+
+## Ansible的Handlers属性
+
+>根据执行任务的`changed`状态，来触发某个任务服务,一般用于配置发生变更，重启服务
+
+```yaml
+---
+- name: manager Web server
+  hosts: web_servers
+  gather_facts: no
+  tasks:
+    - name: install nginx package
+      yum:
+        name=nginx
+        state=present
+
+    - name: copy nginx conf to remote server
+      copy:
+        src=nginx.conf
+        dest=/etc/nginx/nginx.conf
+      notify: reload nginx service
+
+
+  handlers:
+    - name: reload nginx service
+      service:
+        name: nginx
+        state: reloaded
+...
+```
+当配置文件未发生变化，没有重载服务
+
+```shell
+[root@centos-vm-4-71 ~]# ansible-playbook -v -i hosts handlers-site.yaml
+Using /etc/ansible/ansible.cfg as config file
+
+PLAY [manager Web server] **************************************************************************************************************
+
+TASK [install nginx package] ***********************************************************************************************************
+ok: [172.16.4.72]
+
+TASK [copy nginx conf to remote server] ************************************************************************************************
+ok: [172.16.4.72]
+
+PLAY RECAP *****************************************************************************************************************************
+172.16.4.72                : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+
+```
+当配置文件发生变化，通知去执行重载服务
+
+```shell
+[root@centos-vm-4-71 ~]# ansible-playbook -v -i hosts handlers-site.yaml
+Using /etc/ansible/ansible.cfg as config file
+
+PLAY [manager Web server] **************************************************************************************************************
+
+TASK [install nginx package] ***********************************************************************************************************
+ok: [172.16.4.72]
+
+TASK [copy nginx conf to remote server] ************************************************************************************************
+changed: [172.16.4.72]
+
+RUNNING HANDLER [reload nginx service] *************************************************************************************************
+changed: [172.16.4.72] 
+PLAY RECAP *****************************************************************************************************************************
+172.16.4.72                : ok=3    changed=2    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+
+```
+---
+
+## 启用SSH长连接
+
+```shell
+# /etc/ansible/ansible.cfg
+[ssh_connection]
+ssh_args = -C -o ControlMaster=auto -o ControlPersist=86400s
+```
+
+---
+
+## 启用pipline
+
+```shell
+# /etc/ansible/ansible.cfg
+[ssh_connection]
+pipelining = True
+```
+
+---
+
+## gather facts本地文件缓存
+
+```shell
+# /etc/ansible/ansible.cfg
+[defaults]
+gathering = smart
+fact_caching = jsonfile
+fact_caching_connection=/dev/shm/ansible_facts_cache/
+fact_caching_timeout = 86400s
+```
+
+---
+
+## gather facts启用redis缓存
+
+```shell
+# /etc/ansible/ansible.cfg
+[defaults]
+gathering = smart
+fact_caching = jsonfile
+fact_caching_connection=localhost:6379:0
+fact_caching_timeout = 86400s
+```
+---
+
+## Ansible执行策略
+
+>并发执行
+
+```shell
+# /etc/ansible/ansible.cfg
+[defaults]
+strategy = free
+```
+---
+
+## Ansible禁用SSH主机秘钥检测
+
+```shell
+# /etc/ansible/ansible.cfg
+[defaults]
+host_key_checking = False
+```
+---
+
+## Anaible异步
+
