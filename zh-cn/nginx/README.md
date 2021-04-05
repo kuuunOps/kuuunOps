@@ -1,218 +1,264 @@
 # Nginx
 
-## 安装Nginx
+## Nginx的应用场景
 
-**环境准备**：
+- 静态资源服务
+>通过本地文件系统提供服务
 
-- 操作系统：CentOS
-- 网络要求：可以访问互联网
+- 反向代理服务
+  - 缓存
+  - 负载均衡
 
-### 1. 准备安装文件
+- API服务
+  - OpenResty
 
-`nginx-1.18.0.tar.gz`
+---
 
-### 2. 安装依赖包及工具
+## Nginx的优点
+
+- 高并发，高性能
+- 可扩展性好
+- 高可靠性
+- 热部署
+- BSD许可证
+
+---
+
+## Nginx的组成
+
+- Nginx二进制可执行文件
+>由各模块源码编译出的一个文件
+
+- Nginx.conf配置文件
+>控制Nginx的行为
+
+- access.log访问日志
+>记录每一条请求信息
+
+- error.log错误日志
+>定位问题
+
+---
+
+## Nginx配置语法
+
+- 配置文件由指令与指令块构成
+- 每条指令以分号`;`结尾，指令与参数间以空格符号分隔
+- 指令块以大括号`{}`将多条指令组织在一起
+- include语句允许组合多个配置文件以提升可维护性
+- 使用`#`添加注释，提供可读性
+- 使用`$`引用变量
+- 部分指令的参数支持正则表达式
+
+---
+
+## Nginx的http指令块
+
+- http
+- server
+- upstream
+- location
+
+---
+
+## Nginx热部署升级
+
 ```shell
-yum install -y gcc openssl openssl-devel pcre pcre-devel zlib-devel wget
-```
-
-### 3. 创建守护进程用户
-```shell
-useradd -s /sbin/nologin www
-```
-
-### 4. 安装nginx
-```shell
-# 解压安装包
-tar -xvf nginx-1.18.0.tar.gz
-cd nginx-1.18.0
-# 配置选项
-./configure --prefix=/usr/local/nginx \
---user=www \
---group=www \
---with-http_ssl_module \
---with-http_stub_status_module \
---with-http_gzip_static_module \
---with-stream
-# 编译
-make && make install
-```
-
-### 5. 启动nginx
-```shell
-# 检测nginx配置文件是否正确
-/usr/local/nginx/sbin/nginx -t
-# 启动nginx
-/ust/local/nginx/sbin/nginx
+cp nginx nginx.old
+kill -USR2 13195
+kill -WINCH 13195
 ```
 
 ---
-## ` nginx.conf `参考
+
+## Nginx日志切割
 
 ```shell
-user www www;
-worker_processes auto;
-worker_cpu_affinity auto;
-error_log logs/nginx_error.log info;
-pid /var/run/nginx.pid;
-worker_rlimit_nofile 65535;
+cp www_access.log www_access.log.bak
+# 等效于kill -USR1 $(cat nginx.pid)
+nginx -s reopen
+```
+---
 
-events
-{
-    use epoll;
-    worker_connections 10240;
-    multi_accept on;
-}
+## Nginx启用静态文件压缩-gzip
 
-http
-{
-    # 加载媒体类型
-    include mime.types;
-    default_type application/octet-stream;
-    server_names_hash_bucket_size 3526;
-    server_names_hash_max_size 4096;
-    # 定义日志格式
-    log_format main '$remote_addr - $remote_user [$time_local] "$request"'
-                    '$status $body_bytes_sent "$http_referer"'
-                    '"$http_user_agent" "$http_x_forwarded_for"'
-                    '$upstream_addr $upstream_response_time';
+```shell
+gzip on;
+gzip_min_lenth 1024;
+gzip_comp_level 3;
+gzip_types text/plain application/x-javascript text/css application/xml text/javascript application/x-httpd-php image/jpeg image/gif image/png;
+```
 
-    access_log logs/access.log main;
-    # 关闭版本号显示
-    server_tokens off;
-    # 提升文件传输
-    sendfile on;
-    send_timeout 10;
-    tcp_nopush on;
-    tcp_nodelay on;
-    # TCP长连接超时时间
-    keepalive_timeout 30;
-    # 客户端请求信息配置
-    client_header_timeout 30;
-    client_header_buffer_size 4k;
-    large_client_header_buffers 8 16k;
-    client_body_timeout 10;
-    client_max_body_size 500m;
-    client_body_buffer_size 256k;
-    connection_pool_size 256;
-    request_pool_size 4k;
-    output_buffers 4 32k;
-    postpone_output 1460;
-    # 启用gzip模块，并配置
-    gzip on;
-    gzip_min_length 1k;
-    gzip_buffers 4 16k;
-    gzip_comp_level 3;
-    gzip_http_version 1.0;
-    gzip_types     text/plain application/javascript application/x-javascript text/javascript text/css application/xml;
-    gzip_vary on;
-    gzip_proxied   expired no-cache no-store private auth;
-    gzip_disable "MSIE [1-6]\.";
-    # 子配置
-    include default.d/default.conf;
+---
+
+## Nginx显示网站目录结构
+
+```shell
+location / {
+    autoindex on;
 }
 ```
 
 ---
 
-## Nginx启动脚本参考
-```bash
-#!/bin/bash
-# chkconfig: - 30 21
-# description: http service.
-# Source Function Library
-. /etc/init.d/functions
-# Nginx Settings
+## Nginx请求频率限制
 
-NGINX_SBIN="/usr/local/nginx/sbin/nginx"
-NGINX_CONF="/usr/local/nginx/conf/nginx.conf"
-NGINX_PID="/usr/local/nginx/logs/nginx.pid"
-RETVAL=0
-prog="Nginx"
-
-start() {
-        echo -n $"Starting $prog: "
-        mkdir -p /dev/shm/nginx_temp
-        daemon $NGINX_SBIN -c $NGINX_CONF
-        RETVAL=$?
-        echo
-        return $RETVAL
+```shell
+location / {
+    set $limit_rate 1k;
 }
-
-stop() {
-        echo -n $"Stopping $prog: "
-        killproc -p $NGINX_PID $NGINX_SBIN -TERM
-        rm -rf /dev/shm/nginx_temp
-        RETVAL=$?
-        echo
-        return $RETVAL
-}
-
-reload(){
-        echo -n $"Reloading $prog: "
-        killproc -p $NGINX_PID $NGINX_SBIN -HUP
-        RETVAL=$?
-        echo
-        return $RETVAL
-}
-
-restart(){
-        stop
-        start
-}
-
-configtest(){
-    $NGINX_SBIN -c $NGINX_CONF -t
-    return 0
-}
-
-case "$1" in
-  start)
-        start
-        ;;
-  stop)
-        stop
-        ;;
-  reload)
-        reload
-        ;;
-  restart)
-        restart
-        ;;
-  configtest)
-        configtest
-        ;;
-  *)
-        echo $"Usage: $0 {start|stop|reload|restart|configtest}"
-        RETVAL=1
-esac
-exit $RETVAL
 ```
 
 ---
 
-## PHP的Nginx配置文件
+## Nginx日志格式
 
-**配置示例**
-```nginx
+定义
+
+```shell
+log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                '$status [$request_lenth:$body_bytes_sent] "$http_referer" '
+                '"$http_user_agent" "$http_x_forwarded_for" "$upstream_cache_status" ';
+```
+
+使用
+
+```shell
+access_log logs/www_access.log main;
+```
+
+---
+
+## Nginx反向代理
+
+```shell
+upstream local {
+    server 127.0.0.1:8080;
+}
 server {
+    server_name docs.kuuun.com;
     listen 80;
-    server_name localhost;
-    index index.html index.php;
-    
+
     location / {
-        root /wwwroot;
-    }
-    location ~ \.php$ {
-        root /wwwroot;
-        # 设置监听端口
-        fastcgi_pass   lnmp_php:9000;
-        # 设置nginx的默认首页文件(上面已经设置过了，可以删除)
-        fastcgi_index  index.php;
-        # 设置脚本文件请求的路径
-        fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
-        # 引入fastcgi的配置文件
-        include        fastcgi_params;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_pass http://local;
     }
 }
 ```
+
+## Nginx反向代理缓存
+
+```shell
+http {
+    proxy_cache_path /tmp/nginxcache levels=1:2 keys_zone=my_cache:10m max_size=10g
+                     inactive=60m use_temp_path=off;
+    server {
+        location / {
+            proxy_cache my_cache;
+            proxy_cache_key $host$uri;
+            proxy_cache_valid 200 304 302 1d;
+        }
+    }
+}
+```
+---
+
+## 使用Goaccess实时显示日志情况
+
+>官网地址：https://goaccess.io/
+
+---
+
+## 证书验证
+
+域名验证：DV
+组织验证：OV
+扩展验证：EV
+
+---
+## TLS通讯过程
+
+1. 验证身份
+2. 达成安全套件共识
+3. 传递秘钥
+4. 加密通讯
+
+---
+
+## 使用Let's Encrypt配置SSL证书
+
+1. cert
+
+```shell
+$ yum install -y certbot python2-certbot-nginx
+$ certbot --nginx --nginx-server-root=/usr/local/openresty/nginx/conf/ -d docs.kuuun.com
+```
+
+2. acme
+
+---
+
+## SSL连接优化
+
+```shell
+ssl_session_cache shared:le_nginx_SSL:1m;
+ssl_session_timeout 1440m;
+ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+ssl_prefer_server_ciphers on;
+ssl_ciphers "EECDH+CHACHA20:EECDH+CHACHA20-draft:EECDH+AES128:RSA+AES128:EECDH+AES256:RSA+AES256:EECDH+3DES:RSA+3DES:!MD5";
+ssl_dhparam /usr/local/nginx/ssl/ssl-dhparams.pem;
+```
+
+---
+
+## Nginx信号管理
+
+- Master进程
+  1. 监控worker进程：CHLD
+  2. 管理worker进程
+  3. 接收信号
+    - TERM,INT
+    - QUIT
+    - HUP
+    - USR1
+    - USR2
+    - WINCH
+
+- Worker进程
+  - 接收信号
+    - TERM,INT
+    - QUIT
+    - USR1
+    - WINCH
+
+- nginx命令行
+  - reolad：HUP
+  - reopen：USR1
+  - stop：TERM
+  - quit：QUIT
+
+---
+
+## reload流程
+
+1. 向master进程发送HUP信号
+2. master进程校验配置语法是否正确
+3. master进程打开新的监听端口
+4. master进程用新配置启动新的worker子进程
+5. master进程向老worker子进程发送QUIT信号
+6. 老worker进程关闭监听句柄，处理完当前连接后结束进程
+
+---
+
+## 热升级流程
+
+1. 将旧Nginx文件换成新Nginx文件（注意备份）
+2. 向master进程发送USR2信号
+3. master进程修改pid文件名，加后缀`.oldbin`
+4. master进程用新Nginx文件启动新master进程
+5. 向老master进程发送QUIT信号，关闭老master进程
+6. 回滚：向老master发送HUP，向新master发送QUIT
+
+---
