@@ -262,3 +262,14 @@ ssl_dhparam /usr/local/nginx/ssl/ssl-dhparams.pem;
 6. 回滚：向老master发送HUP，向新master发送QUIT
 
 ---
+
+## Worker进程的优雅关闭
+
+1. 设置定时器：worker_shutdown_timeout
+2. 关闭监听句柄
+3. 关闭空闲连接
+4. 在循环中等待全部连接关闭
+5. 退出进程
+
+---
+
