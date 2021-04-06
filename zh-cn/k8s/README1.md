@@ -25,3 +25,16 @@
   - `kubelet`：负责同容器运行时
   - `kube-proxy`：负责每个节点运行的网络代理，用以控制集群内部和集群外部与POD进行的通信
   - `Container Runtime`：容器运行环境是负责运行容器的软件。
+
+
+## k8s高可用
+
+```shell
+kubeadm init --control-plane-endpoint="172.16.4.60:8443" \
+--apiserver-advertise-address="172.16.4.60" \
+--apiserver-bind-port=6443 \
+--image-repository="registry.aliyuncs.com/google_containers" \
+--kubernetes-version "v1.20.0" \
+--pod-network-cidr="10.244.0.0/16" \
+--service-cidr="10.96.0.0/12"
+```
