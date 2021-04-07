@@ -299,4 +299,26 @@ kubeadm join 192.168.0.200:6443 --token 9vr73a.a8uxyaju799qwdjv --discovery-toke
 
 ```shell
 kubeadm join 192.168.0.200:6443 --token 9vr73a.a8uxyaju799qwdjv --discovery-token-ca-cert-hash sha256:7c2e69131a36ae2a042a339b33381c6d0d43887e2de83720eff5359e26aec866
+=======
+--service-cidr="10.96.0.0/12"
+
+
+You can now join any number of the control-plane node running the following command on each as root:
+
+  kubeadm join 172.16.4.60:8443 --token 8gt2tr.bpdmun9t60dbs8hb \
+    --discovery-token-ca-cert-hash sha256:bdc308443571af6f5f6b053ce82775f6c7b7b4edcd44d98a9c0fc7ccf51d239d \
+    --control-plane --certificate-key 4d9cdf2c1994b41fc44e9a707e4086cbfaddbe183ffb0849cfdf56348542f1fd
+
+Please note that the certificate-key gives access to cluster sensitive data, keep it secret!
+As a safeguard, uploaded-certs will be deleted in two hours; If necessary, you can use
+"kubeadm init phase upload-certs --upload-certs" to reload certs afterward.
+
+Then you can join any number of worker nodes by running the following on each as root:
+
+kubeadm join 172.16.4.60:8443 --token 8gt2tr.bpdmun9t60dbs8hb \
+    --discovery-token-ca-cert-hash sha256:bdc308443571af6f5f6b053ce82775f6c7b7b4edcd44d98a9c0fc7ccf51d239d
+
+
+
+sudo kubeadm init phase upload-certs --upload-certs
 ```
