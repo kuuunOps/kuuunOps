@@ -27,17 +27,6 @@
   - `Container Runtime`：容器运行环境是负责运行容器的软件。
 
 
-## k8s高可用
-
-```shell
-kubeadm init --control-plane-endpoint="172.16.4.60:8443" \
---image-repository="registry.aliyuncs.com/google_containers" \
---kubernetes-version "v1.20.0" \
---pod-network-cidr="10.244.0.0/16" \
---service-cidr="10.96.0.0/12" \
---upload-certs
-```
-
 ---
 
 ## 基于kubeadm搭建高可用集群
