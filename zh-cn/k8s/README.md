@@ -311,3 +311,130 @@ kubeadm join 172.16.4.60:8443 --token 8gt2tr.bpdmun9t60dbs8hb \
 
 sudo kubeadm init phase upload-certs --upload-certs
 ```
+
+---
+
+## 为用户签发kubeconfig文件
+
+### 一. 生成客户端TLS证书
+
+```shell
+
+cat > ca-config.json <<EOF
+{
+  "signing": {
+    "default": {
+      "expiry": "87600h"
+    },
+    "profiles": {
+      "kubernetes": {
+        "usages": [
+            "signing",
+            "key encipherment",
+            "server auth",
+            "client auth"
+        ],
+        "expiry": "87600h"
+      }
+    }
+  }
+}
+EOF
+
+cat > kuuun-csr.json <<EOF
+{
+  "CN": "kuuun",
+  "hosts": [],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "CN",
+      "ST": "BeiJing",
+      "L": "BeiJing",
+      "O": "k8s",
+      "OU": "System"
+    }
+  ]
+}
+EOF
+
+cfssl gencert -ca=/etc/kubernetes/pki/ca.crt -ca-key=/etc/kubernetes/pki/ca.key -config=ca-config.json -profile=kubernetes kuuun-csr.json | cfssljson -bare kuuun
+```
+
+### 二、生成kubeconfig
+
+#### 1. 导出集群证书信息到kubeconfig中
+
+```shell
+kubectl config set-cluster kubernetes --certificate-authority=/etc/kubernetes/pki/ca.crt --embed-certs=true --server=https://172.16.4.60:8443 --kubeconfig=kuuun.kubeconfig
+```
+
+#### 2. 导出客户端证书信息到kubeconfig中
+
+```shell
+kubectl config set-credentials kuuun --client-key=kuuun-key.pem --client-certificate=kuuun.pem --embed-certs=true --kubeconfig=kuuun.kubeconfig
+```
+
+#### 3. 将集群信息与用户信息绑定，生成一个用户信息组
+
+```shell
+kubectl config set-context kuuun@kubernetes --cluster=kubernetes --user=kuuun --kubeconfig=kuuun.kubeconfig
+```
+
+#### 4. 设置当前默认的用户信息组
+
+```shell
+kubectl config use-context kuuun@kubernetes --kubeconfig=kuuun.kubeconfig
+```
+---
+### 三、RBAC
+
+#### 1. 创建Role
+
+```shell
+kubectl create role pod-reader --namespace=default --resource=pods --verb=get,watch,list --dry-run=client -o yaml > rbac.yml
+```
+示例配置文件
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-reader
+  namespace: default
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - watch
+  - list
+```
+
+#### 2. Rolebinding
+
+```shell
+kubectl create rolebinding pods-read --namespace=default --role=pod-reader --user=zhanghk --dry-run=client -o yaml > rolebinding.yml
+```
+示例配置
+```shell
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pods-read
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pod-reader
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: zhanghk
+```
+---
