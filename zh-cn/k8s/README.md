@@ -29,6 +29,117 @@
 
 ---
 
+## kubeadm使用自定义的证书
+
+>kubernetes证书默认存放目录：`/etc/kubernetes/pki`
+
+CA
+
+| 路径                   | 默认CN                    | 描述                   |
+| ---------------------- | ------------------------- | ---------------------- |
+| ca.crt,key             | kubernetes-ca             | Kubernetes 通用 CA     |
+| etcd/ca.crt,key        | etcd-ca                   | 与 etcd 相关的所有功能 |
+| front-proxy-ca.crt,key | kubernetes-front-proxy-ca | 用于 前端代理          |
+
+所有证书
+
+| 默认 CN                       | 父级 CA                   | O (位于 Subject 中) | 类型           | 主机 (SAN)                                       |
+| ----------------------------- | ------------------------- | ------------------- | -------------- | ------------------------------------------------ |
+| kube-etcd                     | etcd-ca                   |                     | server, client | localhost, 127.0.0.1                             |
+| kube-etcd-peer                | etcd-ca                   |                     | server, client | `<hostname>`, `<Host_IP>`, localhost, 127.0.0.1  |
+| kube-etcd-healthcheck-client  | etcd-ca                   |                     | client         |                                                  |
+| kube-apiserver-etcd-client    | etcd-ca                   | system:masters      | client         |                                                  |
+| kube-apiserver                | kubernetes-ca             |                     | server         | `<hostname>`, `<Host_IP>`, `<advertise_IP>`, [1] |
+| kube-apiserver-kubelet-client | kubernetes-ca             | system:masters      | client         |                                                  |
+| front-proxy-client            | kubernetes-front-proxy-ca |                     | client         |                                                  |
+
+### 生成ETCD相关证书
+
+```shell
+curl -s -L https://pkg.cfssl.org/R1.2/cfssl_linux-amd64 -o /usr/bin/cfssl
+curl -s -L https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64 -o /usr/bin/cfssljson
+curl -s -L https://pkg.cfssl.org/R1.2/cfssl-certinfo_linux-amd64 -o /usr/bin/cfssl-certinfo
+chmod +x /usr/bin/cfssl*
+```
+
+生成`etcd-ca`
+
+```shell
+cat > ca-config.json << EOF
+{
+  "signing": {
+    "default": {
+      "expiry": "876000h"
+    },
+    "profiles": {
+      "etcd": {
+        "expiry": "876000h",
+        "usages": [
+          "signing",
+          "key encipherment",
+          "server auth",
+          "client auth"
+        ]
+      },
+      "server": {
+        "expiry": "876000h",
+        "usages": [
+          "signing",
+          "key encipherment",
+          "server auth"
+        ]
+      },
+      "client": {
+        "expiry": "876000h",
+        "usages": [
+          "signing",
+          "key encipherment",
+          "client auth"
+        ]
+      }
+    }
+  }
+}
+EOF
+
+cat > ca-csr.json << EOF
+{
+    "CN": "etcd-ca",
+    "key": {
+        "expiry": "876000h",
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [{}]
+}
+EOF
+cfssl gencert -initca ca-csr.json | cfssljson -bare ca
+
+cat > server-csr.json << EOF
+{
+    "CN": "kube-etcd",
+    "hosts": [
+        "k8s-master1",
+        "k8s-node1",
+        "k8s-node2",
+        "172.16.4.63",
+        "172.16.4.65",
+        "172.16.4.66",
+        "localhost",
+        "127.0.0.1"
+    ],
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [{}]
+}
+EOF
+```
+
+
+---
+
 ## 基于kubeadm搭建高可用集群
 
 ### 一、资源准备
