@@ -1,0 +1,54 @@
+---
+- hosts: all
+  remote_user: root
+
+  tasks:
+    - include_vars: vars/vars.yml
+    - include_tasks: tasks/bootstrap_centos.yml
+      when: ansible_distribution == "CentOS"
+    - include_tasks: tasks/k8s.yml
+    - include_tasks: tasks/binaries.yml
+
+    - name: Load br_netfilter kernel module
+      modprobe:
+        name: "{{ item }}"
+      loop:
+        - 'br_netfilter'
+        - 'overlay'
+
+    - name: "Set bridge-nf-call-iptables"
+      sysctl:
+        name: "{{ item }}"
+        value: '1'
+      loop:
+        - net.bridge.bridge-nf-call-iptables
+        - net.bridge.bridge-nf-call-ip6tables
+
+    - name: "Set ip_forward"
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: '1'
+
+    - name: "Add image endpoint"
+      lineinfile:
+        dest: "/etc/crictl.yaml"
+        line: "image-endpoint: unix:///run/containerd/containerd.sock"
+        insertafter: 'runtime-endpoint*'
+
+    - name: "Add runtime args in kubelet conf (CentOS)"
+      lineinfile:
+        dest: "/usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf"
+        line: "Environment=\"KUBELET_EXTRA_ARGS= --runtime-cgroups=/system.slice/containerd.service --container-runtime=remote --runtime-request-timeout=15m --container-runtime-endpoint=unix:///run/containerd/containerd.sock\""
+        insertafter: '\[Service\]'
+      when: ansible_distribution == "CentOS"
+
+    - name: "Start Containerd"
+      systemd: name=containerd daemon_reload=yes state=started enabled=yes
+
+    - name: "Start Kubelet"
+      systemd: name=kubelet daemon_reload=yes state=started enabled=yes
+
+    - name: "Pre-pull pause container image"
+      shell: |
+        /usr/local/bin/ctr pull registry.aliyuncs.com/google_containers/pause:3.2
+        /usr/local/bin/crictl pull registry.aliyuncs.com/google_containers/pause:3.2

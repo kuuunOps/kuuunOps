@@ -1,0 +1,25 @@
+---
+- name: "Copy containerd archive"
+  copy:
+    src: files/cri-containerd-cni-{{ containerd_release_version }}-linux-amd64.tar.gz
+    dest: /tmp/
+
+- name: "Get Containerd"
+  unarchive:
+    src: /tmp/cri-containerd-cni-{{ containerd_release_version }}-linux-amd64.tar.gz
+    dest: "/"
+    remote_src: yes
+
+- name: "Create a directory for cni binary"
+  file: path={{ cni_bin_dir }} state=directory
+
+- name: "Create a directory for cni config files"
+  file: path={{ cni_conf_dir }} state=directory
+
+- name: "Create a directory for containerd config file"
+  file: path={{ containerd_conf_dir }} state=directory
+
+- name: "Copy Containerd config file"
+  copy:
+    src: files/config.toml
+    dest: "{{ containerd_conf_dir }}/config.toml"

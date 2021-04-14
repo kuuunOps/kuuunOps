@@ -1,0 +1,25 @@
+---
+- name: "Add Kubernetes repository and install gpg key (CentOS)"
+  yum_repository:
+    name: kubernetes
+    description: Kubernetes repository
+    baseurl: https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64/
+    gpgcheck: no
+    enabled: yes
+    repo_gpgcheck: no
+  when: ansible_distribution == "CentOS"
+
+- name: "Disable SELinux (CentOS)"
+  selinux:
+    state: disabled
+  when: ansible_distribution == "CentOS"
+
+- name: "Install kubelet,kubeadm,kubectl (CentOS)"
+  yum: 
+    state=present
+    name={{ item }}-{{ kubernetes_version }}
+  loop:
+    - kubelet
+    - kubeadm
+    - kubectl
+  when: ansible_distribution == "CentOS"
