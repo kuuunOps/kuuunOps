@@ -278,3 +278,9 @@ spec:
 ```shell
 kubectl get pv --sort-by='{.metadata.name}' --sort-by='{.spec.capacity.storage}' >/opt/pv
 ```
+
+## 获取`discovery-token-ca-cert-hash`
+
+```shell
+openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'
+```
