@@ -306,11 +306,19 @@ ln -s /usr/local/jdk1.7.0_79/  /usr/local/jdk
 ```
 
 - 配置
+
 ```bash
-vim /etc/profile
+cat > /etc/profile.d/jdk.sh << EOF
+#!/bin/bash
 export JAVA_HOME=/usr/local/jdk
 export PATH=$JAVA_HOME/bin:$JAVA_HOME/jre/bin:$PATH
 export CLASSPATH=.$CLASSPATH:$JAVA_HOME/lib:$JAVA_HOME/jre/lib:$JAVA_HOME/lib/tools.jar
+EOF
+```
+
+```shell
+ln -sf /usr/local/jdk/bin/* /usr/bin/
+ln -sf /usr/local/jdk/jre/bin/* /usr/bin/
 ```
 
 - 重载

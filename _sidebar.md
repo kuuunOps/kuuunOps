@@ -10,6 +10,7 @@
   - [Redis](/zh-cn/redis/)
   - [Kafka](/zh-cn/kafka/)
   - [Consul](/zh-cn/consul/)
+  - [Jenkins](/zh-cn/jenkins/)
   - [Linux](/zh-cn/linux/)
   - [Ubuntu](/zh-cn/ubuntu/)
   - [PHP](/zh-cn/php/)
