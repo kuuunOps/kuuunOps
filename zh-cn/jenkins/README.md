@@ -223,4 +223,51 @@ agent { node { label 'label name'}}
 
 ## Pipeline语法-post
 
+>定义一个或多个steps，这些阶段根据流水线或阶段的完成情况而运行（取决于流水线中post部分的位置）。post支持以下post-condition块中的其中之一。
+
+| 状态       | 描述                                       |
+| ---------- | ------------------------------------------ |
+| `always`   | 无论流水线或者阶段的完成状态               |
+| `changed`  | 只有当流水线或者阶段完成状态与之前不同时。 |
+| `failure`  | 只有当流水线或者阶段状态为`failure`运行。  |
+| `success`  | 只有当流水线或者阶段状态为`success`运行。  |
+| `unstable` | 只有当流水线或者阶段状态为`unstable`运行   |
+| `aborted`  | 只有当流水线或者阶段状态为`aborted`运行    |
+
+## Pipeline语法-stages
+
+>包含一系列一个或者多个stage指令，建议stages至少包含一个stage指令用于连续交付过程的每个离散部分。
+
+```groovy
+pipeline {
+    agent any
+    stages {
+        stage('Example'){
+            steps {
+                echo "Hello World"
+            }
+        }
+    }
+}
+```
+
+## Pipeline语法-steps
+
+>step是每个阶段中要执行的每个步骤
+
+```groovy
+pipeline {
+    agent any
+    stages {
+        stage('Example'){
+            steps {
+                echo "Hello World"
+            }
+        }
+    }
+}
+```
+
+## Pipeline语法-environment
+
 >
