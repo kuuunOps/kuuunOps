@@ -1,4 +1,5 @@
 - [首页](/)
+  - [Linux](/zh-cn/linux/)
   - [Docker](/zh-cn/docker/)
   - [Kubernetes](zh-cn/k8s/)
   - [Helm](zh-cn/helm/)
@@ -11,7 +12,6 @@
   - [Kafka](/zh-cn/kafka/)
   - [Consul](/zh-cn/consul/)
   - [Jenkins](/zh-cn/jenkins/)
-  - [Linux](/zh-cn/linux/)
   - [Ubuntu](/zh-cn/ubuntu/)
   - [PHP](/zh-cn/php/)
   - [PostgresSQL](/zh-cn/postgressql/)

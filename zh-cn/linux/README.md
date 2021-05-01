@@ -1,6 +1,6 @@
 # Linux
 
-## OpenSSH关闭CBC加密模块
+## OpenSSH-关闭CBC加密模块
 
 1. 编辑`/etc/ssh/sshd_config`
 ```bash
@@ -16,47 +16,51 @@ systemctl restart sshd
 ---
 
 
-## OpenSSH
+## OpenSSH-版本升级
 
-### 版本升级
+1. 安装软件包
 
-#### 1. 安装软件包
 ```bash
 yum install gcc pam-devel zlib-devel
 ```
 
-#### 2. 启用Telnet
+2. 启用Telnet
 
-- 安装telnet软件包
+>安装telnet软件包
+
 ```bash
 yum -y install telnet-server* telnet
 ```
+>修改配置
 
-- 修改配置
 ```bash
 vim /etc/xinetd.d/telnet
 # disable = yes 修改为： disable = no
 ```
-- 启动服务
+>启动服务
+
 ```bash
 /etc/init.d/xinetd  start
 chkconfig xinetd on
 ```
 
-- 防火墙开通23端口
+>防火墙开通23端口
+
 ```bash
 # 测试端口是否开通
 telnet xxx.xxx.xxx.xxx 23
 ```
-#### 3. 安装OpenSSL
+3. 安装OpenSSL
 
-1. 编译
+>编译
+
 ```bash
 ./config enable-shared zlib
 make && make install
 ```
 
-2. 配置
+>配置
+
 ```bash
 ln -s /usr/local/ssl/bin/openssl /usr/bin/openssl
 ln -s /usr/local/ssl/include/openssl /usr/include/openssl
@@ -66,14 +70,15 @@ ln -s /usr/lib64/libssl.so.1.0.0  libssl.so.10
 ln -s /usr/lib64/libcrypto.so.1.0.0  libcrypto.so.10
 ```
 
-3. 版本确认
+>版本确认
+
 ```bash
 openssl version -a
 ```
 
-#### 4. 安装OpenSSH
+4. 安装OpenSSH
 
-1. 查看当前环境已经安装的OpenSSH包
+>查看当前环境已经安装的OpenSSH包
 
 ```bash
 rpm -qa | grep openssh
@@ -82,7 +87,7 @@ openssh-clients-5.3p1-117.el6.x86_64
 openssh-5.3p1-117.el6.x86_64
 ```
 
-2. 卸载
+>卸载旧版本OpenSSH
 
 ```bash
 rpm -e --nodeps openssh-server-5.3p1-117.el6.x86_64
@@ -90,14 +95,14 @@ rpm -e --nodeps openssh-clients-5.3p1-117.el6.x86_64
 rpm -e --nodeps openssh-5.3p1-117.el6.x86_64
 ```
 
-3. 编译
+>编译
 
 ```bash
 ./configure --prefix=/usr --sysconfdir=/etc/ssh --with-md5-passwords --with-pam --with-zlib --with-ssl-dir=/usr/local/ssl --with-openssl-includes=/usr/include/openssl --with-privsep-path=/var/lib/sshd
 make && make install
 ```
 
-4. 配置
+>配置
 
 ```bash
 install -v -m755    contrib/ssh-copy-id /usr/bin
@@ -220,8 +225,6 @@ exit $?
 ```bash
 jmap -dump:format=b,file=jetty_$(date +%Y%m%d).hprof 23151
 ```
-
-
 ---
 
 ## java占用CPU过高
@@ -474,4 +477,32 @@ done
     inet6 fe80::7264:bb88:a9ed:9155/64 scope link noprefixroute
        valid_lft forever preferred_lft forever
 ```
+---
 
+## 常见的公共DNS
+
+>AliDNS
+
+```
+223.5.5.5
+223.6.6.6
+```
+
+>114DNS
+
+```
+114.114.114.114
+114.114.115.115
+```
+
+>Baidu Public DNS
+
+```
+180.76.76.76
+```
+
+>DNSPod Public DNS
+
+```
+119.29.29.29
+```
