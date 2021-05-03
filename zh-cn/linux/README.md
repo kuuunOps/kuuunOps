@@ -433,7 +433,7 @@ ONBOOT=yes
 [root@localhost network-scripts]# mv ifcfg-ens32 ifcfg-eth0
 ```
 
-4. 编辑grub配置文件
+4. 编辑grub配置文件`/etc/default/grub`
 
 >在`GRUB_CMDLINE_LINUX`中增加参数`net.ifnames=0 biosdevname=0`
 
