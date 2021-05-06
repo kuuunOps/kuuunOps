@@ -7,6 +7,7 @@
 ```shell
 mkdir -p /etc/etcd /var/lib/etcd
 chmod 700 /var/lib/etcd
+cd $HOME
 cp etcd-ca.pem etcd-server-key.pem etcd-server.pem etcd-healthcheck-client.pem etcd-healthcheck-client-key.pem /etc/etcd/
 ```
 
