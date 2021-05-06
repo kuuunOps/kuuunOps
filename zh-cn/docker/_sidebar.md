@@ -1,4 +1,5 @@
 - [首页](/)
+  - [Linux](zh-cn/linux/)
   - [Docker](/zh-cn/docker/)
     - [Docker核心概念](/zh-cn/docker/Docker核心概念.md)
     - [Docker镜像管理](/zh-cn/docker/Docker镜像管理.md)
@@ -23,7 +24,6 @@
   - [Consul](/zh-cn/consul/)
   - [MySQL](/zh-cn/mysql/)
   - [Redis](/zh-cn/redis/)
-  - [Linux](zh-cn/linux/)
   - [Ubuntu](zh-cn/ubuntu/)
   - [PHP](zh-cn/php/)
   - [PostgresSQL](/zh-cn/postgressql/)
