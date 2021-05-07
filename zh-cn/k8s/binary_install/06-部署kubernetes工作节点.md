@@ -13,50 +13,19 @@ tar xf cri-containerd-cni-1.4.4-linux-amd64.tar.gz -C /
 mkdir -p /etc/containerd
 # 默认配置生成配置文件
 containerd config default > /etc/containerd/config.toml
+
 # 定制化配置（可选）
-vi /etc/containerd/config.toml
+# 配置国内镜像地址
+sed -i 's#sandbox_image.*$#sandbox_image = "registry.aliyuncs.com/google_containers/pause:3.2"#' /etc/containerd/config.toml
+# 配置国内镜像加速地址
+sed -i 's#endpoint.*$#endpoint = ["https://b9pmyelo.mirror.aliyuncs.com"]#' /etc/containerd/config.toml
+
 # 启动containerd
 systemctl enable containerd
 systemctl restart containerd
 # 检查状态
 systemctl status containerd
 ```
->定制化配置`/etc/containerd/config.toml`
-
-```shell
-... ...
-[plugins."io.containerd.grpc.v1.cri"]
- disable_tcp_service = true
- stream_server_address = "127.0.0.1"
- stream_server_port = "0"
- stream_idle_timeout = "4h0m0s"
- enable_selinux = false
- selinux_category_range = 1024
- # 配置pause镜像仓库地址
- sandbox_image = "registry.aliyuncs.com/google_containers/pause:3.2"
-... ...
-   [plugins."io.containerd.grpc.v1.cri".containerd.runtimes]
-     [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
-       ...
-       # 配置Cgroup
-       [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
-         SystemdCgroup = true
-... ...
-  [plugins."io.containerd.grpc.v1.cri".registry]
-    [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-      [plugins."io.containerd.grpc.v1.cri".registry.mirrors."b9pmyelo.mirror.aliyuncs.com"]
-        # 配置镜像加速地址
-        endpoint = ["https://b9pmyelo.mirror.aliyuncs.com"]
-   # 私有镜像仓库配置
-   [plugins."io.containerd.grpc.v1.cri".registry.configs]
-     [plugins."io.containerd.grpc.v1.cri".registry.configs."reg.kuuun.com".tls]
-       insecure_skip_verify = true
-     [plugins."io.containerd.grpc.v1.cri".registry.configs."reg.kuuun.com".auth]
-       username = "admin"
-       password = "Harbor12345"
-... ...
-```
-
 ---
 
 ## 2. 配置kubelet

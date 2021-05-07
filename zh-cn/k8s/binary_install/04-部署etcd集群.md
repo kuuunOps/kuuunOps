@@ -44,7 +44,8 @@ ExecStart=/usr/local/bin/etcd \\
   --initial-cluster-token etcd-cluster-0 \\
   --initial-cluster ${ETCD_NAMES[0]}=https://${ETCD_IPS[0]}:2380,${ETCD_NAMES[1]}=https://${ETCD_IPS[1]}:2380,${ETCD_NAMES[2]}=https://${ETCD_IPS[2]}:2380 \\
   --initial-cluster-state new \\
-  --data-dir=/var/lib/etcd
+  --data-dir=/var/lib/etcd \\
+  --logger=zap
 Restart=on-failure
 RestartSec=5
 
