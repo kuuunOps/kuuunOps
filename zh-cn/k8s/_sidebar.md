@@ -12,6 +12,7 @@
       - [07-网络插件](/zh-cn/k8s/binary_install/07-网络插件-Calico.md)
       - [08-DNS插件](/zh-cn/k8s/binary_install/08-DNS插件-CoreDNS.md)
       - [09-集群冒烟测试](/zh-cn/k8s/binary_install/09-集群冒烟测试.md)
+    - [服务发现-ingress](/zh-cn/k8s/服务发现-ingress.md)
   - [Helm](zh-cn/helm/)
   - [Prometheus](/zh-cn/prometheus/)
   - [Python](/zh-cn/python/)
