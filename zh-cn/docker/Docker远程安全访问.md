@@ -88,7 +88,7 @@ docker context rm 72-docker
 
 ```shell
 openssl genrsa -out ca.key 4096
-openssl req -x509 -new -nodes -key ca.key -subj "/CN=centos-vm-4-72" -days 36500 -out ca.crt
+openssl req -x509 -new -nodes -key ca.key -subj "/CN=172.16.4.72" -days 36500 -out ca.crt
 ```
 
 >创建Server端证书
@@ -117,7 +117,7 @@ DNS.1 = centos-vm-4-72
 [ v3_ext ]
 authorityKeyIdentifier=keyid,issuer:always
 basicConstraints=CA:FALSE
-keyUsage=keyEncipherment,dataEncipherment
+keyUsage=keyEncipherment,dataEncipherment,digitalSignature
 extendedKeyUsage=serverAuth
 subjectAltName=@alt_names
 EOF
@@ -140,10 +140,11 @@ distinguished_name = dn
 [ dn ]
 CN = client
 
+
 [ v3_ext ]
 authorityKeyIdentifier=keyid,issuer:always
 basicConstraints=CA:FALSE
-keyUsage=keyEncipherment,dataEncipherment
+keyUsage=keyEncipherment,dataEncipherment,digitalSignature
 extendedKeyUsage=clientAuth
 EOF
 
