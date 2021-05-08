@@ -1,0 +1,4 @@
+curl https://172.16.4.72:2376/version \
+  --cert /etc/docker/pki/client.crt \
+  --key /etc/docker/pki/client.key \
+  --cacert /etc/docker/pki/ca.crt

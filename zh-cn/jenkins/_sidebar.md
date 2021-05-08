@@ -1,4 +1,5 @@
 - [首页](/)
+  - [Linux](/zh-cn/linux/)
   - [Docker](/zh-cn/docker/)
   - [Kubernetes](zh-cn/k8s/)
   - [Helm](zh-cn/helm/)
@@ -15,7 +16,6 @@
     - [流水线基础](/zh-cn/jenkins/1-流水线基础.md)
     - [系统集成](/zh-cn/jenkins/2-系统集成.md)
     - [流水线实践](/zh-cn/jenkins/3-流水线实践.md)
-  - [Linux](/zh-cn/linux/)
   - [Ubuntu](/zh-cn/ubuntu/)
   - [PHP](/zh-cn/php/)
   - [PostgresSQL](/zh-cn/postgressql/)
