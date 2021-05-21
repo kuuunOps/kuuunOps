@@ -1,5 +1,3 @@
-## 服务发现-ingress
-
 ## 1. 常见的服务发现方式
 
 - Service
@@ -94,16 +92,69 @@ spec:
 - https://github.com/kubernetes/ingress-nginx/blob/master/README.md
 - https://kubernetes.github.io/ingress-nginx/deploy
 
-```shell
-curl -s -L https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.44.0/deploy/static/provider/baremetal/deploy.yaml
-```
-
->修改网络类型
+### 1、下载Ingress
 
 ```shell
-template:
-  spec:
-    hostNetwork: true
+curl -o nginx-ingress.yaml https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.46.0/deploy/static/provider/baremetal/deploy.yaml
 ```
+
+### 2、配置
+
+>修改镜像地址
+
+```shell
+# 修改前
+      containers:
+        - name: controller
+          image: k8s.gcr.io/ingress-nginx/controller:v0.46.0@sha256:52f0058bed0a17ab0fb35628ba97e8d52b5d32299fbc03cc0f6c7b9ff036b61a
+          imagePullPolicy: IfNotPresent
+
+IMAGE="bitnami/nginx-ingress-controller:0.46.0"
+sed -i "s#image: k8s.gcr.io/ingress-nginx/controller:v0.46.0.*#image: ${IMAGE}#" nginx-ingress.yaml
+
+# 修改后
+      containers:
+        - name: controller
+          image: bitnami/nginx-ingress-controller:0.46.0
+          imagePullPolicy: IfNotPresent
+
+```
+
+
+>修改网络类型：hostNetwork
+
+```shell
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirst
+      containers:
+        - name: controller
+```
+
+### 3、部署
+
+```shell
+kubectl apply -f nginx-ingress.yaml
+```
+>生产建议部署方案：deamonset+nodeAffinity
+
+1. 在节点打上相应的label，例如：app=nginx
+2. 添加nodeAffinity配置，例如：
+
+```shell
+nodeAffinity:
+  requiredDuringSchedulingIgnoredDuringExecution:
+    nodeSelectorTerms:
+    - matchFields:
+      - key: app
+        operator: In
+        values:
+        - nginx
+```
+
+
+
+
+
 
 
