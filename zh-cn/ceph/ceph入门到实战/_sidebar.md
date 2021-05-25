@@ -15,6 +15,7 @@
       - [ceph-RGW](/zh-cn/ceph/ceph入门到实战/ceph-RGW.md)
       - [ceph-CephFS](/zh-cn/ceph/ceph入门到实战/ceph-cephfs.md)
       - [ceph-OSD操作](/zh-cn/ceph/ceph入门到实战/ceph-osd操作.md)
+      - [ceph-集群操作](/zh-cn/ceph/ceph入门到实战/ceph-集群运维.md)
     - [Rook构建Ceph云原生存储实战](/zh-cn/ceph/rook构建ceph云原生存储实战/)
   - [Redis](/zh-cn/redis/)
   - [Kafka](/zh-cn/kafka/)
