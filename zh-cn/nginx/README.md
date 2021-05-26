@@ -211,6 +211,8 @@ ssl_ciphers "EECDH+CHACHA20:EECDH+CHACHA20-draft:EECDH+AES128:RSA+AES128:EECDH+A
 ssl_dhparam /usr/local/nginx/ssl/ssl-dhparams.pem;
 ```
 
+扩展：`openssl dhparam -out /usr/local/nginx/ssl/ssl-dhparams.pem 2048`
+
 ---
 
 ## Nginx信号管理
