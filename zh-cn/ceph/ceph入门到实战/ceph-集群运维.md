@@ -142,3 +142,39 @@ ceph osd pool application enable {pool-name} {application-name}
 ceph osd pool set-quota data max_objects 10000
 ceph osd pool get-quota data
 ```
+
+## 5、集群删除
+
+```shell
+# 删除pool，需要确认
+ceph osd pool rm ceph-pool-demo ceph-pool-demo
+Error EPERM: WARNING: this will *PERMANENTLY DESTROY* all data stored in pool ceph-pool-demo.  If you are *ABSOLUTELY CERTAIN* that is what you want, pass the pool name *twice*, followed by --yes-i-really-really-mean-it.
+
+# 删除pool，需要开启允许删除参数
+ceph osd pool rm ceph-pool-demo ceph-pool-demo --yes-i-really-really-mean-it
+Error EPERM: pool deletion is disabled; you must first set the mon_allow_pool_delete config option to true before you can destroy a pool
+
+ceph daemon /var/run/ceph/ceph-mon.node1.asok config show|grep mon_allow_pool_delete
+    "mon_allow_pool_delete": "false",
+
+# 临时设置
+HOSTS=(node1 node2 node3)
+for instance in ${HOSTS[@]};
+do
+  ssh $instance ceph daemon /var/run/ceph/ceph-mon.${instance}.asok config set mon_allow_pool_delete true
+done
+
+# 永久设置
+sed  -i '/\[global\]/a\mon_allow_pool_delete = true' ceph.conf
+ceph-deploy --overwrite-conf config push node1 node2 node3
+
+HOSTS=(node1 node2 node3)
+for instance in ${HOSTS[@]};
+do
+  ssh $instance systemctl restart ceph-mon.target
+  ssh $instanc ceph daemon /var/run/ceph/ceph-mon.${instance}.asok config show|grep mon_allow_pool_delete
+done
+
+
+ceph osd pool rm ceph-pool-demo ceph-pool-demo --yes-i-really-really-mean-it
+```
