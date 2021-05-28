@@ -38,9 +38,9 @@ PRIORITY=101
 # 配置认证信息
 AUTH_PASS=111222
 # 设置VIP的地址
-APISERVER_VIP=172.16.4.45/24
+RGW_VIP=172.16.4.45/24
 # 设置VIP的端口
-APISERVER_DEST_PORT=80
+RGW_DEST_PORT=80
 
 mkdir -p /etc/keepalived/
 
@@ -68,7 +68,7 @@ vrrp_instance VI_1 {
         auth_pass ${AUTH_PASS}
     }
     virtual_ipaddress {
-        ${APISERVER_VIP} device ${INTERFACE}
+        ${RGW_VIP} device ${INTERFACE}
     }
     track_script {
         check_apiserver
@@ -85,9 +85,9 @@ errorExit() {
     exit 1
 }
 
-curl --silent --max-time 2 --insecure https://localhost:${APISERVER_DEST_PORT}/ -o /dev/null || errorExit "Error GET https://localhost:${APISERVER_DEST_PORT}/"
-if ip addr | grep -q "${APISERVER_VIP}"; then
-    curl --silent --max-time 2 --insecure https://${APISERVER_VIP}:${APISERVER_DEST_PORT}/ -o /dev/null || errorExit "Error GET https://${APISERVER_VIP}:${APISERVER_DEST_PORT}/"
+curl --silent --max-time 2 --insecure http://localhost:${RGW_DEST_PORT}/ -o /dev/null || errorExit "Error GET http://localhost:${RGW_DEST_PORT}/"
+if ip addr | grep -q "${RGW_VIP}"; then
+    curl --silent --max-time 2 --insecure http://${RGW_VIP}:${RGW_DEST_PORT}/ -o /dev/null || errorExit "Error GET http://${RGW_VIP}:${RGW_DEST_PORT}/"
 fi
 EOF
 ```
@@ -96,12 +96,12 @@ EOF
 
 ```shell
 # 设置VIP的端口
-APISERVER_DEST_PORT=80
+RGW_DEST_PORT=80
 # 设置源站的端口
-APISERVER_SRC_PORT=7480
+RGW_SRC_PORT=7480
 # 设置主机ID
-HOST1_ID=node1
-HOST2_ID=node2
+HOST1_ID=rgw1
+HOST2_ID=rgw2
 # 设置主机IP
 HOST1_ADDRESS=172.16.4.41
 HOST2_ADDRESS=172.16.4.42
@@ -142,23 +142,19 @@ defaults
 #---------------------------------------------------------------------
 # apiserver frontend which proxys to the masters
 #---------------------------------------------------------------------
-frontend apiserver
-    bind *:${APISERVER_DEST_PORT}
-    mode tcp
-    option tcplog
-    default_backend apiserver
+frontend http_web
+    bind *:${RGW_DEST_PORT}
+    mode http
+    default_backend rgw
 
 #---------------------------------------------------------------------
 # round robin balancing for apiserver
 #---------------------------------------------------------------------
-backend apiserver
-    option httpchk GET /healthz
-    http-check expect status 200
-    mode tcp
-    option ssl-hello-chk
+backend rgw
+    mode http
     balance     roundrobin
-        server ${HOST1_ID} ${HOST1_ADDRESS}:${APISERVER_SRC_PORT} check
-        server ${HOST2_ID} ${HOST2_ADDRESS}:${APISERVER_SRC_PORT} check
+        server ${HOST1_ID} ${HOST1_ADDRESS}:${RGW_SRC_PORT} check
+        server ${HOST2_ID} ${HOST2_ADDRESS}:${RGW_SRC_PORT} check
 EOF
 ```
 >启动服务
@@ -166,4 +162,16 @@ EOF
 ```shell
 sudo systemctl enable haproxy --now
 sudo systemctl enable keepalived --now
+```
+>测试
+
+```shell
+curl 172.16.4.45
+```
+
+>客户端s3cmd测试
+
+```shell
+s3cmd ls
+s3cmd mb s3://test
 ```

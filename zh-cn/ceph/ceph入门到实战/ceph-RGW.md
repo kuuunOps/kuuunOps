@@ -224,10 +224,16 @@ sudo pip install --upgrade python-swiftclient
 swift -V 1 -A http://172.16.4.41:80/auth -U ceph-s3-user:swift -K '0fS0DnoRABVkdQbBkvk6tKd1te1aJBmvLLvBKExF' list
 
 # 使用环境变量的注入信息
-export ST_AUTH="http://172.16.4.41:80/auth"
-export ST_USER="ceph-s3-user:swift"
-export ST_KEY="0fS0DnoRABVkdQbBkvk6tKd1te1aJBmvLLvBKExF"
-
+RGW_HOST=172.16.4.41
+RGW_PORT=80
+RGW_USE="ceph-s3-user:swift"
+RGW_KEY="0fS0DnoRABVkdQbBkvk6tKd1te1aJBmvLLvBKExF"
+cat << EOF | sudo tee /etc/profile.d/swift.sh
+export ST_AUTH="http://${RGW_HOST}:${RGW_PORT}/auth"
+export ST_USER="${RGW_USE}"
+export ST_KEY="${RGW_KEY}"
+EOF
+source /etc/profile
 swift list
 ```
 
