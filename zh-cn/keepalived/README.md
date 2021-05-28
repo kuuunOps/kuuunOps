@@ -68,7 +68,7 @@ vrrp_instance VI_1 {
         auth_pass 1111
     }
     virtual_ipaddress {
-        172.16.4.60/24
+        172.16.4.60/24 dev eth0
     }
     track_script {
         check_apiserver
