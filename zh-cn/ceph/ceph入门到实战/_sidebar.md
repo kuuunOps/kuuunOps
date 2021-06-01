@@ -19,6 +19,7 @@
       - [ceph-RBD进阶](/zh-cn/ceph/ceph入门到实战/ceph-rbd进阶.md)
       - [ceph-RGW进阶](/zh-cn/ceph/ceph入门到实战/ceph-rgw进阶.md)
       - [ceph-集成k8s](/zh-cn/ceph/ceph入门到实战/ceph-集成kubernetes.md)
+      - [ceph-监控与管理](/zh-cn/ceph/ceph入门到实战/ceph-监控与管理.md)
     - [Rook构建Ceph云原生存储实战](/zh-cn/ceph/rook构建ceph云原生存储实战/)
   - [Redis](/zh-cn/redis/)
   - [Kafka](/zh-cn/kafka/)
