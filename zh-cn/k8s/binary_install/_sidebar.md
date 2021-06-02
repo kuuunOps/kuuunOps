@@ -2,6 +2,7 @@
   - [Linux](/zh-cn/linux/)
   - [Docker](/zh-cn/docker/)
   - [Kubernetes](/zh-cn/k8s/)
+    - [Kubernetes快速安装](/zh-cn/k8s/quick_install/)
     - [Kubernetes基于二进制](/zh-cn/k8s/binary_install/)
       - [01-基础环境准备](/zh-cn/k8s/binary_install/01-基础环境准备.md)
       - [02-生成证书](/zh-cn/k8s/binary_install/02-生成证书.md)
