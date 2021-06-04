@@ -109,7 +109,7 @@ kubectl delete -f crds.yaml
 
 ```shell
 # 文件数据
-rm -rf /var/lib/rook/
+sudo rm -rf /var/lib/rook/
 ```
 >格式化磁盘
 
@@ -141,7 +141,7 @@ rm -rf /dev/mapper/ceph--*
 # Inform the OS of partition table changes
 partprobe \$DISK
 EOF
-sh clean.sh
+sudo sh clean.sh
 ```
 
 ### 1、定制mon
