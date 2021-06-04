@@ -128,7 +128,7 @@ sgdisk --zap-all \$DISK
 dd if=/dev/zero of="\$DISK" bs=1M count=100 oflag=direct,dsync
 
 # Clean disks such as ssd with blkdiscard instead of dd
-blkdiscard $DISK
+blkdiscard \$DISK
 
 # These steps only have to be run once on each node
 # If rook sets up osds using ceph-volume, teardown leaves some devices mapped that lock the disks.
@@ -149,7 +149,7 @@ sudo sh clean.sh
 ```yaml
 ...
   placement:
-    all:
+    mon:
       nodeAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
@@ -216,4 +216,26 @@ kubectl label nodes ubuntu-vm-4-44 ceph-mgr=enabled
     - name: "ubuntu-vm-4-44"
       devices: # specific devices to use for storage can be specified for each node
       - name: "sdb"
+```
+
+### 4、资源使用限制
+
+```shell
+  resources:
+# The requests and limits set here, allow the mgr pod to use half of one CPU core and 1 gigabyte of memory
+    mgr:
+      limits:
+        cpu: "2000m"
+        memory: "2048Mi"
+      requests:
+        cpu: "2000m"
+        memory: "2048Mi"
+    # 每1TB，消耗4GB
+    osd:
+      limits:
+        cpu: "2000m"
+        memory: "2048Mi"
+      requests:
+        cpu: "2000m"
+        memory: "2048Mi"
 ```

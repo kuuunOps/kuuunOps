@@ -130,12 +130,13 @@ kubeadm version
 >初始化配置文件
 
 ```shell
+K8S_VERSION="v1.20.7"
 cat << EOF |sudo tee config.yaml 
 apiVersion: kubeadm.k8s.io/v1beta2
 clusterName: kubernetes
 imageRepository: registry.aliyuncs.com/google_containers
 kind: ClusterConfiguration
-kubernetesVersion: v1.20.7
+kubernetesVersion: ${K8S_VERSION}
 networking:
   podSubnet: 10.244.0.0/16
   serviceSubnet: 10.96.0.0/12
@@ -195,3 +196,22 @@ kubectl apply -f calico.yaml
 sudo kubeadm join 172.16.4.40:6443 --token pssx6x.mt95boyyrabdjdws \
     --discovery-token-ca-cert-hash sha256:c34131aff478faef6789615962edc220a2cf628e907f48b7f4672b87932c2251
 ```
+
+## 七、资源管理
+
+```shell
+curl -fsSLo metrics-server.yaml https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.4.4/components.yaml
+
+# 更换镜像源
+sed -i "s#image:.*#image: bitnami/metrics-server:0.4.4#" metrics-server.yaml
+
+# 增加启动参数，跳过TLS证书验证
+--kubelet-insecure-tls
+```
+>部署
+
+```shell
+kubectl apply -f metrics-server.yaml
+kubectl top nodes
+```
+
