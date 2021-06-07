@@ -239,3 +239,196 @@ kubectl label nodes ubuntu-vm-4-44 ceph-mgr=enabled
         cpu: "2000m"
         memory: "2048Mi"
 ```
+
+### 5、健康探测
+
+```shell
+  healthCheck:
+    daemonHealth:
+      mon:
+        disabled: false
+        interval: 45s
+      osd:
+        disabled: false
+        interval: 60s
+      status:
+        disabled: false
+        interval: 60s
+    # Change pod liveness probe, it works for all mon,mgr,osd daemons
+    livenessProbe:
+      mon:
+        disabled: false
+      mgr:
+        disabled: false
+      osd:
+        disabled: false
+```
+
+## 六、RBD
+
+>创建storageclass
+
+```shell
+kubectl apply -f rook/cluster/examples/kubernetes/ceph/csi/rbd/storageclass.yaml
+kubectl get sc
+```
+
+>验证
+
+```shell
+cat <<EOF |sudo tee raw-block-pod-demo.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rbd-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: rook-ceph-block
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: csi-rbd-demo-pod
+spec:
+  containers:
+    - name: web-server
+      image: nginx
+      volumeMounts:
+        - name: mypvc
+          mountPath: /var/lib/www/html
+  volumes:
+    - name: mypvc
+      persistentVolumeClaim:
+        claimName: rbd-pvc
+        readOnly: false
+EOF
+
+kubectl apply -f raw-block-pod-demo.yaml
+kubectl get pv,pvc
+kubectl get pod
+```
+>演示Demo
+
+```shell
+kubectl apply -f rook/cluster/examples/kubernetes/mysql.yaml
+kubectl apply -f rook/cluster/examples/kubernetes/wordpress.yaml
+```
+>Statefulset
+
+```shell
+cat << EOF |sudo tee rook-ceph-statefulset.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  labels:
+    app: nginx
+spec:
+  ports:
+  - port: 80
+    name: web
+  clusterIP: None
+  selector:
+    app: nginx
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: web
+spec:
+  selector:
+    matchLabels:
+      app: nginx # has to match .spec.template.metadata.labels
+  serviceName: "nginx"
+  replicas: 3 # by default is 1
+  template:
+    metadata:
+      labels:
+        app: nginx # has to match .spec.selector.matchLabels
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+          name: web
+        volumeMounts:
+        - name: www
+          mountPath: /usr/share/nginx/html
+  volumeClaimTemplates:
+  - metadata:
+      name: www
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "rook-ceph-block"
+      resources:
+        requests:
+          storage: 1Gi
+EOF
+
+kubectl apply -f rook-ceph-statefulset.yaml
+```
+
+## 七、CephFS
+
+>mds
+
+```shell
+kubectl create -f rook/cluster/examples/kubernetes/ceph/filesystem.yaml
+kubectl -n rook-ceph get pods -l app=rook-ceph-mds
+```
+>storageclass
+
+```shell
+kubectl create -f rook/cluster/examples/kubernetes/ceph/csi/cephfs/storageclass.yaml
+kubectl get sc
+```
+
+>测试
+
+```shell
+kubectl create -f rook/cluster/examples/kubernetes/ceph/csi/cephfs/kube-registry.yaml
+```
+
+>集群维护
+
+## 八、Object
+
+```shell
+kubectl create -f object.yaml
+kubectl -n rook-ceph get pod -l app=rook-ceph-rgw
+```
+
+>连接外部rgw集群
+
+```yaml
+apiVersion: ceph.rook.io/v1
+kind: CephObjectStore
+metadata:
+  name: external-store
+  namespace: rook-ceph
+spec:
+  gateway:
+    port: 8080
+    externalRgwEndpoints:
+      - ip: 192.168.39.182
+  healthCheck:
+    bucket:
+      enabled: true
+      interval: 60s
+```
+
+### 1、创建bucket
+
+>Storgeclass
+
+```shell
+kubectl create -f storageclass-bucket-delete.yaml
+```
+

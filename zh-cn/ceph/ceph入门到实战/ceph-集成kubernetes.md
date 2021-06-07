@@ -480,7 +480,7 @@ spec:
       terminationGracePeriodSeconds: 10
       containers:
       - name: nginx
-        image: k8s.gcr.io/nginx-slim:0.8
+        image: nginx
         ports:
         - containerPort: 80
           name: web
@@ -500,3 +500,5 @@ EOF
 
 kubectl apply -f statefulset-ceph.yaml
 ```
+
+
