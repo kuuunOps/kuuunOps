@@ -431,4 +431,200 @@ spec:
 ```shell
 kubectl create -f storageclass-bucket-delete.yaml
 ```
+>创建bucket
 
+```shell
+kubectl create -f object-bucket-claim-delete.yaml
+radosgw-admin bucket list
+```
+### 2、使用
+
+>获取相关信息
+
+```shell
+# 获取主机
+export AWS_HOST=$(kubectl -n default get cm ceph-delete-bucket -o jsonpath='{.data.BUCKET_HOST}')
+# 获取access_key
+export AWS_ACCESS_KEY_ID=$(kubectl -n default get secret ceph-delete-bucket -o jsonpath='{.data.AWS_ACCESS_KEY_ID}' | base64 --decode)
+# 获取secret_key
+export AWS_SECRET_ACCESS_KEY=$(kubectl -n default get secret ceph-delete-bucket -o jsonpath='{.data.AWS_SECRET_ACCESS_KEY}' | base64 --decode)
+echo $AWS_HOST
+echo $AWS_ACCESS_KEY_ID
+echo $AWS_SECRET_ACCESS_KEY
+kubectl -n rook-ceph get service rook-ceph-rgw-my-store
+```
+
+>配置
+
+```shell
+kubectl -n rook-ceph exec -it rook-ceph-tools-fc5f9586c-vcdrz -- bash
+yum install -y s3cmd
+export AWS_HOST=rook-ceph-rgw-my-store.rook-ceph.svc
+export AWS_ENDPOINT=10.96.173.39:80
+export AWS_ACCESS_KEY_ID=3BT1H5REL197ONG96JZF
+export AWS_SECRET_ACCESS_KEY=jlR5DDoiMa9yLEjyB3kRZRmTXk6WsvBPBBNlfLF5
+s3cmd --configure
+
+Enter new values or accept defaults in brackets with Enter.
+Refer to user manual for detailed description of all options.
+
+Access key and Secret key are your identifiers for Amazon S3. Leave them empty for using the env variables.
+Access Key: 3BT1H5REL197ONG96JZF
+Secret Key: jlR5DDoiMa9yLEjyB3kRZRmTXk6WsvBPBBNlfLF5
+Default Region [US]:
+
+Use "s3.amazonaws.com" for S3 Endpoint and not modify it to the target Amazon S3.
+S3 Endpoint [s3.amazonaws.com]: rook-ceph-rgw-my-store.rook-ceph.svc:80
+
+Use "%(bucket)s.s3.amazonaws.com" to the target Amazon S3. "%(bucket)s" and "%(location)s" vars can be used
+if the target S3 system supports dns based buckets.
+DNS-style bucket+hostname:port template for accessing a bucket [%(bucket)s.s3.amazonaws.com]: rook-ceph-rgw-my-store.rook-ceph.svc:80/%(bucket)s
+
+Encryption password is used to protect your files from reading
+by unauthorized persons while in transfer to S3
+Encryption password:
+Path to GPG program [/usr/bin/gpg]:
+
+When using secure HTTPS protocol all communication with Amazon S3
+servers is protected from 3rd party eavesdropping. This method is
+slower than plain HTTP, and can only be proxied with Python 2.7 or newer
+Use HTTPS protocol [Yes]: no
+
+On some networks all internet access must go through a HTTP proxy.
+Try setting it here if you can\'t connect to S3 directly
+HTTP Proxy server name:
+
+New settings:
+  Access Key: 3BT1H5REL197ONG96JZF
+  Secret Key: jlR5DDoiMa9yLEjyB3kRZRmTXk6WsvBPBBNlfLF5
+  Default Region: US
+  S3 Endpoint: rook-ceph-rgw-my-store.rook-ceph.svc:80
+  DNS-style bucket+hostname:port template for accessing a bucket: rook-ceph-rgw-my-store.rook-ceph.svc:80/%(bucket)
+  Encryption password:
+  Path to GPG program: /usr/bin/gpg
+  Use HTTPS protocol: False
+  HTTP Proxy server name:
+  HTTP Proxy server port: 0
+
+Test access with supplied credentials? [Y/n] y
+Please wait, attempting to list all buckets...
+Success. Your access key and secret key worked fine :-)
+
+Now verifying that encryption works...
+Not configured. Never mind.
+
+Save settings? [y/N] y
+Configuration saved to '/root/.s3cfg'
+```
+>测试
+
+```shell
+# 查看
+s3cmd ls
+# 上传文件
+s3cmd put /etc/passwd s3://ceph-bkt-e76f591a-c9d6-4a2e-ae0d-82225c2454a6
+s3cmd ls s3://ceph-bkt-e76f591a-c9d6-4a2e-ae0d-82225c2454a6
+# 下载文件
+s3cmd get s3://ceph-bkt-e76f591a-c9d6-4a2e-ae0d-82225c2454a6/passwd
+```
+
+### 3、外部访问
+
+>配置NodePort
+
+```shell
+kubectl apply -f rgw-external.yaml
+```
+
+>创建用户
+
+```shell
+kubectl create -f object-user.yaml
+
+kubectl -n rook-ceph describe secret rook-ceph-object-user-my-store-my-user
+```
+
+>配置
+
+```shell
+export AWS_ACCESS_KEY_ID=$(kubectl -n rook-ceph get secret rook-ceph-object-user-my-store-my-user -o jsonpath='{.data.AccessKey}' | base64 --decode)
+export AWS_SECRET_ACCESS_KEY=$(kubectl -n rook-ceph get secret rook-ceph-object-user-my-store-my-user -o jsonpath='{.data.SecretKey}' | base64 --decode)
+s3cmd --configure
+
+Enter new values or accept defaults in brackets with Enter.
+Refer to user manual for detailed description of all options.
+
+Access key and Secret key are your identifiers for Amazon S3. Leave them empty for using the env variables.
+Access Key [3TJZK3ZLZYDFBGG9TZ7T]:
+Secret Key [V3R0kWWVyWs1D19xVJD6hMjNmjgG7grTZGRwUDjW]:
+Default Region [US]:
+
+Use "s3.amazonaws.com" for S3 Endpoint and not modify it to the target Amazon S3.
+S3 Endpoint [s3.amazonaws.com]: 172.16.4.41:31991
+
+Use "%(bucket)s.s3.amazonaws.com" to the target Amazon S3. "%(bucket)s" and "%(location)s" vars can be used
+if the target S3 system supports dns based buckets.
+DNS-style bucket+hostname:port template for accessing a bucket [%(bucket)s.s3.amazonaws.com]: 172.16.4.41:31991/%(bucket)
+
+Encryption password is used to protect your files from reading
+by unauthorized persons while in transfer to S3
+Encryption password:
+Path to GPG program [/usr/bin/gpg]:
+
+When using secure HTTPS protocol all communication with Amazon S3
+servers is protected from 3rd party eavesdropping. This method is
+slower than plain HTTP, and can only be proxied with Python 2.7 or newer
+Use HTTPS protocol [Yes]: no
+
+On some networks all internet access must go through a HTTP proxy.
+Try setting it here if you can\'t connect to S3 directly
+HTTP Proxy server name:
+
+New settings:
+  Access Key: 3TJZK3ZLZYDFBGG9TZ7T
+  Secret Key: V3R0kWWVyWs1D19xVJD6hMjNmjgG7grTZGRwUDjW
+  Default Region: US
+  S3 Endpoint: 172.16.4.41:31991
+  DNS-style bucket+hostname:port template for accessing a bucket: 172.16.4.41:31991/%(bucket)
+  Encryption password:
+  Path to GPG program: /usr/bin/gpg
+  Use HTTPS protocol: False
+  HTTP Proxy server name:
+  HTTP Proxy server port: 0
+
+Test access with supplied credentials? [Y/n] y
+Please wait, attempting to list all buckets...
+Success. Your access key and secret key worked fine :-)
+
+Now verifying that encryption works...
+Not configured. Never mind.
+
+Save settings? [y/N] y
+Configuration saved to '/home/ubuntu/.s3cfg'
+```
+
+>测试
+
+```shell
+# 创建bucket
+s3cmd mb s3://external-object
+s3cmd ls
+
+# 上传文件
+s3cmd put /etc/passwd s3://external-object
+s3cmd put -r rook s3://external-object
+s3cmd ls s3://external-object
+
+# 下载文件
+s3cmd get s3://external-object/passwd
+```
+
+## 八、OSD
+
+```shell
+ceph status
+ceph osd tree
+ceph osd status
+ceph osd df
+ceph osd utilization
+```
