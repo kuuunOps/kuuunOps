@@ -621,10 +621,68 @@ s3cmd get s3://external-object/passwd
 
 ## 八、OSD
 
+### 1、健康状态监控
+
 ```shell
 ceph status
 ceph osd tree
 ceph osd status
 ceph osd df
 ceph osd utilization
+```
+
+### 2、osd扩容
+
+
+>OSD配置项
+
+```yaml
+- name: "node-1"
+  devices:
+  - name: "sdc"
+    config:
+      metadataDevice: "/dev/sdc"
+      databaseSizeMB: "4096"
+      walSizeMB: "4096"
+      deviceClass: "ssd"
+```
+
+### 3、OSD移除
+
+>云原生移除
+
+```shell
+# 停止OSD
+kubectl -n rook-ceph scale deployment rook-ceph-osd-6 --replicas=0
+# 启用job，移除OSD
+kubectl apply -f osd-purge.yaml
+kubectl get job rook-ceph-purge-osd  -n rook-ceph
+# 移除job
+kubectl delete -f osd-purge.yaml
+```
+>手动移除
+
+```shell
+ceph osd out osd.7
+ceph status
+ceph osd down osd.7
+ceph osd purge 7 --yes-i-really-mean-it
+ceph osd tree
+kubectl delete deployment -n rook-ceph rook-ceph-osd-7
+```
+
+## 九、Dashboard
+
+>默认启用
+
+```shell
+# 获取密码
+kubectl -n rook-ceph get secret rook-ceph-dashboard-password -o jsonpath="{['data']['password']}" | base64 --decode && echo
+```
+
+>配置NodePort进行外部访问
+
+```shell
+kubectl create -f dashboard-external-https.yaml
+kubectl -n rook-ceph get service
 ```
