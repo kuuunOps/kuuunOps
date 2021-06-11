@@ -59,7 +59,7 @@ sudo curl -fsSL https://mirrors.aliyun.com/docker-ce/linux/ubuntu/gpg | sudo apt
 sudo add-apt-repository "deb [arch=amd64] https://mirrors.aliyun.com/docker-ce/linux/ubuntu $(lsb_release -cs) stable"
 # Step 4: 更新并安装Docker-CE
 sudo apt-get -y update
-sudo apt-get -y install docker-ce
+sudo apt-get -y install docker-ce=19.03
  
 # 安装指定版本的Docker-CE:
 # Step 1: 查找Docker-CE的版本:
@@ -119,10 +119,9 @@ EOF
 # sudo apt-get update
 # sudo apt-cache madison kubeadm|sort -r
 sudo apt-get update
-sudo apt-get install -y kubelet=1.20.7-00 kubeadm=1.20.7-00 kubectl=1.20.7-00
+sudo apt-get install -y kubelet=1.19.8-00 kubeadm=1.19.8-00 kubectl=1.19.8-00
 sudo apt-mark hold kubelet kubeadm kubectl
 kubeadm version
-
 ```
 
 ## 四、集群初始化
@@ -130,7 +129,7 @@ kubeadm version
 >初始化配置文件
 
 ```shell
-K8S_VERSION="v1.20.7"
+K8S_VERSION="v1.19.8"
 cat << EOF |sudo tee config.yaml 
 apiVersion: kubeadm.k8s.io/v1beta2
 clusterName: kubernetes
@@ -140,10 +139,6 @@ kubernetesVersion: ${K8S_VERSION}
 networking:
   podSubnet: 10.244.0.0/16
   serviceSubnet: 10.96.0.0/12
----
-kind: KubeletConfiguration
-apiVersion: kubelet.config.k8s.io/v1beta1
-cgroupDriver: systemd
 EOF
 ```
 >初始化
