@@ -1,4 +1,4 @@
-<img width="160px" style="border-radius:50%" bor src="_media/yuzhiboyou.jpg">   
+<img width="160px" style="border-radius:50%" bor src="_media/logo.jpg">   
 
 # Kuuun
 
