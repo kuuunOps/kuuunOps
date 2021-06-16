@@ -21,3 +21,4 @@
   - [RabbitMQ](zh-cn/rabbitmq/)
   - [Git](zh-cn/git/)
   - [Subversion](zh-cn/subversion/)
+  - [SonarQube](zh-cn/sonarqube/)
