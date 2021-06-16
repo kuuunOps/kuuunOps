@@ -526,3 +526,30 @@ done
 3. 挂载文件系统`mount -o remount,rw /`
 4. 重置密码
 5. `touch /.autorelabel`，恢复启动`exec /sbin/init`
+
+
+## elk删除节点
+
+>排除节点IP，禁止向这个IP地址节点进行分片及调度
+
+```shell
+PUT _cluster/settings
+{
+ "transient" : {
+ "cluster.routing.allocation.exclude._ip" : "172.16.4.28"
+ }
+}
+```
+
+>当节点分片数变为0的时候，停止节点服务，并清空排除的节点IP
+
+```shell
+systemc stop elasticsearch
+
+PUT _cluster/settings
+{
+ "transient" : {
+ "cluster.routing.allocation.exclude._ip" : null
+ }
+}
+```
