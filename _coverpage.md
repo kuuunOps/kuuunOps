@@ -1,6 +1,6 @@
 <img width="160px" style="border-radius:50%" bor src="_media/logo.jpg">   
 
-# Kuuun
+# Uncordon
 
 > 非专业技术栈
 
@@ -8,5 +8,4 @@
 - 本技术栈还在更新中，会导致有些项目还是空白，未开始整理
 - 整理来源：个人笔记，学习视频，及其他原本人技术博客
 
-<!-- [Gitee](https://gitee.com/kuuun/docs) -->
 [开始阅读](/zh-cn/)
