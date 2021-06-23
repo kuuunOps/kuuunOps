@@ -104,3 +104,29 @@ Kafka 主要特点是基于Pull 的模式来处理消息消费，追求高吞吐
 
 - Binding：exchange 和queue 之间的虚拟连接，binding 中可以包含 routing key，Binding 信息被保存到 exchange 中的查询表中，用于 message 的分发依据  
 
+### 8、创建用户
+
+- 创建账户
+
+```shell
+rabbitmqctl add_user admin 123
+```
+
+- 绑定角色
+
+```shell
+rabbitmqctl set_user_tags admin administrator
+```
+
+- 设置权限
+
+```shell
+# set_permissions [-p vhostpath ] <user> <conf> <write> <read>
+rabbitmqctl set_permissions -p "/" admin ".*" ".*" ".*"
+```
+
+- 查看用户
+
+```shell
+rabbitmqctl list_users
+```
