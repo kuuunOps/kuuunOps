@@ -553,3 +553,40 @@ PUT _cluster/settings
  }
 }
 ```
+
+---
+
+## Alpine镜像优化
+
+- 准备Dockerfile
+
+```shell
+FROM alpine
+COPY .bashrc /root/
+RUN  set -x \
+     && apk update \
+     && apk add --no-cache tzdata bash bash-doc bash-completion \
+     && sed -i 's/ash/bash/g' /etc/passwd \
+     && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+     && echo "alias ll='ls -l'" >> /etc/profile \
+     && source /root/.bashrc
+CMD ["/bin/bash"]
+```
+
+- 准备依赖文件
+
+`.bashrc`
+
+```shell
+export HISTTIMEFORMAT="%d/%m/%y %T "
+export PS1='\u@\h:\W \$ '
+alias ll='ls -alF'
+alias ls='ls --color=auto'
+source /etc/profile.d/bash_completion.sh
+```
+
+- 构建镜像
+
+```shell
+docker build -t alpine:v1 .
+```
