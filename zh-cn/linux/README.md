@@ -528,7 +528,7 @@ done
 5. `touch /.autorelabel`，恢复启动`exec /sbin/init`
 
 
-## elk删除节点
+## ELK节点删除
 
 >排除节点IP，禁止向这个IP地址节点进行分片及调度
 
