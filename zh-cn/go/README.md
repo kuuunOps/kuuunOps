@@ -371,8 +371,292 @@ func main() {
 
 ### 三、bufio.NewReader()
 
+```go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+)
+
+func main() {
+
+    fmt.Println("请输入内容：")
+	reader := bufio.NewReader(os.Stdin)
+	s1, _ := reader.ReadString('\n')
+	fmt.Printf(s1)
+}
+
+```
+---
+
+## 流程控制
+
+### 一、if
+
+#### 1、if
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	num:= 16
+	if num > 10 {
+		fmt.Println("大于10")
+	}
+	fmt.Println("main...over...")
+}
+```
+
+#### 2、if...else
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+
+	score := 0
+	fmt.Println("请输入你的成绩：")
+	fmt.Scanln(&score)
+	if score >= 60 {
+		fmt.Println("成绩合格")
+	} else {
+		fmt.Println("成绩不合格")
+	}
+}
+```
+
+if 语句嵌套
+
+```go
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+
+	sex := "男"
+	if sex == "男" {
+		fmt.Println("去男厕所")
+	} else {
+		if sex == "女" {
+			fmt.Println("去女厕所")
+		} else {
+			fmt.Println("不知道")
+		}
+	}
+}
+```
+
+
+#### 3、if...else...if
+
+```go
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+
+	sex := "男"
+	if sex == "男" {
+		fmt.Println("去男厕所")
+	} else if sex == "女" {
+		fmt.Println("去女厕所")
+	} else {
+		fmt.Println("不知道")
+	}
+}
+```
+
+#### 4、if其他用法
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+  if num := 4; num > 0 {
+    fmt.Println("正数")
+  } else {
+    fmt.Println("负数")
+  }
+}
+
+```
 
 ---
+
+### 二、switch
+
+- switch可以作用在其他数据类型
+- switch作用的变量类型必须和case的数据类型一致
+- case后的数据必须是唯一的
+- default语句为可选
+
+#### 1、基本用法
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+
+  num := 3
+  switch num {
+  case 1:
+    fmt.Println("第一季度")
+  case 2:
+    fmt.Println("第二季度")
+  case 3:
+    fmt.Println("第三季度")
+  case 4:
+    fmt.Println("第四季度")
+  default:
+    fmt.Println("数据异常")
+  }
+}
+
+```
+#### 2、switch其他用法
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	score := 80
+	switch {
+	case score >= 0 && score < 60:
+		fmt.Println("D")
+	case score >= 60 && score < 70:
+		fmt.Println("C")
+	case score >= 70 && score < 80:
+		fmt.Println("B")
+	case score >= 80:
+		fmt.Println("A")
+	}
+}
+```
+
+或
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+
+	month := 5
+	day := 0
+	year := 2019
+	switch month {
+	case 1, 3, 5, 7, 8, 10, 12:
+		day = 31
+	case 4, 6, 9, 11:
+		day = 30
+	case 2:
+		if year%400 == 0 || year%4 == 0 && year%100 != 0 {
+			day = 29
+		} else {
+			day = 28
+		}
+	}
+	fmt.Printf("%d 年 %d 月 的天数是 %d\n", year, month, day)
+}
+
+```
+
+或
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+
+	switch language := "golang";language {
+	case "golang":
+		fmt.Println("Go语言")
+	case "python":
+		fmt.Println("Python语言")
+	case "java":
+		fmt.Println("Java语言")
+	}
+}
+
+```
+
+#### 3、break/fallthrough
+
+- break用于强制结束case语句
+- fallthrough用于穿透case语句
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	num := 1
+	switch num {
+	case 1:
+		fmt.Println("1")
+		fmt.Println("1")
+		break
+		fmt.Println("1")
+	case 2:
+		fmt.Println("2")
+		fmt.Println("2")
+		fmt.Println("2")
+	}
+}
+```
+
+或
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	num := 2
+	switch num {
+	case 1:
+		fmt.Println("1")
+		fmt.Println("1")
+		fmt.Println("1")
+	case 2:
+		fmt.Println("2")
+		fmt.Println("2")
+		fmt.Println("2")
+		fallthrough
+	case 3:
+		fmt.Println("3")
+		fmt.Println("3")
+		fmt.Println("3")
+	}
+}
+```
+
+---
+
+### 三、
 
 ## 复合类型-array
 
