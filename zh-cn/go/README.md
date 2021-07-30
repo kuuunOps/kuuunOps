@@ -656,7 +656,57 @@ func main() {
 
 ---
 
-### 三、
+### 三、for
+
+#### 1、基本使用
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+
+	for i:=0;i < 5;i++{
+		fmt.Println("Hello World!")
+	}
+}
+```
+
+#### 2、其他用法
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+
+	i := 0
+	for i<5 {
+		fmt.Println("Hello World")
+		i++
+	}
+}
+```
+或
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	i := 0
+	for {
+		fmt.Println(i)
+		if i == 5 {
+			break
+		}
+		i++
+	}
+}
+```
 
 ## 复合类型-array
 
