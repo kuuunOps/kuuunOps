@@ -1330,6 +1330,43 @@ func main() {
 }
 ```
 
+### 三、map与slice
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	user1 := make(map[string]string)
+	user1["name"] = "李雷"
+	user1["age"] = "20"
+	user1["sex"] = "男"
+	user1["address"] = "北京市昌平区"
+
+	user2 := make(map[string]string)
+	user2["name"] = "韩梅梅"
+	user2["age"] = "18"
+	user2["sex"] = "女"
+	user2["address"] = "北京市通州区"
+
+	user3 := make(map[string]string)
+	user3["name"] = "李晓华"
+	user3["age"] = "21"
+	user3["sex"] = "女"
+	user3["address"] = "杭州市余杭区"
+
+	users := make([]map[string]string,0)
+	users = append(users,user1)
+	users = append(users,user2)
+	users = append(users,user3)
+
+	for _, user := range users {
+		fmt.Println(user["name"])
+	}
+}
+
+```
 ---
 ## 复合类型-function
 
