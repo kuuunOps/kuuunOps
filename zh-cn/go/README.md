@@ -1171,6 +1171,165 @@ func main() {
 
 ## 复合类型-map
 
+- map是引用类型数据
+
+### 一、map的使用
+
+#### 1、创建map
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	var m1 map[int]string // 只是声明，无法直接使用
+	var m2 = make(map[int]string) // 初始化
+	var m3 = map[string]int{"Golang": 98, "Python": 99, "Java": 100}
+	fmt.Println(m1)
+	fmt.Println(m2)
+	fmt.Println(m3)
+}
+
+```
+
+#### 2、修改map
+
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+  m1 := make(map[string]int)
+  m1["China"] = 100
+  m1["Japan"] = 99
+  m1["USA"] = 98
+  fmt.Println(m1)
+}
+
+```
+
+#### 3、获取map
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	m1 := make(map[string]int)
+	m1["China"] = 100
+	m1["Japan"] = 99
+	m1["USA"] = 98
+	fmt.Println(m1)
+	fmt.Println(m1["China"])
+}
+
+```
+
+或
+
+```go
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	m1 := make(map[string]int)
+	m1["China"] = 100
+	m1["Japan"] = 99
+	m1["USA"] = 98
+
+	if v, ok := m1["India"]; ok {
+		fmt.Println(v)
+	} else {
+		m1["India"] = 0
+	}
+	fmt.Println(m1)
+}
+
+```
+
+#### 4、删除map
+
+```go
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	m1 := make(map[string]int)
+	m1["China"] = 100
+	m1["Japan"] = 99
+	m1["USA"] = 98
+
+	if v, ok := m1["India"]; ok {
+		fmt.Println(v)
+	} else {
+		m1["India"] = 0
+	}
+	fmt.Println(m1)
+
+	delete(m1,"India")
+	fmt.Println(m1)
+}
+
+```
+
+### 二、map的遍历
+
+#### 1、无序遍历
+
+```go
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	s := map[string]int{"China": 100, "Japan": 99, "USA": 98}
+
+	for k, v := range s {
+		fmt.Println(k, v)
+	}
+
+}
+
+```
+
+#### 2、有序遍历
+
+```go
+package main
+
+import (
+	"fmt"
+	"sort"
+)
+
+func main() {
+	s := map[string]int{"China": 100, "Japan": 99, "USA": 98}
+
+	ss := make([]string, 0)
+	for k, _ := range s {
+		ss = append(ss, k)
+	}
+	sort.Strings(ss)
+
+	for _, i := range ss {
+		fmt.Println(i,s[i])
+	}
+
+}
+```
+
 ---
 ## 复合类型-function
 
