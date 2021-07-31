@@ -1368,6 +1368,415 @@ func main() {
 
 ```
 ---
+
+## 字符串-String
+
+- 字符串是一个字节的切片
+- 字节--byte--uint8
+
+### 一、string使用
+
+#### 1、string的定义
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	s1 := "Hello"
+	s2 := `Hello World!`
+	fmt.Println(s1)
+	fmt.Println(s2)
+
+}
+
+```
+
+#### 2、len
+
+- 字节长度
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+  s1 := "Hello 中国!"
+  s2 := `Hello World!`
+  fmt.Println(s1)
+  fmt.Println(s2)
+  fmt.Println(len(s1))
+  fmt.Println(len(s2))
+}
+
+```
+
+#### 3、字符串的遍历
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	s1 := "Hello 中国!"
+
+	for _, i := range s1 {
+		fmt.Println(i)
+	}
+}
+
+```
+
+#### 4、字符串与字节的转换
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+
+	s1 := "Hello 中国!"
+	fmt.Println([]byte(s1))
+
+	s2 := []byte{72,101,108,108,111,32,228,184,173,229,155,189,33}
+	fmt.Println(string(s2))
+}
+
+```
+
+### 二、strings包
+
+#### Contains
+
+```go
+package main
+
+import (
+	"fmt"
+	"strings"
+)
+
+func main() {
+	s1 := "Hello World!"
+	if strings.Contains(s1, "H") {
+		fmt.Println("存在")
+	} else {
+		fmt.Println("不存在")
+	}
+}
+
+```
+
+#### ContainsAny
+
+```go
+package main
+
+import (
+	"fmt"
+	"strings"
+)
+
+func main() {
+	s1 := "Hello World!"
+
+	if strings.ContainsAny(s1, "Hc") {
+		fmt.Println("存在")
+	} else {
+		fmt.Println("不存在")
+	}
+}
+
+```
+
+#### Count
+
+```go
+package main
+
+import (
+	"fmt"
+	"strings"
+)
+
+func main() {
+	s1 := "Hello World!"
+
+	fmt.Println(strings.Count(s1,"l"))
+
+}
+
+```
+
+
+#### HasPrefix/HasSuffix
+
+```go
+package main
+
+import (
+	"fmt"
+	"strings"
+)
+
+func main() {
+	s1 := "Hello World!"
+
+	fmt.Println(strings.HasPrefix(s1, "Hello"))
+	fmt.Println(strings.HasSuffix(s1, "!"))
+
+}
+
+```
+
+#### Index/LastIndex
+
+```go
+package main
+
+import (
+  "fmt"
+  "strings"
+)
+
+func main() {
+  s1 := "Hello World!"
+
+  fmt.Println(strings.Index(s1,"o"))
+  fmt.Println(strings.LastIndex(s1,"o"))
+}
+
+
+```
+
+#### IndexAny
+
+```go
+package main
+
+import (
+	"fmt"
+	"strings"
+)
+
+func main() {
+	s1 := "Hello World!"
+
+	fmt.Println(strings.IndexAny(s1,"oa"))
+}
+
+```
+
+#### Join
+
+```go
+package main
+
+import (
+	"fmt"
+	"strings"
+)
+
+func main() {
+	s1 := []string{"Hello", "World", "!"}
+
+	s2 := strings.Join(s1, " ")
+	fmt.Println(s2)
+}
+
+```
+
+#### Split
+
+```go
+package main
+
+import (
+	"fmt"
+	"strings"
+)
+
+func main() {
+	s1 := `123-456-789`
+	fmt.Println(strings.Split(s1,"-"))
+}
+
+```
+
+#### Repeat
+
+```go
+package main
+
+import (
+	"fmt"
+	"strings"
+)
+
+func main() {
+	s1 := strings.Repeat("Ah ",5)
+	fmt.Println(s1)
+}
+
+```
+
+#### Replace
+
+```go
+package main
+
+import (
+	"fmt"
+	"strings"
+)
+
+func main() {
+	s1 := "Hello World！"
+	fmt.Println(strings.Replace(s1,"o","*",-1))
+}
+
+```
+
+#### ToLower/ToUpper
+
+```go
+package main
+
+import (
+	"fmt"
+	"strings"
+)
+
+func main() {
+	s1 := "Hello World！"
+
+	fmt.Println(strings.ToLower(s1))
+	fmt.Println(strings.ToUpper(s1))
+}
+
+```
+
+### 三、strconv包
+
+#### string--bool
+
+```go
+package main
+
+import (
+	"fmt"
+	"strconv"
+)
+
+func main() {
+	s1 := "true"
+	if s, err := strconv.ParseBool(s1); err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println(s)
+
+	}
+}
+
+```
+
+```go
+package main
+
+import (
+	"fmt"
+	"strconv"
+)
+
+func main() {
+	b1 := true
+
+	s1 := strconv.FormatBool(b1)
+	fmt.Println(s1)
+
+}
+
+```
+
+#### string--int
+
+```go
+package main
+
+import (
+	"fmt"
+	"strconv"
+)
+
+func main() {
+	s1 := "100"
+	v, err := strconv.ParseInt(s1, 10, 64)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(v)
+
+}
+
+```
+
+```go
+package main
+
+import (
+	"fmt"
+	"strconv"
+)
+
+func main() {
+	s := "100"
+	v, err := strconv.Atoi(s)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(v)
+}
+
+```
+
+
+
+```go
+package main
+
+import (
+	"fmt"
+	"strconv"
+)
+
+func main() {
+	n := 100
+	s := strconv.FormatInt(int64(n), 10)
+	fmt.Println(s)
+}
+
+```
+
+```go
+package main
+
+import (
+	"fmt"
+	"strconv"
+)
+
+func main() {
+	n := 100
+	fmt.Println(strconv.Itoa(n))
+}
+
+```
+
+---
 ## 复合类型-function
 
 ---
