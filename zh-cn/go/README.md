@@ -708,6 +708,90 @@ func main() {
 }
 ```
 
+#### 3、break/continue
+
+**break**
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	for i := 0; i < 10; i++ {
+		if i == 5 {
+			break
+		}
+		fmt.Println(i)
+	}
+}
+```
+
+**continue**
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	for i := 0; i < 10; i++ {
+		if i == 5 {
+			continue
+		}
+		fmt.Println(i)
+	}
+}
+```
+
+**标记循环**
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+  // 标记要终止的循环
+
+out:
+  for i := 0; i < 10; i++ {
+    fmt.Println(i)
+    for j := 0; j < 10; j++ {
+      if j == 5 {
+        break out
+      }
+      fmt.Println(j)
+    }
+  }
+}
+
+```
+
+#### 4、goto
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	var a = 10
+LOOP:
+	for a < 20 {
+		if a == 15 {
+			a += 1
+			goto LOOP
+		}
+		fmt.Println(a)
+		a++
+	}
+
+}
+```
+
+---
+
 ## 复合类型-array
 
 ---
