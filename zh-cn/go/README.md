@@ -789,13 +789,255 @@ LOOP:
 
 }
 ```
+---
+
+### 四、随机数生成
+
+#### 1、基本使用
+
+```go
+package main
+
+import (
+	"fmt"
+	"math/rand"
+	"time"
+)
+
+func main() {
+	//设置种子数
+	rand.Seed(time.Now().UnixNano()*7)
+	num := rand.Intn(9999)
+	fmt.Println(num)
+}
+```
+
+#### 2、范围随机
+
+```go
+package main
+
+import (
+	"fmt"
+	"math/rand"
+	"time"
+)
+
+func main() {
+	//10-99 之间随机数获取
+	rand.Seed(time.Now().UnixNano())
+	fmt.Println(rand.Intn(99-10) + 10)
+
+}
+```
 
 ---
 
 ## 复合类型-array
 
+- 数组是值传递类型
+
+### 1、数组的定义
+
+- 数组的初始化
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+  // 定义一个长度为4的int类型数组
+  var arr1 [4] int
+  arr1[0] = 1
+  arr1[1] = 2
+  arr1[2] = 3
+  arr1[3] = 4
+  fmt.Println(arr1)
+  fmt.Println(arr1[2])
+}
+
+```
+
+- **len/cap**
+  - len()：获取长度，实际的数据量
+  - cap()：获取容量，可存储的数据量
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	// 定义一个长度为4的int类型数组
+	var arr1 [4] int
+	arr1[0] = 1
+	arr1[1] = 2
+	arr1[2] = 3
+	fmt.Printf("长度为：%d\n",len(arr1))
+	fmt.Printf("容量为：%d\n",cap(arr1))
+}
+```
+
+- 数组初始化赋值
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	var a = [4]int{1,2,4,5}
+	fmt.Println(a)
+}
+
+```
+
+指定下标位置初始值
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	var a = [5]int{1:3,3:20}
+	fmt.Println(a)
+}
+```
+
+- 不定长赋值
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	var a = [...]int{3,20,99,222}
+	fmt.Println(a)
+	fmt.Println(cap(a))
+	fmt.Println(len(a))
+}
+```
+### 2、数组的遍历
+
+#### 方法1-下标
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	arr1 := [...]int{2,44,5,54}
+	fmt.Println(arr1[2])
+}
+```
+
+#### 方法2-for...i
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	arr1 := [...]int{2,44,5,54}
+	for i := 0; i < len(arr1); i++ {
+		fmt.Println(arr1[i])
+	}
+}
+
+```
+
+#### 方法3-for...range
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	arr1 := [...]int{2, 44, 5, 54}
+	for i, i2 := range arr1 {
+		fmt.Println(i, i2)
+	}
+}
+```
+
+### 3、数组的排序
+
+#### 冒泡排序
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	arr := [...]int{15, 23, 8, 10, 7, 1, 23, 4356, 234, 23}
+	for j := 0; j < len(arr); j++ {
+		for i := 0; i < len(arr)-1; i++ {
+			if arr[i] > arr[i+1] {
+				arr[i], arr[i+1] = arr[i+1], arr[i]
+			}
+		}
+	}
+	fmt.Println(arr)
+}
+```
+
+### 4、多维数组
+
+#### 二维数组
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	arr := [3][5]int{{1, 2, 3, 65, 2}, {2, 43, 5, 21, 3}, {3, 5, 76, 3, 23}}
+	fmt.Println(arr)
+}
+```
+
 ---
 ## 复合类型-slice
+
+### 一、切片的基本使用
+
+#### slice的创建
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	var s1 []int
+	fmt.Println(s1)
+	
+	s2 := []int{1,2,3,5}
+	fmt.Println(s2)
+}
+
+```
+
+#### 使用make创建
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	s1 := make([]int,3,10)
+	fmt.Println(s1)
+}
+
+```
 
 ---
 ## 复合类型-map
