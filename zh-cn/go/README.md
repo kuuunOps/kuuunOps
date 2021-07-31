@@ -1006,7 +1006,9 @@ func main() {
 ---
 ## 复合类型-slice
 
-### 一、切片的基本使用
+- slice是引用型数据类型，存储的array的内存地址
+
+### 一、slice的基本使用
 
 #### slice的创建
 
@@ -1025,7 +1027,9 @@ func main() {
 
 ```
 
-#### 使用make创建
+#### make
+
+- 使用make创建slice
 
 ```go
 package main
@@ -1039,7 +1043,132 @@ func main() {
 
 ```
 
+#### append
+
+- 使用append向slice中添加元素
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	s1 := make([]int,0,5)
+	s1 = append(s1,1,2)
+	fmt.Println(s1)
+}
+```
+
+或
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+  s1 := []int{1, 2, 34, 5, 435, 545}
+
+  s := make([]int, 0, 0)
+  s = append(s, 100, 99)
+  s = append(s, s1...)
+  fmt.Println(s) //[100 99 1 2 34 5 435 545]
+
+}
+
+```
+
+### 二、slice的遍历
+
+#### 1、for...i
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	s1 := []int{1, 2, 34, 5, 435, 545}
+	for i := 0; i < len(s1); i++ {
+		fmt.Println(s1[i])
+	}
+}
+
+```
+#### 2、for...range
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	s1 := []int{1, 2, 34, 5, 435, 545}
+
+	for i, i2 := range s1 {
+		fmt.Println(i, i2)
+	}
+
+}
+```
+### 三、array创建slice
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	a := [...]int{2, 3, 5, 6, 8, 33, 44, 66, 77}
+	fmt.Println(a)
+	s1 := a[:3]
+	fmt.Printf("s1:%v,len:%d,cap:%d\n",s1,len(s1),cap(s1))
+	s2 := a[4:]
+	fmt.Printf("s1:%v,len:%d,cap:%d\n",s2,len(s2),cap(s2))
+	s3 := a[3:7]
+	fmt.Printf("s1:%v,len:%d,cap:%d\n",s3,len(s3),cap(s3))
+	
+}
+```
+
+### 四、深copy与浅copy
+
+#### for循环实现深copy
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	s1 := []int{2,3,4,5,6}
+	s2 := make([]int,0,10)
+	for _, i := range s1 {
+		s2 = append(s2,i)
+	}
+	fmt.Printf("%p\n",s1)
+	fmt.Printf("%p\n",s2)
+}
+
+```
+
+#### copy
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	s1 := []int{12,22,33,44,55}
+	s2 := make([]int,len(s1))
+	copy(s2,s1)
+	fmt.Println(s2)
+}
+```
+
 ---
+
 ## 复合类型-map
 
 ---
