@@ -1779,6 +1779,144 @@ func main() {
 ---
 ## 复合类型-function
 
+- go语言中至少含有一个main函数，程序启动时，系统自动执行的函数
+
+### 一、函数的基本使用
+
+```go
+package main
+
+import "fmt"
+
+func getSum() {
+	sum := 0
+	for i := 1; i <= 100; i++ {
+		sum += i
+	}
+	fmt.Println(sum)
+}
+func main() {
+	getSum()
+}
+
+```
+
+### 二、参数
+
+#### 1、固定参数
+
+```go
+package main
+
+import "fmt"
+
+// 用于统计数字累加和
+func getSum(start,end int) int {
+	/*
+	start: 起始数值的变量参数
+	end：结束数值的变量参数
+	return：返回计算结果
+	*/
+	sum := 0
+	for i := start; i <= end; i++ {
+		sum += i
+	}
+	return sum
+}
+func main() {
+	sum := getSum(1,97)
+	fmt.Println(sum)
+}
+
+```
+
+#### 2、可变参数
+
+- 可变参数即slice
+- 最多只能有一个可变参数
+
+```go
+package main
+
+import "fmt"
+
+func getSum(nums ...int) {
+	sum := 0
+	for i := 0; i < len(nums); i++ {
+		sum += nums[i]
+	}
+	fmt.Println(sum)
+}
+
+func main() {
+    // getSum([]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}...)
+	getSum(1,2,3,4,5,6,7,8,9,10)
+}
+
+```
+
+#### 3、参数传递
+
+- 值传递
+- 引用传递
+
+### 三、返回值
+
+#### 1、返回一个值
+
+```go
+package main
+
+import "fmt"
+
+func add(x, y int) int {
+	return x + y
+}
+
+func main() {
+	res := add(3, 5)
+	fmt.Println(res)
+}
+
+```
+
+
+#### 2、多值返回
+
+```go
+package main
+
+import "fmt"
+
+func demo(x, y int) (int, int) {
+	return x + y, x * y
+}
+
+func main() {
+	v1, v2 := demo(4, 3)
+	fmt.Println(v1, v2)
+}
+
+```
+
+#### 3、空白标识符“_”
+
+```go
+package main
+
+import "fmt"
+
+func demo(x, y int) (int, int) {
+	return x + y, x * y
+}
+
+func main() {
+	v1, _ := demo(4, 3)
+	fmt.Println(v1)
+}
+
+```
+
 ---
 ## 复合类型-pointer
 
