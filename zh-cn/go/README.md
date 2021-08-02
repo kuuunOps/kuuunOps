@@ -2113,6 +2113,78 @@ func increment() func() int {
 
 ## 复合类型-pointer
 
+### 一、指针基本使用
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+
+	//获取地址
+	a := 10
+	fmt.Printf("%p\n", &a)
+	//声明指针
+	var p1 *int
+	p1 = &a
+
+	// 使用&获取数值的指针地址
+	// 使用*获取指针地址指向的数值
+	fmt.Println(*p1)
+	fmt.Printf("%p\n", p1)
+
+	//修改数值
+	*p1 = 200
+	fmt.Println(*p1)
+	fmt.Println(a)
+
+}
+
+```
+
+### 二、数值的指针和指针的数值
+
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+
+	//定义数组
+	arr1 := [4]int{1, 2, 3, 4}
+	fmt.Println(arr1)
+	//获取数值的指针地址
+	fmt.Println(&arr1)
+
+	//定义数组类型的指针变量
+	var p1 *[4]int
+	p1 = &arr1
+	fmt.Println(p1)
+	fmt.Println(*p1)
+
+	//修改元素数值
+	(*p1)[0] = 100
+	fmt.Println(arr1)
+	// 简写
+	p1[1] = 200
+	fmt.Println(arr1)
+
+	a := 1
+	b := 2
+	c := 3
+	d := 4
+	arr2 := [4]int{a, b, c, d}
+	// 定义存储指针类型数据的数组
+	arr3 := [4]*int{&a, &b, &c, &d}
+	fmt.Println(arr2)
+	fmt.Println(*arr3[0])
+}
+
+```
+
 ---
 
 ## 复合类型-struct
