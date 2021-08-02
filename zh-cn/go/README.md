@@ -1,6 +1,8 @@
 # Go
->Go是一种开源编程语言，可以轻松构建简单、可靠和高效的软件。
+
+> Go是一种开源编程语言，可以轻松构建简单、可靠和高效的软件。
 ---
+
 ## Go的安装
 
 ### 1、下载安装
@@ -18,6 +20,7 @@
 - `GOROOT`：go程序的安装目录
 
 例如：
+
 ```shell
 GOROOT=/usr/local/go
 ```
@@ -25,6 +28,7 @@ GOROOT=/usr/local/go
 - `GOPATH`: 程序开发的工作区
 
 例如：
+
 ```shell
 GOPAHT=/home/zhanghk/go
 ```
@@ -32,6 +36,7 @@ GOPAHT=/home/zhanghk/go
 - `GOPROXY`: 配置国内依赖包下载代理
 
 例如：
+
 ```shell
 GO111MODULE=on
 GOPROXY=https://goproxy.cn
@@ -50,15 +55,17 @@ GOPROXY=https://goproxy.cn
 ### 1、Helloworld
 
 在src目录中创建helloworld程序目录， 在目录中创建文件`helloworld.go`。内容如下：
+
 ```go
 package main
 
 import "fmt"
 
 func main() {
-    fmt.Println("Hello World!")
+	fmt.Println("Hello World!")
 }
 ```
+
 运行命令
 
 ```shell
@@ -89,9 +96,9 @@ import "fmt"
 
 func main() {
 	/*
-    var name string = "LiLei"
-    var age int = 18
-	 */
+	   var name string = "LiLei"
+	   var age int = 18
+	*/
 	var name string
 	name = "LiLei"
 	var age int
@@ -141,12 +148,13 @@ import "fmt"
 func main() {
 	var (
 		name = "LiLei"
-		age = 18
+		age  = 18
 	)
 
 	fmt.Println(name, age)
 }
 ```
+
 或
 
 ```go
@@ -169,9 +177,9 @@ func main() {
 - 简短定义方式，左侧至少有一个变量是新值
 - 简短定义不能定义全局作用域
 - 变量存在零值即默认值
-  - `int`：0
-  - `float`：0
-  - `string`：“”
+    - `int`：0
+    - `float`：0
+    - `string`：“”
 - 变量定义了就必须要使用
 
 ---
@@ -180,7 +188,7 @@ func main() {
 
 #### 1、常量的定义
 
->常量定义后，在后续使用中，就不可以再进行赋值。
+> 常量定义后，在后续使用中，就不可以再进行赋值。
 
 ```go
 package main
@@ -188,10 +196,10 @@ package main
 import "fmt"
 
 func main() {
-  //const PI float = 3.14
-  const PI = 3.14
+	//const PI float = 3.14
+	const PI = 3.14
 
-  fmt.Println(PI)
+	fmt.Println(PI)
 }
 ```
 
@@ -208,9 +216,9 @@ func main() {
 	//const NAME,AGE = "LiLei",18
 	const (
 		NAME = "LiLei"
-		AGE = 18
+		AGE  = 18
 	)
-	fmt.Println(NAME,AGE)
+	fmt.Println(NAME, AGE)
 }
 ```
 
@@ -219,7 +227,7 @@ func main() {
 
 #### 2、iota
 
->特殊常量iota，可以被系统修改的常量
+> 特殊常量iota，可以被系统修改的常量
 
 ```go
 package main
@@ -243,20 +251,20 @@ func main() {
 ### 一、数值
 
 - 整数
-  - `int`：取决于操作系统的位数
-  - `int8`：
-  - `int16`
-  - `int32`：rune
-  - `int64`
-  - `uint8`：byte
-  - `uint16`
-  - `uint32`
-  - `uint64`
+    - `int`：取决于操作系统的位数
+    - `int8`：
+    - `int16`
+    - `int32`：rune
+    - `int64`
+    - `uint8`：byte
+    - `uint16`
+    - `uint32`
+    - `uint64`
 
 - 浮点数
-  - float32
-  - float64
-  
+    - float32
+    - float64
+
 - 复数
 
 ### 二、字符串
@@ -291,13 +299,13 @@ package main
 import "fmt"
 
 func main() {
-  var a bool
-  b := true
-  c := false
+	var a bool
+	b := true
+	c := false
 
-  fmt.Printf("%T,%t\n", a, a)
-  fmt.Printf("%T,%t\n", b, b)
-  fmt.Printf("%T,%t\n", c, c)
+	fmt.Printf("%T,%t\n", a, a)
+	fmt.Printf("%T,%t\n", b, b)
+	fmt.Printf("%T,%t\n", c, c)
 }
 ```
 
@@ -311,8 +319,8 @@ import "fmt"
 func main() {
 	num1 := 100
 	num2 := float64(num1)
-	fmt.Printf("%T,%d\n",num1,num1)
-	fmt.Printf("%T,%f\n",num2,num2)
+	fmt.Printf("%T,%d\n", num1, num1)
+	fmt.Printf("%T,%f\n", num2, num2)
 }
 ```
 
@@ -341,7 +349,6 @@ func main() {
 
 ### 一、fmt.Printf()
 
-
 - `%b`：二进制数值占位符
 - `%d`：十进制数值类型变量占位符
 - `%f`：浮点数值类型变量占位符
@@ -362,8 +369,8 @@ import "fmt"
 func main() {
 	name := "LiLei"
 	age := 18
-	fmt.Printf("%d的内存地址：%p\n",age,&age)
-	fmt.Printf("%s的内存地址：%p\n",name,&name)
+	fmt.Printf("%d的内存地址：%p\n", age, &age)
+	fmt.Printf("%s的内存地址：%p\n", name, &name)
 }
 ```
 
@@ -382,13 +389,14 @@ import (
 
 func main() {
 
-    fmt.Println("请输入内容：")
+	fmt.Println("请输入内容：")
 	reader := bufio.NewReader(os.Stdin)
 	s1, _ := reader.ReadString('\n')
 	fmt.Printf(s1)
 }
 
 ```
+
 ---
 
 ## 流程控制
@@ -403,7 +411,7 @@ package main
 import "fmt"
 
 func main() {
-	num:= 16
+	num := 16
 	if num > 10 {
 		fmt.Println("大于10")
 	}
@@ -455,7 +463,6 @@ func main() {
 }
 ```
 
-
 #### 3、if...else...if
 
 ```go
@@ -486,11 +493,11 @@ package main
 import "fmt"
 
 func main() {
-  if num := 4; num > 0 {
-    fmt.Println("正数")
-  } else {
-    fmt.Println("负数")
-  }
+	if num := 4; num > 0 {
+		fmt.Println("正数")
+	} else {
+		fmt.Println("负数")
+	}
 }
 
 ```
@@ -513,22 +520,23 @@ import "fmt"
 
 func main() {
 
-  num := 3
-  switch num {
-  case 1:
-    fmt.Println("第一季度")
-  case 2:
-    fmt.Println("第二季度")
-  case 3:
-    fmt.Println("第三季度")
-  case 4:
-    fmt.Println("第四季度")
-  default:
-    fmt.Println("数据异常")
-  }
+	num := 3
+	switch num {
+	case 1:
+		fmt.Println("第一季度")
+	case 2:
+		fmt.Println("第二季度")
+	case 3:
+		fmt.Println("第三季度")
+	case 4:
+		fmt.Println("第四季度")
+	default:
+		fmt.Println("数据异常")
+	}
 }
 
 ```
+
 #### 2、switch其他用法
 
 ```go
@@ -589,7 +597,7 @@ import "fmt"
 
 func main() {
 
-	switch language := "golang";language {
+	switch language := "golang"; language {
 	case "golang":
 		fmt.Println("Go语言")
 	case "python":
@@ -667,7 +675,7 @@ import "fmt"
 
 func main() {
 
-	for i:=0;i < 5;i++{
+	for i := 0; i < 5; i++ {
 		fmt.Println("Hello World!")
 	}
 }
@@ -683,12 +691,13 @@ import "fmt"
 func main() {
 
 	i := 0
-	for i<5 {
+	for i < 5 {
 		fmt.Println("Hello World")
 		i++
 	}
 }
 ```
+
 或
 
 ```go
@@ -752,18 +761,18 @@ package main
 import "fmt"
 
 func main() {
-  // 标记要终止的循环
+	// 标记要终止的循环
 
 out:
-  for i := 0; i < 10; i++ {
-    fmt.Println(i)
-    for j := 0; j < 10; j++ {
-      if j == 5 {
-        break out
-      }
-      fmt.Println(j)
-    }
-  }
+	for i := 0; i < 10; i++ {
+		fmt.Println(i)
+		for j := 0; j < 10; j++ {
+			if j == 5 {
+				break out
+			}
+			fmt.Println(j)
+		}
+	}
 }
 
 ```
@@ -789,6 +798,7 @@ LOOP:
 
 }
 ```
+
 ---
 
 ### 四、随机数生成
@@ -806,7 +816,7 @@ import (
 
 func main() {
 	//设置种子数
-	rand.Seed(time.Now().UnixNano()*7)
+	rand.Seed(time.Now().UnixNano() * 7)
 	num := rand.Intn(9999)
 	fmt.Println(num)
 }
@@ -847,21 +857,21 @@ package main
 import "fmt"
 
 func main() {
-  // 定义一个长度为4的int类型数组
-  var arr1 [4] int
-  arr1[0] = 1
-  arr1[1] = 2
-  arr1[2] = 3
-  arr1[3] = 4
-  fmt.Println(arr1)
-  fmt.Println(arr1[2])
+	// 定义一个长度为4的int类型数组
+	var arr1 [4]int
+	arr1[0] = 1
+	arr1[1] = 2
+	arr1[2] = 3
+	arr1[3] = 4
+	fmt.Println(arr1)
+	fmt.Println(arr1[2])
 }
 
 ```
 
 - **len/cap**
-  - len()：获取长度，实际的数据量
-  - cap()：获取容量，可存储的数据量
+    - len()：获取长度，实际的数据量
+    - cap()：获取容量，可存储的数据量
 
 ```go
 package main
@@ -870,12 +880,12 @@ import "fmt"
 
 func main() {
 	// 定义一个长度为4的int类型数组
-	var arr1 [4] int
+	var arr1 [4]int
 	arr1[0] = 1
 	arr1[1] = 2
 	arr1[2] = 3
-	fmt.Printf("长度为：%d\n",len(arr1))
-	fmt.Printf("容量为：%d\n",cap(arr1))
+	fmt.Printf("长度为：%d\n", len(arr1))
+	fmt.Printf("容量为：%d\n", cap(arr1))
 }
 ```
 
@@ -887,7 +897,7 @@ package main
 import "fmt"
 
 func main() {
-	var a = [4]int{1,2,4,5}
+	var a = [4]int{1, 2, 4, 5}
 	fmt.Println(a)
 }
 
@@ -901,7 +911,7 @@ package main
 import "fmt"
 
 func main() {
-	var a = [5]int{1:3,3:20}
+	var a = [5]int{1: 3, 3: 20}
 	fmt.Println(a)
 }
 ```
@@ -914,12 +924,13 @@ package main
 import "fmt"
 
 func main() {
-	var a = [...]int{3,20,99,222}
+	var a = [...]int{3, 20, 99, 222}
 	fmt.Println(a)
 	fmt.Println(cap(a))
 	fmt.Println(len(a))
 }
 ```
+
 ### 2、数组的遍历
 
 #### 方法1-下标
@@ -930,7 +941,7 @@ package main
 import "fmt"
 
 func main() {
-	arr1 := [...]int{2,44,5,54}
+	arr1 := [...]int{2, 44, 5, 54}
 	fmt.Println(arr1[2])
 }
 ```
@@ -943,7 +954,7 @@ package main
 import "fmt"
 
 func main() {
-	arr1 := [...]int{2,44,5,54}
+	arr1 := [...]int{2, 44, 5, 54}
 	for i := 0; i < len(arr1); i++ {
 		fmt.Println(arr1[i])
 	}
@@ -1004,6 +1015,7 @@ func main() {
 ```
 
 ---
+
 ## 复合类型-slice
 
 - slice是引用型数据类型，存储的array的内存地址
@@ -1020,8 +1032,8 @@ import "fmt"
 func main() {
 	var s1 []int
 	fmt.Println(s1)
-	
-	s2 := []int{1,2,3,5}
+
+	s2 := []int{1, 2, 3, 5}
 	fmt.Println(s2)
 }
 
@@ -1037,7 +1049,7 @@ package main
 import "fmt"
 
 func main() {
-	s1 := make([]int,3,10)
+	s1 := make([]int, 3, 10)
 	fmt.Println(s1)
 }
 
@@ -1053,8 +1065,8 @@ package main
 import "fmt"
 
 func main() {
-	s1 := make([]int,0,5)
-	s1 = append(s1,1,2)
+	s1 := make([]int, 0, 5)
+	s1 = append(s1, 1, 2)
 	fmt.Println(s1)
 }
 ```
@@ -1067,12 +1079,12 @@ package main
 import "fmt"
 
 func main() {
-  s1 := []int{1, 2, 34, 5, 435, 545}
+	s1 := []int{1, 2, 34, 5, 435, 545}
 
-  s := make([]int, 0, 0)
-  s = append(s, 100, 99)
-  s = append(s, s1...)
-  fmt.Println(s) //[100 99 1 2 34 5 435 545]
+	s := make([]int, 0, 0)
+	s = append(s, 100, 99)
+	s = append(s, s1...)
+	fmt.Println(s) //[100 99 1 2 34 5 435 545]
 
 }
 
@@ -1095,6 +1107,7 @@ func main() {
 }
 
 ```
+
 #### 2、for...range
 
 ```go
@@ -1111,6 +1124,7 @@ func main() {
 
 }
 ```
+
 ### 三、array创建slice
 
 ```go
@@ -1122,12 +1136,12 @@ func main() {
 	a := [...]int{2, 3, 5, 6, 8, 33, 44, 66, 77}
 	fmt.Println(a)
 	s1 := a[:3]
-	fmt.Printf("s1:%v,len:%d,cap:%d\n",s1,len(s1),cap(s1))
+	fmt.Printf("s1:%v,len:%d,cap:%d\n", s1, len(s1), cap(s1))
 	s2 := a[4:]
-	fmt.Printf("s1:%v,len:%d,cap:%d\n",s2,len(s2),cap(s2))
+	fmt.Printf("s1:%v,len:%d,cap:%d\n", s2, len(s2), cap(s2))
 	s3 := a[3:7]
-	fmt.Printf("s1:%v,len:%d,cap:%d\n",s3,len(s3),cap(s3))
-	
+	fmt.Printf("s1:%v,len:%d,cap:%d\n", s3, len(s3), cap(s3))
+
 }
 ```
 
@@ -1141,13 +1155,13 @@ package main
 import "fmt"
 
 func main() {
-	s1 := []int{2,3,4,5,6}
-	s2 := make([]int,0,10)
+	s1 := []int{2, 3, 4, 5, 6}
+	s2 := make([]int, 0, 10)
 	for _, i := range s1 {
-		s2 = append(s2,i)
+		s2 = append(s2, i)
 	}
-	fmt.Printf("%p\n",s1)
-	fmt.Printf("%p\n",s2)
+	fmt.Printf("%p\n", s1)
+	fmt.Printf("%p\n", s2)
 }
 
 ```
@@ -1160,9 +1174,9 @@ package main
 import "fmt"
 
 func main() {
-	s1 := []int{12,22,33,44,55}
-	s2 := make([]int,len(s1))
-	copy(s2,s1)
+	s1 := []int{12, 22, 33, 44, 55}
+	s2 := make([]int, len(s1))
+	copy(s2, s1)
 	fmt.Println(s2)
 }
 ```
@@ -1183,7 +1197,7 @@ package main
 import "fmt"
 
 func main() {
-	var m1 map[int]string // 只是声明，无法直接使用
+	var m1 map[int]string         // 只是声明，无法直接使用
 	var m2 = make(map[int]string) // 初始化
 	var m3 = map[string]int{"Golang": 98, "Python": 99, "Java": 100}
 	fmt.Println(m1)
@@ -1195,18 +1209,17 @@ func main() {
 
 #### 2、修改map
 
-
 ```go
 package main
 
 import "fmt"
 
 func main() {
-  m1 := make(map[string]int)
-  m1["China"] = 100
-  m1["Japan"] = 99
-  m1["USA"] = 98
-  fmt.Println(m1)
+	m1 := make(map[string]int)
+	m1["China"] = 100
+	m1["Japan"] = 99
+	m1["USA"] = 98
+	fmt.Println(m1)
 }
 
 ```
@@ -1276,7 +1289,7 @@ func main() {
 	}
 	fmt.Println(m1)
 
-	delete(m1,"India")
+	delete(m1, "India")
 	fmt.Println(m1)
 }
 
@@ -1324,7 +1337,7 @@ func main() {
 	sort.Strings(ss)
 
 	for _, i := range ss {
-		fmt.Println(i,s[i])
+		fmt.Println(i, s[i])
 	}
 
 }
@@ -1356,10 +1369,10 @@ func main() {
 	user3["sex"] = "女"
 	user3["address"] = "杭州市余杭区"
 
-	users := make([]map[string]string,0)
-	users = append(users,user1)
-	users = append(users,user2)
-	users = append(users,user3)
+	users := make([]map[string]string, 0)
+	users = append(users, user1)
+	users = append(users, user2)
+	users = append(users, user3)
 
 	for _, user := range users {
 		fmt.Println(user["name"])
@@ -1367,6 +1380,7 @@ func main() {
 }
 
 ```
+
 ---
 
 ## 字符串-String
@@ -1403,12 +1417,12 @@ package main
 import "fmt"
 
 func main() {
-  s1 := "Hello 中国!"
-  s2 := `Hello World!`
-  fmt.Println(s1)
-  fmt.Println(s2)
-  fmt.Println(len(s1))
-  fmt.Println(len(s2))
+	s1 := "Hello 中国!"
+	s2 := `Hello World!`
+	fmt.Println(s1)
+	fmt.Println(s2)
+	fmt.Println(len(s1))
+	fmt.Println(len(s2))
 }
 
 ```
@@ -1442,7 +1456,7 @@ func main() {
 	s1 := "Hello 中国!"
 	fmt.Println([]byte(s1))
 
-	s2 := []byte{72,101,108,108,111,32,228,184,173,229,155,189,33}
+	s2 := []byte{72, 101, 108, 108, 111, 32, 228, 184, 173, 229, 155, 189, 33}
 	fmt.Println(string(s2))
 }
 
@@ -1506,12 +1520,11 @@ import (
 func main() {
 	s1 := "Hello World!"
 
-	fmt.Println(strings.Count(s1,"l"))
+	fmt.Println(strings.Count(s1, "l"))
 
 }
 
 ```
-
 
 #### HasPrefix/HasSuffix
 
@@ -1539,15 +1552,15 @@ func main() {
 package main
 
 import (
-  "fmt"
-  "strings"
+	"fmt"
+	"strings"
 )
 
 func main() {
-  s1 := "Hello World!"
+	s1 := "Hello World!"
 
-  fmt.Println(strings.Index(s1,"o"))
-  fmt.Println(strings.LastIndex(s1,"o"))
+	fmt.Println(strings.Index(s1, "o"))
+	fmt.Println(strings.LastIndex(s1, "o"))
 }
 
 
@@ -1566,7 +1579,7 @@ import (
 func main() {
 	s1 := "Hello World!"
 
-	fmt.Println(strings.IndexAny(s1,"oa"))
+	fmt.Println(strings.IndexAny(s1, "oa"))
 }
 
 ```
@@ -1602,7 +1615,7 @@ import (
 
 func main() {
 	s1 := `123-456-789`
-	fmt.Println(strings.Split(s1,"-"))
+	fmt.Println(strings.Split(s1, "-"))
 }
 
 ```
@@ -1618,7 +1631,7 @@ import (
 )
 
 func main() {
-	s1 := strings.Repeat("Ah ",5)
+	s1 := strings.Repeat("Ah ", 5)
 	fmt.Println(s1)
 }
 
@@ -1636,7 +1649,7 @@ import (
 
 func main() {
 	s1 := "Hello World！"
-	fmt.Println(strings.Replace(s1,"o","*",-1))
+	fmt.Println(strings.Replace(s1, "o", "*", -1))
 }
 
 ```
@@ -1743,8 +1756,6 @@ func main() {
 
 ```
 
-
-
 ```go
 package main
 
@@ -1777,6 +1788,7 @@ func main() {
 ```
 
 ---
+
 ## 复合类型-function
 
 - go语言中至少含有一个main函数，程序启动时，系统自动执行的函数
@@ -1811,11 +1823,11 @@ package main
 import "fmt"
 
 // 用于统计数字累加和
-func getSum(start,end int) int {
+func getSum(start, end int) int {
 	/*
-	start: 起始数值的变量参数
-	end：结束数值的变量参数
-	return：返回计算结果
+		start: 起始数值的变量参数
+		end：结束数值的变量参数
+		return：返回计算结果
 	*/
 	sum := 0
 	for i := start; i <= end; i++ {
@@ -1824,7 +1836,7 @@ func getSum(start,end int) int {
 	return sum
 }
 func main() {
-	sum := getSum(1,97)
+	sum := getSum(1, 97)
 	fmt.Println(sum)
 }
 
@@ -1849,8 +1861,8 @@ func getSum(nums ...int) {
 }
 
 func main() {
-    // getSum([]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}...)
-	getSum(1,2,3,4,5,6,7,8,9,10)
+	// getSum([]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}...)
+	getSum(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 }
 
 ```
@@ -1879,7 +1891,6 @@ func main() {
 }
 
 ```
-
 
 #### 2、多值返回
 
@@ -1917,14 +1928,199 @@ func main() {
 
 ```
 
+### 四、作用域
+
+#### 1、局部作用域
+
+- 在函数内部定义的变量
+- 变量在哪里定义，就只能在哪个范围使用
+
+#### 2、全局作用域
+
+- 在函数外部定义的变量
+- 所有的函数都可以使用，数据共享
+
+### 五、递归函数
+
+- 一个函数自己调用自己
+
+```go
+package main
+
+import "fmt"
+
+func getSum(num int) int {
+	if num == 1 {
+		return 1
+	}
+	return getSum(num-1) + num
+
+}
+
+func main() {
+	sum := getSum(100)
+	fmt.Println(sum)
+}
+
+```
+
+### 六、defer
+
+- 让一个函数或方法的执行被延迟执行
+- 多个defer，按LIFO顺序执行
+- defer函数调用时，就已经传递参数了，只是暂时不执行函数中的代码
+
+```go
+package main
+
+import "fmt"
+
+func fun1(s string) {
+	fmt.Println(s)
+}
+func main() {
+	defer fun1("第一：王二狗")
+	defer fun1("第二：李小花")
+	fun1("李四")
+}
+
+```
+
+### 七、匿名函数
+
+#### 1、基本样式
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	func() {
+		fmt.Println("Hello World!")
+	}()
+}
+
+```
+
+#### 2、带参数
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	func(a, b int) {
+		fmt.Println(a + b)
+	}(1, 2)
+}
+
+```
+
+#### 3、带返回值
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	res := func(a, b int) int {
+		return a + b
+	}(1, 2)
+
+	fmt.Println(res)
+}
+```
+
+### 八、回调函数
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+
+	res1 := oper(10, 20, add)
+	fmt.Println(res1)
+
+	res2 := oper(30, 20, sub)
+	fmt.Println(res2)
+}
+
+// 闭包函数
+func add(a, b int) int {
+	return a + b
+}
+
+func sub(a, b int) int {
+	return a - b
+}
+
+// 高阶函数
+func oper(a, b int, fun func(int, int) int) int {
+	return fun(a, b)
+}
+
+```
+
+使用匿名函数作为参数
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+
+	res3 := oper(10, 20, func(a int, b int) int {
+		return a * b
+	})
+	fmt.Println(res3)
+}
+
+func oper(a, b int, fun func(int, int) int) int {
+	return fun(a, b)
+}
+
+```
+
+### 九、闭包
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	res1 := increment()
+	fmt.Println(res1())
+}
+
+func increment() func() int {
+	i := 1
+	return func() int {
+		i++
+		return i
+	}
+}
+
+```
+
 ---
+
 ## 复合类型-pointer
 
 ---
+
 ## 复合类型-struct
 
 ---
+
 ## 复合类型-interface
 
 ---
+
 ## 复合类型-channel
