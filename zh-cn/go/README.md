@@ -2185,9 +2185,85 @@ func main() {
 
 ```
 
+### 三、函数指针和指针函数
+
+#### 1、函数的指针
+
+- 指向了一个函数的指针
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+
+	var f func()
+	f = fun1
+	f()
+}
+
+func fun1() {
+	fmt.Println("func1...")
+}
+
+```
+
+#### 2、指针的函数
+
+- 一个函数它的返回值是一个指针
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+  f1 := fun1()
+  fmt.Println(f1)
+  fmt.Println(*f1)
+  fmt.Println(f1[0])
+}
+
+func fun1() *[4]int {
+  arr := [4]int{2, 3, 4, 5}
+  return &arr
+}
+
+```
+
+### 四、指针参数
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+
+	a := 10
+	fun1(&a)
+	fmt.Println(a)
+
+}
+
+func fun1(p *int) {
+	fmt.Println(*p)
+	*p = 200
+	fmt.Println("函数修改过的值：",*p)
+}
+
+```
+
 ---
 
 ## 复合类型-struct
+
+### 一、初识结构体
+
+```go
+
+```
 
 ---
 
