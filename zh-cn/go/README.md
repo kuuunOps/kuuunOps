@@ -2262,7 +2262,38 @@ func fun1(p *int) {
 ### 一、初识结构体
 
 ```go
+package main
 
+import "fmt"
+
+type Person struct {
+	name    string
+	age     int
+	sex     string
+	address string
+}
+
+func main() {
+	// 方法一
+	var p1 Person
+	p1.name = "李雷"
+	p1.age = 20
+	p1.sex = "男"
+	p1.address = "北京市昌平区"
+	fmt.Println(p1)
+
+	// 方法二
+	p2 := Person{}
+	p2.name = "韩梅梅"
+	p2.age = 18
+	p2.sex = "女"
+	p2.address = "北京市通州区"
+	fmt.Println(p2)
+
+	//方法三
+	p3 := Person{name: "Alice", age: 18, sex: "女", address: "北京市朝阳区"}
+	fmt.Println(p3)
+}
 ```
 
 ---
