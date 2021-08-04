@@ -2408,6 +2408,98 @@ func main() {
 
 ```
 
+### 五、面向对象
+
+#### 1、显示继承
+
+```go
+package main
+
+import "fmt"
+
+//定义父类
+type Person struct {
+	name string
+	age  int
+}
+
+//定义子类
+type Student struct {
+	//继承父类结构
+	Person
+	school string
+}
+
+func main() {
+	s1 := Student{
+		Person: Person{
+			name: "李雷",
+			age:  18,
+		},
+		school: "五道口职业技术学院",
+	}
+	fmt.Println(s1)
+}
+
+```
+
+#### 2、隐式继承
+
+```go
+package main
+
+import "fmt"
+
+//定义父类
+type Person struct {
+	name string
+	age  int
+}
+
+//定义子类
+type Student struct {
+	//继承父类结构
+	Person
+	school string
+}
+
+func main() {
+	var s1 Student
+	s1.name = "李雷"
+	s1.age = 18
+	s1.school = "五道口职业技术学院"
+	fmt.Println(s1)
+}
+
+```
+
+#### 3、方法
+
+```go
+package main
+
+import "fmt"
+
+type Worker struct {
+  name string
+  age  int
+  sex  string
+}
+
+func (w Worker) work() {
+  fmt.Println(w.name, "在工作...")
+}
+
+func (w *Worker) rest() {
+  fmt.Println(w.name, "工人在休息...")
+}
+func main() {
+  w1 := Worker{name: "李雷", age: 18, sex: "name"}
+  w1.work()
+  w1.rest()
+}
+
+```
 
 ---
 
