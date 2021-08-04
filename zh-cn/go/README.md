@@ -2259,6 +2259,8 @@ func fun1(p *int) {
 
 ## 复合类型-struct
 
+- 结构体属于值类型数据
+
 ### 一、初识结构体
 
 ```go
@@ -2295,6 +2297,117 @@ func main() {
 	fmt.Println(p3)
 }
 ```
+
+### 二、结构体指针
+
+- new，用于创建任意类型的指针
+
+```go
+package main
+
+import (
+	"fmt"
+)
+
+type Person struct {
+	name    string
+	age     int
+	sex     string
+	address string
+}
+
+func main() {
+
+	p1 := new(Person)
+	fmt.Printf("%T\n", p1)
+	p1.name = "李雷"
+	p1.age = 18
+	p1.sex = "男"
+	p1.address = "北京市通州区"
+	fmt.Println(p1)
+}
+
+```
+
+### 三、结构体匿名字段
+
+#### 1、匿名结构体
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	s1 := struct {
+		name string
+		age  int
+	}{"李雷", 18}
+	fmt.Println(s1.name, s1.age)
+}
+
+```
+
+#### 2、匿名字段
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	w1 := Worker{
+		string: "李雷",
+		int:    18,
+	}
+	fmt.Println(w1.string, w1.int)
+}
+
+type Worker struct {
+	string
+	int
+}
+
+```
+
+### 四、结构体嵌套
+
+```go
+package main
+
+import "fmt"
+
+type Book struct {
+	bookName string
+	price    float64
+}
+
+type Student struct {
+	name string
+	age  int
+	// 传递结构体指针
+	book *Book
+}
+
+func main() {
+	b1 := Book{
+		bookName: "西游记",
+		price:    28.7,
+	}
+
+	s1 := Student{
+		name: "李雷",
+		age:  18,
+		book: &b1,
+	}
+	fmt.Println(s1.name)
+	fmt.Println(s1.age)
+	fmt.Println(s1.book.bookName)
+	fmt.Println(s1.book.price)
+}
+
+```
+
 
 ---
 
