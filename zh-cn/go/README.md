@@ -2554,6 +2554,220 @@ func main() {
 
 ## 复合类型-interface
 
+- 接口是一组方法签名
+- 当某个类型为接口中的所有方法提供了方法的实现，它被称为实现接口
+- go语言中，接口和类型的实现关系，是非侵入式
+- 当需要接口类型的对象时，可以使用任意实现类对象代替
+- 接口对象不能访问实现类中的属性
+
+### 一、接口初识
+
+```go
+package main
+
+import "fmt"
+
+// 定义接口
+type USB interface {
+	start()
+	end()
+}
+
+type Mouse struct {
+	name string
+}
+
+type FlashDisk struct {
+	name string
+}
+
+//Mouse实现接口全部方法
+func (m Mouse) start() {
+	fmt.Println(m.name, "鼠标，开始工作")
+}
+
+func (m Mouse) end() {
+	fmt.Println(m.name, "鼠标，结束工作")
+}
+
+//FlashDisk实现接口全部方法
+func (d FlashDisk) start() {
+	fmt.Println(d.name, "U盘，开始工作")
+}
+
+func (d FlashDisk) end() {
+	fmt.Println(d.name, "U盘，结束工作")
+}
+
+//定义测试方法
+func testInterface(usb USB) {
+	usb.start()
+	usb.end()
+}
+
+func main() {
+	m1 := Mouse{name: "罗技G502"}
+	fmt.Println(m1.name)
+
+	f1 := FlashDisk{name: "金士顿128GB"}
+	fmt.Println(f1.name)
+
+	testInterface(m1)
+	testInterface(f1)
+
+	var usb USB
+	usb = m1
+	usb.start()
+	usb.end()
+}
+
+```
+
+### 二、接口的类型
+
+- 多态
+  - 一个事务的多种形态 
+  - 一个接口的实现，1、看成实现本身的类型，能够访问实现类中的属性和方法。2、看成是对应的接口类型，那就只能够访问接口中的方法
+
+- 接口的用法
+  - 一个函数如果接受接口类型作为参数，那么实际上可以传入该接口的任意实现类型对象作为参数
+  - 定义一个类型为接口类型，实际上可以复制为任意实现类的对象
+  
+
+### 三、空接口
+
+```go
+package main
+
+import "fmt"
+
+type A interface {
+}
+
+type Cat struct {
+	color string
+}
+
+type Person struct {
+	name string
+	age  int
+}
+
+// 接口A为空接口，代表任意类型
+func test1(a A) {
+	fmt.Println(a)
+}
+
+func test2(a interface{}) {
+	fmt.Println("---->", a)
+}
+
+func test3(s []interface{}) {
+	for i := 0; i < len(s); i++ {
+		fmt.Printf("第%d个数据是%v\n", i+1, s[i])
+	}
+}
+
+func main() {
+	var a1 A = Cat{color: "花猫"}
+	var a2 A = Person{name: "李雷", age: 18}
+	var a3 A = "Hello"
+	var a4 A = 100
+	fmt.Println(a1)
+	fmt.Println(a2)
+	fmt.Println(a3)
+	fmt.Println(a4)
+
+	test1(a1)
+	test1(a2)
+	test1(a3)
+	test1(a4)
+
+	test2(a1)
+	test2(a2)
+	test2(a3)
+	test2(a4)
+
+	m1 := make(map[string]interface{})
+	m1["name"] = "李小花"
+	m1["age"] = 18
+	m1["sex"] = "女"
+
+	s1 := make([]interface{}, 0, 10)
+	s1 = append(s1, a1, a2, a3, a4)
+	fmt.Println(s1)
+
+	test3(s1)
+
+}
+
+```
+
+### 四、接口嵌套
+
+```go
+package main
+
+import "fmt"
+
+type A interface {
+	test1()
+}
+
+type B interface {
+	test2()
+}
+
+type C interface {
+	A
+	B
+	test3()
+}
+
+// 如果想实现接口C，那不止要实现接口C的方法，还要实现接口A，B中的方法
+type Cat struct {
+}
+
+func (c Cat) test1() {
+	fmt.Println("test1...")
+}
+
+func (c Cat) test2() {
+	fmt.Println("test2...")
+}
+
+func (c Cat) test3() {
+	fmt.Println("test3...")
+}
+
+func main() {
+	var c Cat = Cat{}
+	c.test1()
+	c.test2()
+	c.test3()
+
+	var a A = c
+	a.test1()
+
+	var b B = c
+	b.test2()
+
+}
+
+```
+
+### 五、接口断言
+
+- 方式一
+  - instance := 接口对象.(实际类型) ，会panic()
+  - instance,ok := 接口对象.(实际类型)
+- 方式二
+  switch instance := 接口对象.(type){
+  case 实际类型1：
+  case 实际类型2：
+  }
+
+
 ---
 
 ## 复合类型-channel
