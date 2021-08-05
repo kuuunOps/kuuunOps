@@ -2501,6 +2501,55 @@ func main() {
 
 ```
 
+#### 4、方法继承
+
+```go
+package main
+
+import "fmt"
+
+//定义父类
+type Person struct {
+	name string
+	age  int
+}
+
+//定义子类
+type Student struct {
+	Person
+	school string
+}
+
+//定义父类方法
+func (p Person) eat() {
+	fmt.Println(p.name, "正在吃东西...")
+}
+
+//重写父类方法
+func (s Student) eat() {
+	fmt.Println(s.name, "正在吃面包...")
+}
+
+//新增子类方法
+func (s Student) study() {
+	fmt.Println(s.name, "正在学习")
+}
+
+func main() {
+	var s1 Student
+	s1.name = "李雷"
+	s1.age = 18
+	s1.school = "五道口职业技术学院"
+	fmt.Println(s1.name)
+	fmt.Println(s1.age)
+	fmt.Println(s1.school)
+	s1.eat()
+	s1.study()
+
+}
+
+```
+
 ---
 
 ## 复合类型-interface
