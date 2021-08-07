@@ -1,8 +1,3 @@
-# Go
-
-> Go是一种开源编程语言，可以轻松构建简单、可靠和高效的软件。
----
-
 ## Go的安装
 
 ### 1、下载安装
@@ -2145,7 +2140,6 @@ func main() {
 
 ### 二、数值的指针和指针的数值
 
-
 ```go
 package main
 
@@ -2219,15 +2213,15 @@ package main
 import "fmt"
 
 func main() {
-  f1 := fun1()
-  fmt.Println(f1)
-  fmt.Println(*f1)
-  fmt.Println(f1[0])
+	f1 := fun1()
+	fmt.Println(f1)
+	fmt.Println(*f1)
+	fmt.Println(f1[0])
 }
 
 func fun1() *[4]int {
-  arr := [4]int{2, 3, 4, 5}
-  return &arr
+	arr := [4]int{2, 3, 4, 5}
+	return &arr
 }
 
 ```
@@ -2250,7 +2244,7 @@ func main() {
 func fun1(p *int) {
 	fmt.Println(*p)
 	*p = 200
-	fmt.Println("函数修改过的值：",*p)
+	fmt.Println("函数修改过的值：", *p)
 }
 
 ```
@@ -2481,22 +2475,22 @@ package main
 import "fmt"
 
 type Worker struct {
-  name string
-  age  int
-  sex  string
+	name string
+	age  int
+	sex  string
 }
 
 func (w Worker) work() {
-  fmt.Println(w.name, "在工作...")
+	fmt.Println(w.name, "在工作...")
 }
 
 func (w *Worker) rest() {
-  fmt.Println(w.name, "工人在休息...")
+	fmt.Println(w.name, "工人在休息...")
 }
 func main() {
-  w1 := Worker{name: "李雷", age: 18, sex: "name"}
-  w1.work()
-  w1.rest()
+	w1 := Worker{name: "李雷", age: 18, sex: "name"}
+	w1.work()
+	w1.rest()
 }
 
 ```
@@ -2626,13 +2620,12 @@ func main() {
 ### 二、接口的类型
 
 - 多态
-  - 一个事务的多种形态 
-  - 一个接口的实现，1、看成实现本身的类型，能够访问实现类中的属性和方法。2、看成是对应的接口类型，那就只能够访问接口中的方法
+    - 一个事务的多种形态
+    - 一个接口的实现，1、看成实现本身的类型，能够访问实现类中的属性和方法。2、看成是对应的接口类型，那就只能够访问接口中的方法
 
 - 接口的用法
-  - 一个函数如果接受接口类型作为参数，那么实际上可以传入该接口的任意实现类型对象作为参数
-  - 定义一个类型为接口类型，实际上可以复制为任意实现类的对象
-  
+    - 一个函数如果接受接口类型作为参数，那么实际上可以传入该接口的任意实现类型对象作为参数
+    - 定义一个类型为接口类型，实际上可以复制为任意实现类的对象
 
 ### 三、空接口
 
@@ -2759,15 +2752,553 @@ func main() {
 ### 五、接口断言
 
 - 方式一
-  - instance := 接口对象.(实际类型) ，会panic()
-  - instance,ok := 接口对象.(实际类型)
-- 方式二
-  switch instance := 接口对象.(type){
-  case 实际类型1：
-  case 实际类型2：
-  }
+    - instance := 接口对象.(实际类型) ，会panic()
+    - instance,ok := 接口对象.(实际类型)
+- 方式二 switch instance := 接口对象.(type){ case 实际类型1： case 实际类型2： }
 
+```go
+package main
+
+import (
+	"fmt"
+	"math"
+)
+
+type Shape interface {
+	perimeter() float64
+	area() float64
+}
+
+type Trilateral struct {
+	a, b, c float64
+}
+
+func (t Trilateral) perimeter() float64 {
+	return t.a + t.b + t.c
+}
+
+func (t Trilateral) area() float64 {
+	p := t.perimeter() / 2
+	S := math.Sqrt(p * (p - t.a) * (p - t.b) * (p - t.c))
+	return S
+}
+
+type Circle struct {
+	radius float64
+}
+
+func (c Circle) perimeter() float64 {
+	return 2 * math.Pi * c.radius
+}
+
+func (c Circle) area() float64 {
+	return math.Pi * math.Pow(c.radius, 2)
+}
+
+func main() {
+
+	// 定义三角形对象t1
+	var t1 Trilateral
+	t1.a = 3
+	t1.b = 4
+	t1.c = 5
+	fmt.Println(t1.area())
+	fmt.Println(t1.perimeter())
+
+	//定义圆形对象c1
+	var c1 Circle
+	c1.radius = 3
+	fmt.Println(c1.perimeter())
+	fmt.Println(c1.area())
+
+	//定义接口对象s1
+	var s1 Shape
+	s1 = t1
+	fmt.Println(s1.perimeter())
+	fmt.Println(s1.area())
+
+	//定义接口对象s2
+	var s2 Shape
+	s2 = c1
+	fmt.Println(s2.perimeter())
+	fmt.Println(s2.area())
+
+	testShape(t1)
+	testShape(c1)
+	testShape(s1)
+
+	getType(t1)
+	getType(c1)
+	getType(s1)
+
+	var t2 *Trilateral = &Trilateral{3, 4, 2}
+	fmt.Printf("ins:%T,%p,%p\n", t2, &t2, t2)
+	getType(t2)
+
+	getType2(t1)
+	getType2(c1)
+	getType2(t2)
+}
+
+// 使用if语句进行接口类型判断，进行接口断言
+func getType(s Shape) {
+	if instance, ok := s.(Trilateral); ok {
+		fmt.Println("是三角形，三边是：", instance.a, instance.b, instance.c)
+	} else if instance, ok := s.(Circle); ok {
+		fmt.Println("是圆形，半径是：", instance.radius)
+	} else if instance, ok := s.(*Trilateral); ok {
+		fmt.Printf("ins:%T,%p,%p\n", instance, &instance, instance)
+		fmt.Printf("ins:%T,%p,%p\n", s, &s, s)
+	} else {
+		fmt.Println("我也不知道")
+	}
+}
+
+// 使用switch语句进行接口类型判断，进行接口断言
+func getType2(s Shape) {
+	switch instance := s.(type) {
+	case Trilateral:
+		fmt.Println("是三角形，三边是：", instance.a, instance.b, instance.c)
+	case Circle:
+		fmt.Println("是圆形，半径是：", instance.radius)
+	case *Trilateral:
+		fmt.Println("是三角形，三边是：", instance.a, instance.b, instance.c)
+	}
+}
+
+//定义测试函数，参数为接口对象
+func testShape(s Shape) {
+	fmt.Printf("周长:%.2f,面积：%.2f\n", s.perimeter(), s.area())
+}
+
+```
+
+### 六、type
+
+#### 1、定义新类型
+
+```go
+package main
+
+import "fmt"
+
+type myInt int
+type myString string
+
+func main() {
+	var i1 myInt
+	i1 = 200
+
+	var name myString
+	name = "李雷"
+
+	fmt.Printf("%T\n", i1)
+	fmt.Printf("%T\n", name)
+}
+
+```
+
+#### 2、定义函数类型
+
+```go
+package main
+
+import (
+	"fmt"
+	"strconv"
+)
+
+type myFunc func(int, int) string
+
+func foo() myFunc {
+	f := func(a, b int) string {
+		s := strconv.Itoa(a) + strconv.Itoa(b)
+		return s
+	}
+	return f
+}
+
+func main() {
+	r := foo()
+	fmt.Println(r(10, 2))
+}
+
+```
+
+#### 3、别名
+
+```go
+package main
+
+import "fmt"
+
+type myInt = int
+
+func main() {
+	var i1 myInt
+	i1 = 100
+	fmt.Printf("%T\n", i1)
+}
+
+```
+
+非本地类型不能定义的方法
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+//非本地类型不能定义的方法
+type myDuration time.Duration
+
+func (d myDuration) ShowTime() {
+	fmt.Println(time.Now())
+}
+
+func main() {
+	var t1 myDuration
+	t1.ShowTime()
+}
+
+```
+
+#### 4、嵌套时别名
+
+- 嵌套结构体时，需要显示指定赋值那个结构体的属性值/方法
+
+```go
+package main
+
+import "fmt"
+
+type Person struct {
+	name string
+}
+
+func (p Person) show() {
+	fmt.Println("From Person Struct--->", p, p.name)
+}
+
+// 定义一个别名
+type People = Person
+
+func (p People) show2() {
+	fmt.Println("From People Struct--->", p.name)
+}
+
+type Student struct {
+	Person
+	People
+}
+
+func main() {
+	var p Student
+	p.Person.name = "李雷"
+	p.Person.show()
+	p.People.name = "韩梅梅"
+	p.People.show2()
+}
+
+```
 
 ---
 
-## 复合类型-channel
+## 错误与异常
+
+### 一、error的使用
+
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+	"os"
+)
+
+func main() {
+	f, err := os.Open("test.txt")
+	if err != nil {
+		fmt.Println(err)
+		log.Fatal(err)
+		return
+	}
+	fmt.Println(f.Name(), "打开文件成功！")
+}
+
+```
+
+### 二、创建error对象
+
+- error是一个接口数据类型
+- errors中的New方法，可以创建error对象
+
+```go
+package main
+
+import (
+	"errors"
+	"fmt"
+)
+
+func main() {
+	err1 := errors.New("自定义的错误")
+	fmt.Println(err1)
+
+	err2 := fmt.Errorf("错误信息码：%d", 100)
+	fmt.Println(err2)
+
+	err3 := checkAge(-30)
+	if err3 != nil {
+		fmt.Println(err3)
+		return
+	}
+
+}
+
+//测试函数
+func checkAge(age int) error {
+	if age < 0 {
+		//return errors.New("年龄不合法")
+		return fmt.Errorf("给定的年龄数值%d,不合法", age)
+	}
+
+	fmt.Println("年龄是：", age)
+	return nil
+}
+
+```
+### 三、错误的获取/表示
+
+- 通过接口断言，转为实现类，调用实现类的属性
+
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+)
+
+func main() {
+	f, err := os.Open("test1.txt")
+	if err != nil {
+		fmt.Println(err)
+		//log.Fatal(err)
+		if ins,ok := err.(*os.PathError);ok {
+			fmt.Println(ins.Op)
+			fmt.Println(ins.Path)
+			fmt.Println(ins.Err)
+		}
+		return
+	}
+	fmt.Println(f.Name(), "打开文件成功！")
+}
+
+```
+
+- 通过接口断言，转为实现类，调用实现类的方法
+
+```go
+package main
+
+import (
+	"fmt"
+	"net"
+)
+
+func main() {
+	add, err := net.LookupHost("www.google.com")
+	if err != nil {
+		fmt.Println(err)
+		if ins, ok := err.(*net.DNSError); ok {
+			if ins.IsTimeout {
+				fmt.Println("访问超时")
+			} else if ins.IsNotFound {
+				fmt.Println("没有找到资源")
+			}
+		}
+		return
+	}
+	fmt.Println(add)
+}
+
+```
+
+- 直接比较错误类型
+
+```go
+package main
+
+import (
+	"fmt"
+	"path/filepath"
+)
+
+func main() {
+	fs, err := filepath.Glob("[")
+	if err != nil && err == filepath.ErrBadPattern {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(fs)
+}
+
+```
+
+### 四、自定义错误
+
+
+```go
+package main
+
+import (
+	"fmt"
+	"math"
+)
+
+func main() {
+	r := -3.0
+	c1, err := circleArea(r)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(c1)
+}
+
+// 自定义错误
+type areaError struct {
+	msg    string
+	radius float64
+}
+
+// 实现Error方法
+func (e *areaError) Error() string {
+	return fmt.Sprintf("error:半径，%2f,%s", e.radius, e.msg)
+}
+
+func circleArea(radius float64) (float64, error) {
+	if radius < 0 {
+		return 0, &areaError{radius: radius, msg: "半径是非法的"}
+	}
+	return math.Pi * radius * radius, nil
+}
+
+```
+
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	length, width := -100.12, 9.1
+	s, err := rectArea(length, width)
+	if err != nil {
+		fmt.Println(err)
+		if ins, ok := err.(*areaError); ok {
+			if ins.lengthNegative() {
+				fmt.Printf("error: %.2f\n", ins.length)
+			}
+			if ins.widthNegative() {
+				fmt.Printf("error: %.2f\n", ins.width)
+			}
+		}
+		return
+	}
+	fmt.Println(s)
+
+}
+
+type areaError struct {
+	msg           string
+	length, width float64
+}
+
+func (e *areaError) Error() string {
+	return e.msg
+}
+
+func (e *areaError) lengthNegative() bool {
+	return e.length < 0
+}
+
+func (e *areaError) widthNegative() bool {
+	return e.width < 0
+}
+
+// 定义计算矩形面积的函数
+func rectArea(length, width float64) (float64, error) {
+	msg := ""
+	if length < 0 {
+		msg = "长度小于零"
+	}
+	if width < 0 {
+		if msg == "" {
+			msg = "宽度小于零"
+		} else {
+			msg += ",宽度小于零"
+		}
+	}
+
+	if msg != "" {
+		return 0, &areaError{msg, length, width}
+	}
+	return width * length, nil
+}
+
+```
+
+### 五、异常
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	defer func() {
+		if msg := recover(); msg != nil{
+			fmt.Println(msg,"程序继续")
+		}
+	}()
+	funA()
+	defer myPrint("defer main A")
+	funB()
+	defer myPrint("defer main B")
+
+	fmt.Println("main over")
+}
+
+func myPrint(s string)  {
+	fmt.Println(s)
+}
+func funA()  {
+	fmt.Println("函数A")
+}
+
+func funB()  {
+	defer func() {
+		if msg := recover(); msg != nil{
+			fmt.Println(msg,"程序继续")
+		}
+	}()
+	fmt.Println("函数B")
+	defer myPrint("defer 函数B Start")
+	for i := 0; i < 10; i++ {
+		fmt.Println("i:",i)
+		if i == 5 {
+			panic("...")
+		}
+	}
+	defer myPrint("defer 函数B End")
+}
+
+```
+

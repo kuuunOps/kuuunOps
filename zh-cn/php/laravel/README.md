@@ -1,5 +1,3 @@
-# Laravel
-
 ## 一、安装composer
 > 安装参考地址：https://developer.aliyun.com/composer
 
