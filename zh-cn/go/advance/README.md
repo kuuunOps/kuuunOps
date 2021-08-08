@@ -565,7 +565,418 @@ func CopyFileIOutil(srcFile, destFile string) (int, error) {
 
 ```
 
+#### 断点续传
+
+- io.SeekStart：0
+- io.SeekCurrent：1
+- io.SeekEnd：2
+
+```go
+package main
+
+import (
+	"fmt"
+	"io"
+	"log"
+	"os"
+	"strconv"
+	"strings"
+)
+
+func main() {
+	srcFile := "E:\\Downloads\\谍影重重5.HD1280超清韩版英语中英双字.mp4"
+	fs := strings.Split(srcFile, "\\")
+	fileName := fs[len(fs)-1]
+	fmt.Println(fileName)
+
+	CopyFileAdvance(srcFile, fileName)
+
+}
+
+func CopyFileAdvance(srcFile, destFile string) {
+
+	// 源文件
+	file1, err := os.Open(srcFile)
+	HandleErr(err)
+
+	//目标文件
+	file2, err := os.OpenFile(destFile, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.ModePerm)
+	HandleErr(err)
+
+	// 临时文件
+	tmpFile := destFile + ".tmp"
+	fileTmp, err := os.OpenFile(tmpFile, os.O_CREATE|os.O_RDWR, os.ModePerm)
+	HandleErr(err)
+
+	defer file1.Close()
+	defer file2.Close()
+
+	buf := make([]byte, 8*1024)
+
+	// 获取文件寻址位置
+	fileTmp.Seek(0, io.SeekStart)
+	tmpN, _ := fileTmp.Read(buf)
+	count, _ := strconv.ParseInt(string(buf[:tmpN]), 10, 64)
+	fmt.Println(count)
+
+	// 设定文件寻址读取位置
+	file1.Seek(count, io.SeekStart)
+	file2.Seek(count, io.SeekStart)
+
+	dataBuf := make([]byte, 8*1024)
+	readN := -1
+	writeN := -1
+	total := count
+
+	// 开始复制文件
+	for {
+		readN, err = file1.Read(dataBuf)
+		if err == io.EOF || readN == 0 {
+			fmt.Println("复制完毕")
+			fileTmp.Close()
+			os.Remove(tmpFile)
+			break
+		}
+		writeN, err = file2.Write(dataBuf[:readN])
+		total += int64(writeN)
+		fmt.Printf("文件已经复制:%dMB\n", total/1024/1024)
+		fileTmp.Seek(0, io.SeekStart)
+		fileTmp.WriteString(strconv.Itoa(int(total)))
+	}
+}
+
+func HandleErr(err error) {
+	if err != nil {
+		fmt.Println(err)
+		log.Fatal(err)
+	}
+}
+
+```
+
+### bufio包
+
+#### NewReader
+
+```go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"log"
+	"os"
+)
+
+func main() {
+	fileName := "hello.txt"
+
+	file, err := os.Open(fileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	f := bufio.NewReader(file)
+
+	bf := make([]byte, 128)
+	n, err := f.Read(bf)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(n)
+	fmt.Println(string(bf[:n]))
+}
+
+```
+
+#### Readline
+
+```go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"log"
+	"os"
+)
+
+func main() {
+	fileName := "hello.txt"
+
+	file, err := os.Open(fileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	f := bufio.NewReader(file)
+
+	dataBytes,flag,err :=f.ReadLine()
+	fmt.Println(dataBytes)
+	fmt.Println(string(dataBytes))
+	fmt.Println(flag)
+	fmt.Println(err)
+}
+```
+
+#### ReadString
+
+```go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"io"
+	"log"
+	"os"
+)
+
+func main() {
+	fileName := "hello.txt"
+
+	file, err := os.Open(fileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	f := bufio.NewReader(file)
+
+	for {
+		dataString,err := f.ReadString('\n')
+		if err == io.EOF{
+			fmt.Println("打印完毕")
+			break
+		}
+		fmt.Println(dataString)
+	}
+}
+
+```
+
+#### ReadBytes
+
+```go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"io"
+	"log"
+	"os"
+)
+
+func main() {
+	fileName := "hello.txt"
+
+	file, err := os.Open(fileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	f := bufio.NewReader(file)
+
+	for {
+		dataByte, err := f.ReadBytes('\n')
+		if err == io.EOF {
+			fmt.Println("打印完毕")
+			break
+		}
+		fmt.Println(string(dataByte))
+
+	}
+}
+
+```
+
+#### scanner
+
+```go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+)
+
+func main() {
+	b := bufio.NewReader(os.Stdin)
+	s,_ :=b.ReadString('\n')
+	fmt.Println(s)
+}
+
+```
+
+#### writer
+
+```go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"log"
+	"os"
+)
+
+func main() {
+	fileName := "cccc.txt"
+
+	file, err := os.OpenFile(fileName,os.O_CREATE|os.O_RDWR,os.ModePerm)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	f := bufio.NewWriter(file)
+	n,err := f.WriteString("ABC")
+	if err != nil {
+		fmt.Println(err)
+	}
+	f.Flush()
+	fmt.Println(n)
+}
+
+```
+
 ---
+
+### ioutil包
+
+- 1.6x以后的版本，将由io和os包提供相关的功能进行替代
+
+```go
+package main
+
+import (
+	"fmt"
+	"io/ioutil"
+)
+
+func main() {
+	fileName := "hello.txt"
+
+	dataByte,err := ioutil.ReadFile(fileName)
+	fmt.Println(err)
+	fmt.Println(string(dataByte))
+}
+
+```
+
+```go
+package main
+
+import (
+	"fmt"
+	"io/ioutil"
+	"os"
+)
+
+func main() {
+	fileName := "abc.txt"
+	dataString := "Hello World"
+	err :=ioutil.WriteFile(fileName,[]byte(dataString),os.ModePerm)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+```
+
+```go
+package main
+
+import (
+	"fmt"
+	"io/ioutil"
+	"strings"
+)
+
+func main() {
+	dataString := "Hello World"
+	dataByte, err := ioutil.ReadAll(strings.NewReader(dataString))
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(string(dataByte))
+
+}
+
+```
+
+```go
+package main
+
+import (
+	"fmt"
+	"io/ioutil"
+	"os"
+)
+
+func main() {
+	tmpDir, err := ioutil.TempDir(".", "test")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(tmpDir)
+	defer os.RemoveAll(tmpDir)
+	tmpFile, err := ioutil.TempFile(tmpDir, "Test*.txt")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer os.RemoveAll(tmpFile.Name())
+	fmt.Println(tmpFile.Name())
+
+}
+
+```
+
+---
+
+## 并发性
+
+- 多任务
+- 并发性（Concurrency）：是指在一个系统中，拥有多个计算，这些计算有同时执行的特性，而且他们之间有着潜在的交互。
+- 并行性（Parallelizability）：并行性是指计算机系统具有可以同时进行运算或操作的特性，在同一时间完成两种或两种以上工作。
+- 进程
+- 线程
+- 协程
+
+---
+
+## Goroutine
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+
+	//	启动Goroutine
+	go printNum()
+
+	for i := 0; i <= 100; i++ {
+		fmt.Printf("\t主Goroutine中打印数据：A,%d\n", i)
+	}
+	time.Sleep(time.Second)
+	fmt.Println("Main Over")
+}
+
+func printNum() {
+	for i := 0; i <= 100; i++ {
+		fmt.Printf("子Goroutine中打印数据：%d\n", i)
+	}
+}
+
+```
 
 
 
