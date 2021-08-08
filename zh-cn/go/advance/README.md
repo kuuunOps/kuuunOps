@@ -448,7 +448,7 @@ func main() {
 	}
 }
 
-func CopyFileCustom(srcFile, destFile string) (float64, error) {
+func CopyFileCustom(srcFile, destFile string) (int64, error) {
 	file1, err := os.Open(srcFile)
 	if err != nil {
 		return 0, err
@@ -461,7 +461,7 @@ func CopyFileCustom(srcFile, destFile string) (float64, error) {
 	defer file2.Close()
 	buf := make([]byte, 8*1024)
 	n := -1
-	var total float64 = 0
+	var total int64 = 0
 	for true {
 		n, err = file1.Read(buf)
 		if n == 0 || err == io.EOF {
@@ -471,8 +471,8 @@ func CopyFileCustom(srcFile, destFile string) (float64, error) {
 			fmt.Printf("%s复制错误\n", srcFile)
 			return 0, err
 		}
-		total += float64(n)
-		fmt.Printf("已复制：%.2fGB\n", total/1024/1024/1024)
+		total += int64(n)
+		fmt.Printf("已复制：%dMB\n", total/1024/1024)
 		_, err = file2.Write(buf[:n])
 		if err != nil {
 			return 0, err
@@ -483,6 +483,88 @@ func CopyFileCustom(srcFile, destFile string) (float64, error) {
 }
 
 ```
+
+- io.Copy
+
+```go
+package main
+
+import (
+	"fmt"
+	"io"
+	"os"
+	"strings"
+)
+
+func main() {
+	srcFile := "E:\\Downloads\\谍影重重5.HD1280超清韩版英语中英双字.mp4"
+	fs := strings.Split(srcFile, "\\")
+	fileName := fs[len(fs)-1]
+
+	total,err := CopyFileIO(srcFile,fileName)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(total)
+}
+
+func CopyFileIO(srcFile, destFile string) (int64, error) {
+	file1, err := os.Open(srcFile)
+	if err != nil {
+		return 0, err
+	}
+	file2, err := os.OpenFile(destFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
+	if err != nil {
+		return 0, err
+	}
+	defer file1.Close()
+	defer file2.Close()
+
+	return io.Copy(file2, file1)
+}
+
+```
+
+- ioutil
+
+```go
+package main
+
+import (
+	"fmt"
+	"io/ioutil"
+	"os"
+	"strings"
+)
+
+func main() {
+	srcFile := "E:\\Downloads\\谍影重重5.HD1280超清韩版英语中英双字.mp4"
+	fs := strings.Split(srcFile, "\\")
+	fileName := fs[len(fs)-1]
+
+	total, err := CopyFileIOutil(srcFile, fileName)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(total)
+}
+
+func CopyFileIOutil(srcFile, destFile string) (int, error) {
+	bs, err := ioutil.ReadFile(srcFile)
+	if err != nil {
+		return 0, err
+	}
+	err = ioutil.WriteFile(destFile, bs, os.ModePerm)
+	if err != nil {
+		return 0, err
+	}
+	return len(bs), err
+}
+
+```
+
 ---
 
 
