@@ -80,30 +80,9 @@ go run helloworld.go
 
 ### 一、变量
 
-#### 1、变量的定义
+#### 1、变量的声明
 
-**方式一**
-
-```go
-package main
-
-import "fmt"
-
-func main() {
-	/*
-	   var name string = "LiLei"
-	   var age int = 18
-	*/
-	var name string
-	name = "LiLei"
-	var age int
-	age = 18
-
-	fmt.Println(name, age)
-}
-```
-
-**方式二**
+- 标准声明
 
 ```go
 package main
@@ -111,14 +90,60 @@ package main
 import "fmt"
 
 func main() {
-	var name = "LiLei"
-	var age = 18
+    var name string
+    var age int
+    
+    fmt.Println(name, age)
+}
+```
+
+- 批量声明
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    var (
+       name string
+       age int
+    )
+    fmt.Println(name, age)
+}
+```
+
+- 声明并初始化
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	var name string = "LiLei"
+	var age int = 18
 
 	fmt.Println(name, age)
 }
 ```
 
-**方式三**
+- 类型推到声明
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	var name  = "LiLei"
+	var age  = 18
+
+	fmt.Println(name, age)
+}
+```
+
+- 简式声明并初始化
 
 ```go
 package main
@@ -164,7 +189,27 @@ func main() {
 }
 ```
 
-#### 3、变量的注意事项
+#### 3、匿名变量
+
+- 使用短“_”接收变量
+
+```go
+package main
+
+import "fmt"
+
+func foo() (string,int) {
+  return "Hello",int
+}
+
+func main() {
+	name, _ := foo()
+
+	fmt.Println(name)
+}
+```
+
+#### 4、变量的注意事项
 
 - 变量必须先定义才能使用
 - 变量类型和赋值必须一致
