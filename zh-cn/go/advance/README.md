@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-func PrintTime()  {
+func PrintTime() {
 	fmt.Println(time.Now())
 }
 ```
@@ -25,18 +25,18 @@ func PrintTime()  {
 package main
 
 import (
-  "fmt"
-  "uncordon.com/person"
-  "uncordon.com/utils"
-  // 对包使用别名
-  tools "uncordon.com/utils/timeutils"
+	"fmt"
+	"uncordon.com/person"
+	"uncordon.com/utils"
+	// 对包使用别名
+	tools "uncordon.com/utils/timeutils"
 )
 
 func main() {
-  utils.Count()
-  tools.PrintTime()
-  p1 := person.Person{Name: "李雷", Age: 18, Sex: "男"}
-  fmt.Println(p1)
+	utils.Count()
+	tools.PrintTime()
+	p1 := person.Person{Name: "李雷", Age: 18, Sex: "男"}
+	fmt.Println(p1)
 }
 
 ```
@@ -48,7 +48,6 @@ func main() {
 - init()可以定义多个
 - init()先执行，再执行main函数
 - 使用“_”引入包，隐式执行init()
-
 
 ---
 
@@ -142,17 +141,17 @@ import (
 )
 
 func main() {
-	fileInfo,err := os.Stat("D:\\code\\go\\test.txt")
+	fileInfo, err := os.Stat("D:\\code\\go\\test.txt")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	fmt.Println(fileInfo)
-	fmt.Println("文件名",fileInfo.Name())
-	fmt.Println("文件大小",fileInfo.Size())
-	fmt.Println("是否为目录",fileInfo.IsDir())
-	fmt.Println("修改时间",fileInfo.ModTime())
-	fmt.Println("权限",fileInfo.Mode())
+	fmt.Println("文件名", fileInfo.Name())
+	fmt.Println("文件大小", fileInfo.Size())
+	fmt.Println("是否为目录", fileInfo.IsDir())
+	fmt.Println("修改时间", fileInfo.ModTime())
+	fmt.Println("权限", fileInfo.Mode())
 }
 
 ```
@@ -228,7 +227,7 @@ func main() {
 		return
 	}
 	fmt.Println(f)
-	
+
 	f3, err := os.Create("abc.txt")
 	if err != nil {
 		fmt.Println(err)
@@ -250,7 +249,7 @@ import (
 	"os"
 )
 
-func main()  {
+func main() {
 	//	打开文件
 	f3, err := os.Open("abc.txt")
 	if err != nil {
@@ -258,7 +257,7 @@ func main()  {
 		return
 	}
 	fmt.Println(f3)
-	f4, err := os.OpenFile("abc.txt",os.O_RDWR|os.O_WRONLY,os.ModePerm)
+	f4, err := os.OpenFile("abc.txt", os.O_RDWR|os.O_WRONLY, os.ModePerm)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -277,7 +276,7 @@ import (
 	"os"
 )
 
-func main()  {
+func main() {
 	f3, err := os.OpenFile("abc.txt", os.O_RDWR|os.O_WRONLY, os.ModePerm)
 	if err != nil {
 		fmt.Println(err)
@@ -301,7 +300,7 @@ import (
 	"os"
 )
 
-func main()  {
+func main() {
 	err := os.Remove("D:\\code\\go\\src\\uncordon.com\\a\\ab.txt")
 	if err != nil {
 		fmt.Println(err)
@@ -350,35 +349,36 @@ func main() {
 
 	n := -1
 	for true {
-		n,err = file.Read(bs)
-		if n ==0 || err == io.EOF{
+		n, err = file.Read(bs)
+		if n == 0 || err == io.EOF {
 			break
 		}
 		fmt.Println(string(bs[:n]))
 	}
-/*	n, err := file.Read(bs)
-	fmt.Println(err)
-	fmt.Println(n)
-	fmt.Println(bs)
-	fmt.Println(string(bs))
-	n, err = file.Read(bs)
-	fmt.Println(err)
-	fmt.Println(n)
-	fmt.Println(bs)
-	fmt.Println(string(bs))
-	n, err = file.Read(bs)
-	fmt.Println(err)
-	fmt.Println(n)
-	fmt.Println(bs)
-	fmt.Println(string(bs))
-	n, err = file.Read(bs)
-	fmt.Println(err)
-	fmt.Println(n)
-	fmt.Println(bs)
-	fmt.Println(string(bs))*/
+	/*	n, err := file.Read(bs)
+		fmt.Println(err)
+		fmt.Println(n)
+		fmt.Println(bs)
+		fmt.Println(string(bs))
+		n, err = file.Read(bs)
+		fmt.Println(err)
+		fmt.Println(n)
+		fmt.Println(bs)
+		fmt.Println(string(bs))
+		n, err = file.Read(bs)
+		fmt.Println(err)
+		fmt.Println(n)
+		fmt.Println(bs)
+		fmt.Println(string(bs))
+		n, err = file.Read(bs)
+		fmt.Println(err)
+		fmt.Println(n)
+		fmt.Println(bs)
+		fmt.Println(string(bs))*/
 }
 
 ```
+
 #### io-写
 
 ```go
@@ -392,23 +392,23 @@ import (
 func main() {
 	fileName := "D:\\code\\go\\src\\uncordon.com\\hello.txt"
 
-	file, err := os.OpenFile(fileName,os.O_CREATE|os.O_WRONLY|os.O_APPEND,0666)
+	file, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	HandleErr(err)
 	defer file.Close()
 
 	//bs := []byte{65, 66, 67, 68, 69, 70}
-	bs := []byte{97,98,99,100}
+	bs := []byte{97, 98, 99, 100}
 	//n,err := file.Write(bs)
-	n,err := file.Write(bs[:2])
+	n, err := file.Write(bs[:2])
 	HandleErr(err)
 	fmt.Println(n)
 	file.WriteString("\n")
 
-	n,err = file.WriteString("HelloWorld")
+	n, err = file.WriteString("HelloWorld")
 	HandleErr(err)
 	fmt.Println(n)
 	file.WriteString("\n")
-	n,err = file.Write([]byte("today"))
+	n, err = file.Write([]byte("today"))
 	HandleErr(err)
 	fmt.Println(n)
 	file.WriteString("\n")
@@ -501,7 +501,7 @@ func main() {
 	fs := strings.Split(srcFile, "\\")
 	fileName := fs[len(fs)-1]
 
-	total,err := CopyFileIO(srcFile,fileName)
+	total, err := CopyFileIO(srcFile, fileName)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -711,7 +711,7 @@ func main() {
 	defer file.Close()
 	f := bufio.NewReader(file)
 
-	dataBytes,flag,err :=f.ReadLine()
+	dataBytes, flag, err := f.ReadLine()
 	fmt.Println(dataBytes)
 	fmt.Println(string(dataBytes))
 	fmt.Println(flag)
@@ -743,8 +743,8 @@ func main() {
 	f := bufio.NewReader(file)
 
 	for {
-		dataString,err := f.ReadString('\n')
-		if err == io.EOF{
+		dataString, err := f.ReadString('\n')
+		if err == io.EOF {
 			fmt.Println("打印完毕")
 			break
 		}
@@ -803,7 +803,7 @@ import (
 
 func main() {
 	b := bufio.NewReader(os.Stdin)
-	s,_ :=b.ReadString('\n')
+	s, _ := b.ReadString('\n')
 	fmt.Println(s)
 }
 
@@ -824,14 +824,14 @@ import (
 func main() {
 	fileName := "cccc.txt"
 
-	file, err := os.OpenFile(fileName,os.O_CREATE|os.O_RDWR,os.ModePerm)
+	file, err := os.OpenFile(fileName, os.O_CREATE|os.O_RDWR, os.ModePerm)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer file.Close()
 
 	f := bufio.NewWriter(file)
-	n,err := f.WriteString("ABC")
+	n, err := f.WriteString("ABC")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -858,7 +858,7 @@ import (
 func main() {
 	fileName := "hello.txt"
 
-	dataByte,err := ioutil.ReadFile(fileName)
+	dataByte, err := ioutil.ReadFile(fileName)
 	fmt.Println(err)
 	fmt.Println(string(dataByte))
 }
@@ -877,7 +877,7 @@ import (
 func main() {
 	fileName := "abc.txt"
 	dataString := "Hello World"
-	err :=ioutil.WriteFile(fileName,[]byte(dataString),os.ModePerm)
+	err := ioutil.WriteFile(fileName, []byte(dataString), os.ModePerm)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -950,25 +950,25 @@ func main() {
 
 ## Goroutine
 
->Go语言中使用goroutine非常简单，只需要在调用函数的时候在前面加上go关键字，就可以为一个函数创建一个goroutine。
+> Go语言中使用goroutine非常简单，只需要在调用函数的时候在前面加上go关键字，就可以为一个函数创建一个goroutine。
 
 ### 启动一个Goroutine
 
 ```go
 func hello() {
-	fmt.Println("Hello Goroutine!")
+fmt.Println("Hello Goroutine!")
 }
 
 func main() {
-    go hello() // 启动另外一个goroutine去执行hello函数
-	time.Sleep(time.Second)
-	fmt.Println("main goroutine done!")
+go hello() // 启动另外一个goroutine去执行hello函数
+time.Sleep(time.Second)
+fmt.Println("main goroutine done!")
 }
 ```
 
 ### 启动多个Goroutine
 
->使用sync.WaitGroup控制goroutine与主线程的同步等待关系
+> 使用sync.WaitGroup控制goroutine与主线程的同步等待关系
 
 - `Add(N)`：启动N个同步等待goroutine
 - `Done()`：完成一个goroutine
@@ -978,16 +978,16 @@ func main() {
 var wg sync.WaitGroup
 
 func hello(i int) {
-	defer wg.Done() // goroutine结束就登记-1
-	fmt.Println("Hello Goroutine!", i)
+defer wg.Done() // goroutine结束就登记-1
+fmt.Println("Hello Goroutine!", i)
 }
 func main() {
 
-	for i := 0; i < 10; i++ {
-		wg.Add(1) // 启动一个goroutine就登记+1
-		go hello(i)
-	}
-	wg.Wait() // 等待所有登记的goroutine都结束
+for i := 0; i < 10; i++ {
+wg.Add(1) // 启动一个goroutine就登记+1
+go hello(i)
+}
+wg.Wait() // 等待所有登记的goroutine都结束
 }
 ```
 
@@ -995,8 +995,9 @@ func main() {
 
 - `GOMAXPROCS`
 
+控制最大并发核心数量。Go1.5版本之后，默认使用全部的CPU逻辑核心数。
+
 ```go
-// 控制最大并发核心数量。Go1.5版本之后，默认使用全部的CPU逻辑核心数。
 runtime.GOMAXPROCS(N)
 ```
 
@@ -1009,3 +1010,337 @@ runtime.GOMAXPROCS(N)
 ---
 
 ## 复合类型-channel
+
+> channel是一种数据类型，属于引用类型。channel是可以让一个goroutine发送特定值到另一个goroutine的通信机制。
+
+Go 语言中的通道（channel）是一种特殊的类型。通道像一个传送带或者队列，总是遵循先入先出（First In First
+Out）的规则，保证收发数据的顺序。每一个通道都是一个具体类型的导管，也就是声明channel的时候需要为其指定元素类型。
+
+Go语言的并发模型是CSP（Communicating Sequential Processes），提倡通过通信共享内存而不是通过共享内存而实现通信。
+
+### 创建channel
+
+```go
+// 声明一个int类型chan，单位进行初始化
+var ch1 chan int
+```
+
+使用make进行初始化
+
+```go
+make(chan 类型, [缓冲大小])
+```
+
+示例：
+
+```go
+ch4 := make(chan int)
+ch5 := make(chan bool)
+ch6 := make(chan []int)
+```
+
+### 操作channel
+
+#### 1、发送，将一个值发送到通道中。
+
+```go
+ch1 := make(chan int)
+ch1 <- 10
+```
+
+#### 2、接收，从一个通道中接收值。
+
+```go
+ch1 := make(chan int)
+ch1 <- 10
+x := <- ch1
+```
+
+#### 3、关闭
+
+我们通过调用内置的close函数来关闭通道。
+
+```go
+close(ch1)
+```
+
+- 对一个关闭的通道再发送值就会导致panic。
+- 对一个关闭的通道进行接收会一直获取值直到通道为空。
+- 对一个关闭的并且没有值的通道执行接收操作会得到对应类型的零值。
+- 关闭一个已经关闭的通道会导致panic。
+
+### 无缓冲channel
+
+> 无缓冲的通道又称为阻塞的通道
+
+```go
+func main() {
+    ch := make(chan int)
+    ch <- 10
+    fmt.Println("发送成功")
+}
+```
+
+无缓冲通道，因为没有接收这，会触发死锁错误。
+
+```go
+fatal error: all goroutines are asleep - deadlock!
+```
+
+可以使用goroutine创建一个接收的线程。
+
+```go
+func recev(c chan int) {
+    ret := <-c
+    fmt.Println("接收成功", ret)
+}
+	
+func main() {
+    ch1 := make(chan int)
+    go recev(ch1) // 启用goroutine从通道接收值
+    ch <- 10
+    fmt.Println("发送成功")
+}
+```
+
+### 有缓冲channel
+
+> 在使用make函数初始化通道的时候为其指定通道的容量。
+
+```go
+func main() {
+ch := make(chan int, 1) // 创建一个容量为1的有缓冲区通道
+ch <- 10
+fmt.Println("发送成功")
+}
+```
+
+使用内置的len函数获取通道内元素的数量，使用cap函数获取通道的容量。
+
+### 优雅获取channel
+
+当向通道中发送完数据时，我们可以通过close函数来关闭通道。使用for range循环获取数据。
+
+```go
+func main() {
+    ch1 := make(chan int)
+    ch2 := make(chan int)
+    // 开启goroutine将0~100的数发送到ch1中
+    go func () {
+        for i := 0; i < 100; i++ {
+            ch1 <- i
+        }
+        close(ch1)
+    }()
+    // 开启goroutine从ch1中接收值，并将该值的平方发送到ch2中
+    go func () {
+        for {
+            // 通道关闭后再取值ok=false
+            if i, ok := <-ch1; !ok {
+                break
+            } else {
+                ch2 <- i * i
+            }
+        }
+        close(ch2)
+    }()
+    // 在主goroutine中从ch2中接收值打印
+    // 通道关闭后会退出for range循环
+    for i := range ch2 {
+        fmt.Println(i)
+    }
+}
+```
+
+### 单向channel
+
+>限制通道在函数中只能发送或只能接收。
+
+```go
+func counter(out chan<- int) {
+	for i := 0; i < 100; i++ {
+		out <- i
+	}
+	close(out)
+}
+
+func squarer(out chan<- int, in <-chan int) {
+	for i := range in {
+		out <- i * i
+	}
+	close(out)
+}
+func printer(in <-chan int) {
+	for i := range in {
+		fmt.Println(i)
+	}
+}
+
+func main() {
+	ch1 := make(chan int)
+	ch2 := make(chan int)
+	go counter(ch1)
+	go squarer(ch2, ch1)
+	printer(ch2)
+}
+```
+
+- `chan<- int` 是一个只写单向通道（只能对其写入int类型值），可以对其执行发送操作但是不能执行接收操作；
+- `<-chan int` 是一个只读单向通道（只能从其读取int类型值），可以对其执行接收操作但是不能执行发送操作。
+
+### worker pool(goroutine 池)
+
+>指定启动一定数量的goroutine–worker pool模式，控制goroutine的数量，防止goroutine泄漏和暴涨。
+
+```go
+func worker(id int, jobs <-chan int, results chan<- int) {
+	for j := range jobs {
+		fmt.Printf("worker:%d start job:%d\n", id, j)
+		time.Sleep(time.Second)
+		fmt.Printf("worker:%d end job:%d\n", id, j)
+		results <- j * 2
+	}
+}
+
+
+func main() {
+	jobs := make(chan int, 100)
+	results := make(chan int, 100)
+	// 开启3个goroutine
+	for w := 1; w <= 3; w++ {
+		go worker(w, jobs, results)
+	}
+	// 5个任务
+	for j := 1; j <= 5; j++ {
+		jobs <- j
+	}
+	close(jobs)
+	// 输出结果
+	for a := 1; a <= 5; a++ {
+		<-results
+	}
+}
+```
+
+### select多路复用
+
+> Go内置了select关键字，可以同时响应多个通道的操作。
+> select的使用类似于switch语句，它有一系列case分支和一个默认的分支。每个case会对应一个通道的通信（接收或发送）过程。select会一直等待，直到某个case的通信操作完成时，就会执行case分支对应的语句。
+
+```go
+func main() {
+	ch := make(chan int, 1)
+	for i := 0; i < 10; i++ {
+		select {
+		case x := <-ch:
+			fmt.Println(x)
+		case ch <- i:
+		}
+	}
+}
+```
+
+- 可处理一个或多个channel的发送/接收操作。
+- 如果多个case同时满足，select会随机选择一个。
+- 对于没有case的select{}会一直等待，可用于阻塞main函数。
+
+---
+
+## 并发安全和锁
+
+### sync.Mutex-互斥锁
+
+>互斥锁是一种常用的控制共享资源访问的方法，它能够保证同时只有一个goroutine可以访问共享资源。Go语言中使用sync包的Mutex类型来实现互斥锁。 
+
+```go
+var x int64
+var wg sync.WaitGroup
+var lock sync.Mutex
+
+func add() {
+	for i := 0; i < 50000; i++ {
+		lock.Lock() // 加锁
+		x = x + 1
+		lock.Unlock() // 解锁
+	}
+	wg.Done()
+}
+func main() {
+	wg.Add(2)
+	go add()
+	go add()
+	wg.Wait()
+	fmt.Println(x)
+}
+```
+
+### sync.RWMutex-读写互斥锁
+
+互斥锁是完全互斥的，但是有很多实际的场景下是读多写少的，当我们并发的去读取一个资源不涉及资源修改的时候是没有必要加锁的，这种场景下使用读写锁是更好的一种选择。读写锁在Go语言中使用sync包中的RWMutex类型。
+
+读写锁分为两种：读锁和写锁。当一个goroutine获取读锁之后，其他的goroutine如果是获取读锁会继续获得锁，如果是获取写锁就会等待；当一个goroutine获取写锁之后，其他的goroutine无论是获取读锁还是写锁都会等待。
+
+```go
+var (
+	x      int64
+	wg     sync.WaitGroup
+	lock   sync.Mutex
+	rwlock sync.RWMutex
+)
+
+func write() {
+	//lock.Lock() // 加互斥锁
+	rwlock.Lock() // 加写锁
+	x = x + 1
+	time.Sleep(10 * time.Millisecond) // 假设读操作耗时10毫秒
+	rwlock.Unlock()                   // 解写锁
+	//lock.Unlock() // 解互斥锁
+	wg.Done()
+}
+
+func read() {
+	//lock.Lock() // 加互斥锁
+	rwlock.RLock()               // 加读锁
+	time.Sleep(time.Millisecond) // 假设读操作耗时1毫秒
+	rwlock.RUnlock()             // 解读锁
+	//lock.Unlock() // 解互斥锁
+	wg.Done()
+}
+
+func main() {
+	start := time.Now()
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go write()
+	}
+
+	for i := 0; i < 10000; i++ {
+		wg.Add(1)
+		go read()
+	}
+
+	wg.Wait()
+	end := time.Now()
+	fmt.Println(end.Sub(start))
+}
+```
+
+### sync.WaitGroup-同步锁
+
+```go
+var wg sync.WaitGroup
+
+func hello() {
+	defer wg.Done()
+	fmt.Println("Hello Goroutine!")
+}
+func main() {
+	wg.Add(1)
+	go hello() // 启动另外一个goroutine去执行hello函数
+	fmt.Println("main goroutine done!")
+	wg.Wait()
+}
+```
+
+### sync.Once-单次锁
+
