@@ -950,34 +950,62 @@ func main() {
 
 ## Goroutine
 
-```go
-package main
+>Go语言中使用goroutine非常简单，只需要在调用函数的时候在前面加上go关键字，就可以为一个函数创建一个goroutine。
 
-import (
-	"fmt"
-	"time"
-)
+### 启动一个Goroutine
+
+```go
+func hello() {
+	fmt.Println("Hello Goroutine!")
+}
 
 func main() {
-
-	//	启动Goroutine
-	go printNum()
-
-	for i := 0; i <= 100; i++ {
-		fmt.Printf("\t主Goroutine中打印数据：A,%d\n", i)
-	}
+    go hello() // 启动另外一个goroutine去执行hello函数
 	time.Sleep(time.Second)
-	fmt.Println("Main Over")
+	fmt.Println("main goroutine done!")
 }
-
-func printNum() {
-	for i := 0; i <= 100; i++ {
-		fmt.Printf("子Goroutine中打印数据：%d\n", i)
-	}
-}
-
 ```
 
+### 启动多个Goroutine
 
+>使用sync.WaitGroup控制goroutine与主线程的同步等待关系
+
+- `Add(N)`：启动N个同步等待goroutine
+- `Done()`：完成一个goroutine
+- `Wait()`：等待所有的goroutine执行结束
+
+```go
+var wg sync.WaitGroup
+
+func hello(i int) {
+	defer wg.Done() // goroutine结束就登记-1
+	fmt.Println("Hello Goroutine!", i)
+}
+func main() {
+
+	for i := 0; i < 10; i++ {
+		wg.Add(1) // 启动一个goroutine就登记+1
+		go hello(i)
+	}
+	wg.Wait() // 等待所有登记的goroutine都结束
+}
+```
+
+### 线程数控制
+
+- `GOMAXPROCS`
+
+```go
+// 控制最大并发核心数量。Go1.5版本之后，默认使用全部的CPU逻辑核心数。
+runtime.GOMAXPROCS(N)
+```
+
+### Go语言中的操作系统线程和goroutine的关系：
+
+- 一个操作系统线程对应用户态多个goroutine。
+- go程序可以同时使用多个操作系统线程。
+- goroutine和OS线程是多对多的关系，即m:n。
+
+---
 
 ## 复合类型-channel
