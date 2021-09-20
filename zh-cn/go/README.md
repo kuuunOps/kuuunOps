@@ -3,3 +3,4 @@
 ---
 #### [Go语法基础](/zh-cn/go/base/)
 #### [Go语法进阶](/zh-cn/go/advance/)
+#### [Go语法数据库](/zh-cn/go/sql/)

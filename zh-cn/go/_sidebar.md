@@ -25,4 +25,5 @@
     - [Golang](/zh-cn/go/)
       - [Golang语法基础](/zh-cn/go/base/)
       - [Golang语法进阶](/zh-cn/go/advance/)
+      - [Golang语法数据库](/zh-cn/go/sql/)
     - [数据结构与算法](/zh-cn/dsaa/)
