@@ -7,6 +7,29 @@ package main
 import "github.com/go-sql-driver/mysql"
 ```
 
+SQL脚本准备
+
+```sql
+create database recordings;
+use recordings;
+DROP TABLE IF EXISTS album;
+CREATE TABLE album (
+  id         INT AUTO_INCREMENT NOT NULL,
+  title      VARCHAR(128) NOT NULL,
+  artist     VARCHAR(255) NOT NULL,
+  price      DECIMAL(5,2) NOT NULL,
+  PRIMARY KEY (`id`)
+);
+
+INSERT INTO album 
+  (title, artist, price) 
+VALUES 
+  ('Blue Train', 'John Coltrane', 56.99),
+  ('Giant Steps', 'John Coltrane', 63.99),
+  ('Jeru', 'Gerry Mulligan', 17.99),
+  ('Sarah Vaughan', 'Sarah Vaughan', 34.98);
+```
+
 ---
 
 ## 二、数据库连接的建立
@@ -29,7 +52,7 @@ cfg := mysql.Config{
     Passwd: password,
     Net:    "tcp",
     Addr:   "127.0.0.1:3306",
-    DBName: "jazzrecords",
+    DBName: "recordings",
 }
 
 // Get a database handle.
@@ -56,46 +79,53 @@ if err := db.Ping(); err != nil {
 ### 1、单行查询
 
 ```go
-func canPurchase(id int, quantity int) (bool, error) {
-    var enough bool
-    // Query for a value based on a single row.
-    if err := db.QueryRow("SELECT (quantity >= ?) from album where id = ?",
-        quantity, id).Scan(&enough); err != nil {
-        if err == sql.ErrNoRows {
-            return false, fmt.Errorf("canPurchase %d: unknown album", id)
-        }
-        return false, fmt.Errorf("canPurchase %d: %v", id)
-    }
-    return enough, nil
+type Album struct {
+ID     int64
+Title  string
+Artist string
+Price  float32
 }
+
+// albumByID queries for the album with the specified ID.
+func albumByID(id int64) (Album, error) {
+// An album to hold data from the returned row.
+var alb Album
+
+row := db.QueryRow("SELECT * FROM album WHERE id = ?", id)
+if err := row.Scan(&alb.ID, &alb.Title, &alb.Artist, &alb.Price); err != nil {
+if err == sql.ErrNoRows {
+return alb, fmt.Errorf("albumsById %d: no such album", id)
+}
+return alb, fmt.Errorf("albumsById %d: %v", id, err)
+}
+
 ```
 
 ### 2、多行查询
 
 ```go
-func albumsByArtist(artist string) ([]Album, error) {
-    rows, err := db.Query("SELECT * FROM album WHERE artist = ?", artist)
-    if err != nil {
-        return nil, err
-    }
-    defer rows.Close()
+// albumsByArtist queries for albums that have the specified artist name.
+func albumsByArtist(name string) ([]Album, error) {
+// An albums slice to hold data from returned rows.
+var albums []Album
 
-    // An album slice to hold data from returned rows.
-    var albums []Album
-
-    // Loop through rows, using Scan to assign column data to struct fields.
-    for rows.Next() {
-        var alb Album
-        if err := rows.Scan(&alb.ID, &alb.Title, &alb.Artist,
-            &alb.Price, &alb.Quantity); err != nil {
-            return albums, err
-        }
-        albums = append(albums, album)
-    }
-    if err = rows.Err(); err != nil {
-        return albums, err
-    }
-    return albums, nil
+rows, err := db.Query("SELECT * FROM album WHERE artist = ?", name)
+if err != nil {
+return nil, fmt.Errorf("albumsByArtist %q: %v", name, err)
+}
+defer rows.Close()
+// Loop through rows, using Scan to assign column data to struct fields.
+for rows.Next() {
+var alb Album
+if err := rows.Scan(&alb.ID, &alb.Title, &alb.Artist, &alb.Price); err != nil {
+return nil, fmt.Errorf("albumsByArtist %q: %v", name, err)
+}
+albums = append(albums, alb)
+}
+if err := rows.Err(); err != nil {
+return nil, fmt.Errorf("albumsByArtist %q: %v", name, err)
+}
+return albums, nil
 }
 ```
 
@@ -157,18 +187,15 @@ if err := rows.Err(); err != nil {
 ### 1、插入
 
 ```go
-func AddAlbum(alb Album) (int64, error) {
-    result, err := db.Exec("INSERT INTO album (title, artist) VALUES (?, ?)", alb.Title, alb.Artist)
+func addAlbum(alb Album) (int64, error) {
+    result, err := db.Exec("INSERT INTO album (title, artist, price) VALUES (?, ?, ?)", alb.Title, alb.Artist, alb.Price)
     if err != nil {
-        return 0, fmt.Errorf("AddAlbum: %v", err)
+        return 0, fmt.Errorf("addAlbum: %v", err)
     }
-
-    // Get the new album's generated ID for the client.
     id, err := result.LastInsertId()
     if err != nil {
-        return 0, fmt.Errorf("AddAlbum: %v", err)
+        return 0, fmt.Errorf("addAlbum: %v", err)
     }
-    // Return the new album's ID.
     return id, nil
 }
 ```
@@ -176,18 +203,60 @@ func AddAlbum(alb Album) (int64, error) {
 ### 2、更新
 
 ```go
-func AddAlbum(alb Album) (int64, error) {
-    result, err := db.Exec("INSERT INTO album (title, artist) VALUES (?, ?)", alb.Title, alb.Artist)
+func updateAlbumByID(id int64) (int64, error) {
+    result, err := db.Exec("UPDATE album SET price = 100 WHERE id = ?", id)
     if err != nil {
-        return 0, fmt.Errorf("AddAlbum: %v", err)
+        return 0, fmt.Errorf("updateAlbumByID: %v", err)
+    }
+    rows, err := result.RowsAffected()
+    if err != nil {
+        return 0, fmt.Errorf("updateAlbumByID: %v", err)
+    }
+    return rows, nil
+}
+```
+
+### 3、删除
+
+```go
+func deleteAlbumByPrice(price float32) (int64, error) {
+	result, err := db.Exec("DELETE FROM album  WHERE price > ?", price)
+	if err != nil {
+		return 0, fmt.Errorf("deleteAlbumByPrice: %v", err)
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("deleteAlbumByPrice: %v", err)
+	}
+	return rows, nil
+}
+```
+
+---
+
+## 五、预处理
+
+```go
+// AlbumByID retrieves the specified album.
+func AlbumByID(id int) (Album, error) {
+    // Define a prepared statement. You'd typically define the statement
+    // elsewhere and save it for use in functions such as this one.
+    stmt, err := db.Prepare("SELECT * FROM album WHERE id = ?")
+    if err != nil {
+        log.Fatal(err)
     }
 
-    // Get the new album's generated ID for the client.
-    id, err := result.LastInsertId()
+    var album Album
+
+    // Execute the prepared statement, passing in an id value for the
+    // parameter whose placeholder is ?
+    err := stmt.QueryRow(id).Scan(&album.ID, &album.Title, &album.Artist, &album.Price, &album.Quantity)
     if err != nil {
-        return 0, fmt.Errorf("AddAlbum: %v", err)
+        if err == sql.ErrNoRows {
+            // Handle the case of no rows returned.
+        }
+        return album, err
     }
-    // Return the new album's ID.
-    return id, nil
+    return album, nil
 }
 ```
